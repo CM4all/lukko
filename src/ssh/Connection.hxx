@@ -73,8 +73,11 @@ protected:
 	}
 
 	void SendPacket(std::span<const std::byte> src);
+
+public:
 	void SendPacket(PacketSerializer &&s);
 
+protected:
 	void SendDisconnect(DisconnectReasonCode reason_code, std::string_view msg);
 	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg);
 
