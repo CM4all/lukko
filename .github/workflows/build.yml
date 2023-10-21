@@ -37,6 +37,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             meson \
             libsystemd-dev \
+            libavahi-client-dev \
             libssl-dev \
             libmd-dev \
             libsodium-dev
