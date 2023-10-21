@@ -10,9 +10,9 @@
 
 class SessionChannel final : public SSH::Channel
 {
-	UniqueFileDescriptor stdin_pipe;
+	UniqueFileDescriptor stdin_pipe, slave_tty;
 
-	PipeEvent stdout_pipe, stderr_pipe;
+	PipeEvent stdout_pipe, stderr_pipe, tty;
 
 public:
 	SessionChannel(SSH::CConnection &_connection,
@@ -27,6 +27,7 @@ public:
 		       std::span<const std::byte> type_specific) override;
 
 private:
+	void OnTtyReady(unsigned events) noexcept;
 	void OnStdoutReady(unsigned events) noexcept;
 	void OnStderrReady(unsigned events) noexcept;
 };
