@@ -4,6 +4,7 @@
 
 #include "Connection.hxx"
 #include "Instance.hxx"
+#include "SessionChannel.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
@@ -32,8 +33,11 @@ Connection::OpenChannel(std::string_view channel_type,
 	fmt::print(stderr, "ChannelOpen type={} local_channel={} peer_channel={}\n",
 		   channel_type, local_channel, peer_channel);
 
-	CConnection &connection = *this;
-	return std::make_unique<SSH::Channel>(connection, local_channel, peer_channel);
+	if (channel_type == "session"sv) {
+		CConnection &connection = *this;
+		return std::make_unique<SessionChannel>(connection, local_channel, peer_channel);
+	} else
+		return SSH::CConnection::OpenChannel(channel_type, local_channel, peer_channel);
 }
 
 inline void

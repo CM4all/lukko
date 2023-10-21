@@ -131,6 +131,7 @@ executable(
   'src/Instance.cxx',
   'src/Listener.cxx',
   'src/Connection.cxx',
+  'src/SessionChannel.cxx',
   'src/Digest.cxx',
   'src/ssh/Cipher.cxx',
   'src/ssh/Connection.cxx',
