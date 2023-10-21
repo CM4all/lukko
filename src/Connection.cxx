@@ -7,6 +7,7 @@
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
+#include "ssh/Channel.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <fmt/core.h>
@@ -15,13 +16,25 @@ using std::string_view_literals::operator""sv;
 
 Connection::Connection(Instance &_instance, UniqueSocketDescriptor _fd,
 		       const Key &_host_key)
-	:SSH::Connection(_instance.GetEventLoop(), std::move(_fd),
+	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
 			 _host_key),
 	 instance(_instance), logger(instance.GetLogger())
 {
 }
 
 Connection::~Connection() noexcept = default;
+
+std::unique_ptr<SSH::Channel>
+Connection::OpenChannel(std::string_view channel_type,
+			uint_least32_t local_channel,
+			uint_least32_t peer_channel)
+{
+	fmt::print(stderr, "ChannelOpen type={} local_channel={} peer_channel={}\n",
+		   channel_type, local_channel, peer_channel);
+
+	CConnection &connection = *this;
+	return std::make_unique<SSH::Channel>(connection, local_channel, peer_channel);
+}
 
 inline void
 Connection::HandleServiceRequest(std::span<const std::byte> payload)
@@ -48,21 +61,6 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 }
 
 inline void
-Connection::HandleChannelOpen(std::span<const std::byte> payload)
-{
-	SSH::Deserializer d{payload};
-
-	const auto channel_type = d.ReadString();
-	const uint_least32_t sender_channel = d.ReadU32();
-
-	fmt::print(stderr, "ChannelOpen type={} sender_channel={}\n", channel_type, sender_channel);
-
-	SendPacket(SSH::MakeChannelOpenFailure(sender_channel,
-					       SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
-					       "No!"sv));
-}
-
-inline void
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
@@ -77,12 +75,8 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 		HandleUserauthRequest(payload);
 		break;
 
-	case SSH::MessageNumber::CHANNEL_OPEN:
-		HandleChannelOpen(payload);
-		break;
-
 	default:
-		SSH::Connection::HandlePacket(msg, payload);
+		SSH::CConnection::HandlePacket(msg, payload);
 	}
 }
 
@@ -90,5 +84,5 @@ void
 Connection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	logger(1, e);
-	SSH::Connection::OnBufferedError(std::move(e));
+	SSH::CConnection::OnBufferedError(std::move(e));
 }

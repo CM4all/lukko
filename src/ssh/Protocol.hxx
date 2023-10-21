@@ -98,4 +98,8 @@ enum class ChannelOpenFailureReasonCode : uint32_t {
 	RESOURCE_SHORTAGE = 4,
 };
 
+enum class ChannelExtendedDataType : uint32_t {
+	STDERR = 1,
+};
+
 } // namespace SSH

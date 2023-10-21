@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ssh/Connection.hxx"
+#include "ssh/CConnection.hxx"
 #include "util/IntrusiveList.hxx"
 
 class Instance;
@@ -16,7 +16,7 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
-	  SSH::Connection
+	  SSH::CConnection
 {
 	Instance &instance;
 	const RootLogger &logger;
@@ -36,6 +36,12 @@ private:
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 	void HandleChannelOpen(std::span<const std::byte> payload);
 
+	/* virtual methods from class SSH::CConnection */
+	std::unique_ptr<SSH::Channel> OpenChannel(std::string_view channel_type,
+						  uint_least32_t local_channel,
+						  uint_least32_t peer_channel) override;
+
+	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,
 			  std::span<const std::byte> payload) override;
 

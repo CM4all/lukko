@@ -78,4 +78,13 @@ MakeChannelOpenFailure(uint_least32_t recipient_channel,
 	return s;
 }
 
+[[gnu::pure]]
+inline PacketSerializer
+MakeChannelClose(uint_least32_t recipient_channel) noexcept
+{
+	PacketSerializer s{MessageNumber::CHANNEL_CLOSE};
+	s.WriteU32(recipient_channel);
+	return s;
+}
+
 } // namespace SSH

@@ -29,6 +29,16 @@ public:
 		return result;
 	}
 
+	uint_least8_t ReadBool() {
+		const auto s = ReadN(1);
+		return s.front() != std::byte{};
+	}
+
+	uint_least8_t ReadU8() {
+		const auto s = ReadN(1);
+		return static_cast<uint_least8_t>(s.front());
+	}
+
 	uint_least32_t ReadU32() {
 		const auto s = ReadN(4);
 		return (static_cast<uint_least32_t>(s[0]) << 24) |
@@ -43,6 +53,10 @@ public:
 
 	std::string_view ReadString() {
 		return ToStringView(ReadLengthEncoded());
+	}
+
+	std::span<const std::byte> GetRest() const noexcept {
+		return src;
 	}
 };
 
