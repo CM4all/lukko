@@ -16,12 +16,12 @@ You need:
 - `libfmt <https://fmt.dev/>`__
 - `libmd <https://www.hadrons.org/software/libmd/>`__
 - `libsodium <https://www.libsodium.org/>`__
-- `OpenSSL <https://www.openssl.org/>`__
 
 Optional dependencies:
 
 - `Avahi <https://www.avahi.org/>`__
 - `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`__
+- `OpenSSL <https://www.openssl.org/>`__
 
 Get the source code::
 

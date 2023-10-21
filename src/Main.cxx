@@ -4,7 +4,6 @@
 
 #include "Instance.hxx"
 #include "key/Ed25519Key.hxx"
-#include "key/ECDSAKey.hxx"
 #include "lib/avahi/Service.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketConfig.hxx"
@@ -17,6 +16,10 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#ifdef HAVE_OPENSSL
+#include "key/ECDSAKey.hxx"
+#endif // HAVE_OPENSSL
+
 #include <stdlib.h>
 
 static std::unique_ptr<Key>
@@ -27,9 +30,14 @@ LoadHostKey(bool use_ed25519_host_key)
 		key->Generate();
 		return key;
 	} else {
+#ifdef HAVE_OPENSSL
 		auto key = std::make_unique<ECDSAKey>();
 		key->Generate();
 		return key;
+#else
+		// TODO
+		std::terminate();
+#endif // HAVE_OPENSSL
 	}
 }
 

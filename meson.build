@@ -107,6 +107,7 @@ inc = include_directories('src', 'libcommon/src')
 
 libcommon_enable_boost = false
 libcommon_require_avahi = get_option('zeroconf')
+libcommon_require_libcrypto = get_option('openssl')
 libcommon_enable_libssl = false
 
 subdir('libcommon/src/util')
@@ -121,12 +122,26 @@ subdir('libcommon/src/net')
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/lib/avahi')
 
+sources = []
+
+if crypto_dep.found()
+  sources += [
+    'src/openssl/SerializeBN.cxx',
+    'src/openssl/SerializeEC.cxx',
+    'src/openssl/SerializeEVP.cxx',
+    'src/openssl/SignECDSA.cxx',
+    'src/key/ECDSAKey.cxx',
+  ]
+endif
+
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
+conf.set('HAVE_OPENSSL', crypto_dep.found())
 configure_file(output: 'config.h', configuration: conf)
 
 executable(
   'cm4all-lukko',
+  sources,
   'src/Main.cxx',
   'src/Instance.cxx',
   'src/Listener.cxx',
@@ -141,11 +156,6 @@ executable(
   'src/ssh/KexHash.cxx',
   'src/ssh/KexProposal.cxx',
   'src/ssh/KexState.cxx',
-  'src/openssl/SerializeBN.cxx',
-  'src/openssl/SerializeEC.cxx',
-  'src/openssl/SerializeEVP.cxx',
-  'src/openssl/SignECDSA.cxx',
-  'src/key/ECDSAKey.cxx',
   'src/key/Curve25519Key.cxx',
   'src/key/Ed25519Key.cxx',
   'src/system/SetupProcess.cxx',
