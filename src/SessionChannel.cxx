@@ -75,11 +75,20 @@ Execute(const char *command, FileDescriptor tty)
 			stderr_w.CheckDuplicate(FileDescriptor{STDERR_FILENO});
 		}
 
-		const char *const args[] = {
-			"sh", "-c", command, nullptr
-		};
+		if (command != nullptr) {
+			const char *const args[] = {
+				"sh", "-c", command, nullptr
+			};
 
-		execvp("/bin/sh", const_cast<char **>(args));
+			execvp("/bin/sh", const_cast<char **>(args));
+		} else {
+			const char *const args[] = {
+				"bash", "-", nullptr
+			};
+
+			execvp("/bin/bash", const_cast<char **>(args));
+		}
+
 		perror("Failed to execute");
 		_exit(EXIT_FAILURE);
 	}
@@ -119,6 +128,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		fmt::print(stderr, "  exec '{}'\n", command);
 
 		Exec(command.c_str());
+		return true;
+	} else if (request_type == "shell"sv) {
+		Exec(nullptr);
 		return true;
 	} else if (request_type == "pty-req"sv) {
 		struct winsize ws{};
