@@ -11,10 +11,6 @@
 #include "ssh/Serializer.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
-#include "lib/openssl/Error.hxx"
-#include "lib/openssl/UniqueBN.hxx"
-#include "openssl/SerializeBN.hxx"
-#include "openssl/SerializeEVP.hxx"
 #include "key/Key.hxx"
 #include "system/Error.hxx"
 #include "system/Urandom.hxx"
@@ -22,8 +18,6 @@
 #include "net/SocketProtocolError.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
-
-#include <openssl/ec.h>
 
 using std::string_view_literals::operator""sv;
 
