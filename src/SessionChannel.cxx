@@ -87,6 +87,26 @@ Execute(const char *command, FileDescriptor tty)
 	return p;
 }
 
+void
+SessionChannel::Exec(const char *cmd)
+{
+	stdout_pipe.Close();
+	stderr_pipe.Close();
+
+	auto p = Execute(cmd, slave_tty);
+	slave_tty.Close();
+
+	if (tty.IsDefined()) {
+		tty.ScheduleRead();
+	} else {
+		stdin_pipe = std::move(p.stdin);
+		stdout_pipe.Open(p.stdout.Release());
+		stdout_pipe.ScheduleRead();
+		stderr_pipe.Open(p.stderr.Release());
+		stderr_pipe.ScheduleRead();
+	}
+}
+
 bool
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
@@ -94,26 +114,11 @@ SessionChannel::OnRequest(std::string_view request_type,
 	fmt::print(stderr, "ChannelRequest '{}'\n", request_type);
 
 	if (request_type == "exec"sv) {
-		stdout_pipe.Close();
-		stderr_pipe.Close();
-
 		SSH::Deserializer d{type_specific};
 		const std::string command{d.ReadString()};
 		fmt::print(stderr, "  exec '{}'\n", command);
 
-		auto p = Execute(command.c_str(), slave_tty);
-		slave_tty.Close();
-
-		if (tty.IsDefined()) {
-			tty.ScheduleRead();
-		} else {
-			stdin_pipe = std::move(p.stdin);
-			stdout_pipe.Open(p.stdout.Release());
-			stdout_pipe.ScheduleRead();
-			stderr_pipe.Open(p.stderr.Release());
-			stderr_pipe.ScheduleRead();
-		}
-
+		Exec(command.c_str());
 		return true;
 	} else if (request_type == "pty-req"sv) {
 		struct winsize ws{};

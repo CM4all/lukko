@@ -27,6 +27,8 @@ public:
 		       std::span<const std::byte> type_specific) override;
 
 private:
+	void Exec(const char *cmd);
+
 	void OnTtyReady(unsigned events) noexcept;
 	void OnStdoutReady(unsigned events) noexcept;
 	void OnStderrReady(unsigned events) noexcept;
