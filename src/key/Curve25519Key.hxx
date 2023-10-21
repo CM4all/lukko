@@ -16,6 +16,7 @@ public:
 
 	void Generate();
 
+	std::string_view GetAlgorithm() const noexcept override;
 	void SerializePublic(SSH::Serializer &s) const override;
 	void SerializeKex(SSH::Serializer &s) const override;
 	void Sign(SSH::Serializer &s, std::span<const std::byte> src) const override;

@@ -11,6 +11,8 @@
 
 #include <stdexcept>
 
+using std::string_view_literals::operator""sv;
+
 Curve25519Key::~Curve25519Key() noexcept
 {
 	sodium_memzero(&key, sizeof(key));
@@ -27,6 +29,13 @@ Curve25519Key::Generate()
 	if (crypto_scalarmult_curve25519_base(reinterpret_cast<unsigned char *>(pub.data()),
 					      reinterpret_cast<const unsigned char *>(key.data())) != 0)
 		throw std::runtime_error{"crypto_scalarmult_curve25519_base() failed"};
+}
+
+std::string_view
+Curve25519Key::GetAlgorithm() const noexcept
+{
+	// TODO
+	return "curve25519"sv;
 }
 
 void
