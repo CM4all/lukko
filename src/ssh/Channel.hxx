@@ -29,6 +29,10 @@ public:
 
 	virtual ~Channel() noexcept = default;
 
+	CConnection &GetConnection() noexcept {
+		return connection;
+	}
+
 	uint_least32_t GetLocalChannel() const noexcept {
 		return local_channel;
 	}
