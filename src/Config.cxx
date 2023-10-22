@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Config.hxx"
+#include "DebugMode.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "net/IPv6Address.hxx"
 #include "net/Parser.hxx"
@@ -19,8 +20,10 @@ static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
 
 Config::Config()
 {
+	if (debug_mode)
+		spawn.default_uid_gid.LoadEffective();
+
 	// TODO implement SpawnConfig properly
-	spawn.default_uid_gid.LoadEffective();
 	spawn.allow_any_uid_gid = true;
 }
 
@@ -36,6 +39,11 @@ Config::Check()
 		l.tcp_no_delay = true;
 		l.keepalive = true;
 	}
+
+	if (debug_mode)
+		/* accept gid=0 (keep current gid) from translation
+		   server if we were started as unprivileged user */
+		spawn.allowed_gids.insert(0);
 }
 
 class LukkoConfigParser final : public NestedConfigParser {

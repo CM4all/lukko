@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "SessionChannel.hxx"
+#include "DebugMode.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
@@ -60,7 +61,7 @@ SessionChannel::Exec(const char *cmd)
 	PreparedChildProcess p;
 
 	// TODO
-	if (geteuid() == 0) {
+	if (!debug_mode) {
 		p.uid_gid.uid = 65535;
 		p.uid_gid.gid = 65535;
 	}

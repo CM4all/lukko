@@ -4,9 +4,11 @@
 
 #include "Instance.hxx"
 #include "Config.hxx"
+#include "DebugMode.hxx"
 #include "key/Ed25519Key.hxx"
 #include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
+#include "lib/cap/Glue.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketConfig.hxx"
@@ -48,6 +50,13 @@ int
 main(int argc, char **argv) noexcept
 try {
 	InitProcessName(argc, argv);
+
+#ifndef NDEBUG
+	/* also checking $SYSTEMD_EXEC_PID to see if we were launched
+	   by systemd, because if we are running in a container, it
+	   may not have CAP_SYS_ADMIN */
+	debug_mode = !IsSysAdmin() && getenv("SYSTEMD_EXEC_PID") == nullptr;
+#endif
 
 	Config config;
 	LoadConfigFile(config, "/etc/cm4all/lukko/lukko.conf");
