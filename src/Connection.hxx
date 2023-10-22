@@ -21,6 +21,8 @@ class Connection final
 	Instance &instance;
 	const RootLogger &logger;
 
+	std::string username;
+
 public:
 	Connection(Instance &_instance, UniqueSocketDescriptor fd,
 		   const Key &_host_key);

@@ -59,7 +59,11 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 inline void
 Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 {
-	(void)payload;
+	SSH::Deserializer d{payload};
+	const auto new_username = d.ReadString();
+	fmt::print(stderr, "Userauth '{}'\n", new_username);
+
+	username.assign(new_username);
 
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 	SendPacket(SSH::MakeUserauthBanner("Hello, world!\n"));
