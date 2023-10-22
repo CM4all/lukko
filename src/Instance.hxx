@@ -20,11 +20,14 @@
 
 #include <stdint.h>
 
+struct Config;
 struct ListenerConfig;
 class Key;
 class UniqueSocketDescriptor;
 class Listener;
 class Connection;
+class SpawnService;
+class SpawnServerClient;
 namespace Avahi { class Client; class Publisher; struct Service; }
 
 class Instance final
@@ -55,8 +58,12 @@ class Instance final
 
 	IntrusiveList<Connection> connections;
 
+	std::unique_ptr<SpawnServerClient> spawn_service;
+
 public:
-	explicit Instance(std::unique_ptr<Key> _host_key);
+	Instance(const Config &config,
+		 std::unique_ptr<Key> _host_key,
+		 UniqueSocketDescriptor spawner_socket);
 	~Instance() noexcept;
 
 	const RootLogger &GetLogger() const noexcept {
@@ -66,6 +73,9 @@ public:
 	auto &GetEventLoop() noexcept {
 		return event_loop;
 	}
+
+	[[gnu::const]]
+	SpawnService &GetSpawnService() const noexcept;
 
 #ifdef HAVE_AVAHI
 	Avahi::Client &GetAvahiClient();

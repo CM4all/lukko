@@ -5,17 +5,28 @@
 #pragma once
 
 #include "ssh/Channel.hxx"
+#include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
-class SessionChannel final : public SSH::Channel
+#include <memory>
+
+class SpawnService;
+class ChildProcessHandle;
+
+class SessionChannel final : public SSH::Channel, ExitListener
 {
+	SpawnService &spawn_service;
+
+	std::unique_ptr<ChildProcessHandle> child;
+
 	UniqueFileDescriptor stdin_pipe, slave_tty;
 
 	PipeEvent stdout_pipe, stderr_pipe, tty;
 
 public:
-	SessionChannel(SSH::CConnection &_connection,
+	SessionChannel(SpawnService &_spawn_service,
+		       SSH::CConnection &_connection,
 		       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept;
 
 	~SessionChannel() noexcept override;
@@ -32,4 +43,7 @@ private:
 	void OnTtyReady(unsigned events) noexcept;
 	void OnStdoutReady(unsigned events) noexcept;
 	void OnStderrReady(unsigned events) noexcept;
+
+	/* virtual methods from class ExitListener */
+	void OnChildProcessExit(int status) noexcept override;
 };

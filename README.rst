@@ -16,6 +16,8 @@ You need:
 - `libfmt <https://fmt.dev/>`__
 - `libmd <https://www.hadrons.org/software/libmd/>`__
 - `libsodium <https://www.libsodium.org/>`__
+- `libcap2 <https://sites.google.com/site/fullycapable/>`__
+- `libseccomp <https://github.com/seccomp/libseccomp>`__
 
 Optional dependencies:
 

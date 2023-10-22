@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Config.hxx"
+#include "spawn/ConfigParser.hxx"
 #include "net/IPv6Address.hxx"
 #include "net/Parser.hxx"
 #include "io/config/FileLineParser.hxx"
@@ -15,6 +16,13 @@
 
 // not defaulting to 22 until this project is fully-featured
 static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
+
+Config::Config()
+{
+	// TODO implement SpawnConfig properly
+	spawn.default_uid_gid.LoadEffective();
+	spawn.allow_any_uid_gid = true;
+}
 
 void
 Config::Check()
@@ -127,6 +135,9 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 	if (StringIsEqual(word, "listener")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<Listener>(config));
+	} else if (strcmp(word, "spawn") == 0) {
+		line.ExpectSymbolAndEol('{');
+		SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
 	} else
 		throw LineParser::Error("Unknown option");
 }

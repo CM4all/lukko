@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "spawn/Config.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
@@ -22,6 +23,10 @@ struct ListenerConfig : SocketConfig {
 
 struct Config {
 	std::forward_list<ListenerConfig> listeners;
+
+	SpawnConfig spawn;
+
+	Config();
 
 	void Check();
 };

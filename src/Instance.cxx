@@ -7,6 +7,7 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "key/Key.hxx"
+#include "spawn/Client.hxx"
 #include "event/net/MultiUdpListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -26,14 +27,25 @@
 #include <signal.h>
 #include <unistd.h>
 
-Instance::Instance(std::unique_ptr<Key> _host_key)
-	:host_key(std::move(_host_key))
+Instance::Instance(const Config &config,
+		   std::unique_ptr<Key> _host_key,
+		   UniqueSocketDescriptor spawner_socket)
+	:host_key(std::move(_host_key)),
+	 spawn_service(new SpawnServerClient(event_loop,
+					     config.spawn,
+					     std::move(spawner_socket)))
 {
 	shutdown_listener.Enable();
 	sighup_event.Enable();
 }
 
 Instance::~Instance() noexcept = default;
+
+SpawnService &
+Instance::GetSpawnService() const noexcept
+{
+	return *spawn_service;
+}
 
 #ifdef HAVE_AVAHI
 
@@ -119,6 +131,8 @@ Instance::OnExit() noexcept
 
 	shutdown_listener.Disable();
 	sighup_event.Disable();
+
+	spawn_service->Shutdown();
 
 #ifdef HAVE_AVAHI
 	avahi_publisher.reset();

@@ -5,7 +5,9 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "key/Ed25519Key.hxx"
+#include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
+#include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -43,8 +45,10 @@ LoadHostKey(bool use_ed25519_host_key)
 }
 
 int
-main(int, char **) noexcept
+main(int argc, char **argv) noexcept
 try {
+	InitProcessName(argc, argv);
+
 	Config config;
 	LoadConfigFile(config, "/etc/cm4all/lukko/lukko.conf");
 	config.Check();
@@ -54,7 +58,9 @@ try {
 	SetupProcess();
 
 	Instance instance{
+		config,
 		LoadHostKey(use_ed25519_host_key),
+		LaunchSpawnServer(config.spawn, nullptr),
 	};
 
 	for (const auto &i : config.listeners)

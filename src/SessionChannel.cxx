@@ -3,6 +3,9 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "SessionChannel.hxx"
+#include "spawn/Interface.hxx"
+#include "spawn/Prepared.hxx"
+#include "spawn/ProcessHandle.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
 #include "system/Error.hxx"
@@ -10,14 +13,17 @@
 #include <fmt/core.h>
 
 #include <pty.h> // for openpty()
+#include <signal.h>
 #include <unistd.h>
 #include <utmp.h> // for login_tty()
 
 using std::string_view_literals::operator""sv;
 
-SessionChannel::SessionChannel(SSH::CConnection &_connection,
+SessionChannel::SessionChannel(SpawnService &_spawn_service,
+			       SSH::CConnection &_connection,
 			       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept
 	:SSH::Channel(_connection, _local_channel, _peer_channel),
+	 spawn_service(_spawn_service),
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -28,6 +34,9 @@ SessionChannel::~SessionChannel() noexcept
 {
 	stdout_pipe.Close();
 	stderr_pipe.Close();
+
+	if (child)
+		child->Kill(SIGTERM);
 }
 
 void
@@ -45,75 +54,51 @@ SessionChannel::OnEof()
 	stdin_pipe.Close();
 }
 
-struct ExecPipes {
-	UniqueFileDescriptor stdin, stdout, stderr;
-};
-
-static ExecPipes
-Execute(const char *command, FileDescriptor tty)
-{
-	ExecPipes p;
-
-	UniqueFileDescriptor stdin_r, stdout_w, stderr_w;
-
-	if (!tty.IsDefined() &&
-	    (!UniqueFileDescriptor::CreatePipe(stdin_r, p.stdin) ||
-	     !UniqueFileDescriptor::CreatePipe(p.stdout, stdout_w) ||
-	     !UniqueFileDescriptor::CreatePipe(p.stderr, stderr_w)))
-		throw MakeErrno("Failed to create pipe");
-
-	const auto pid = fork();
-	if (pid < 0)
-		throw MakeErrno("Failed to fork");
-
-	if (pid == 0) {
-		if (tty.IsDefined()) {
-			login_tty(tty.Get());
-		} else {
-			stdin_r.CheckDuplicate(FileDescriptor{STDIN_FILENO});
-			stdout_w.CheckDuplicate(FileDescriptor{STDOUT_FILENO});
-			stderr_w.CheckDuplicate(FileDescriptor{STDERR_FILENO});
-		}
-
-		if (command != nullptr) {
-			const char *const args[] = {
-				"sh", "-c", command, nullptr
-			};
-
-			execvp("/bin/sh", const_cast<char **>(args));
-		} else {
-			const char *const args[] = {
-				"bash", "-", nullptr
-			};
-
-			execvp("/bin/bash", const_cast<char **>(args));
-		}
-
-		perror("Failed to execute");
-		_exit(EXIT_FAILURE);
-	}
-
-	return p;
-}
-
 void
 SessionChannel::Exec(const char *cmd)
 {
-	stdout_pipe.Close();
-	stderr_pipe.Close();
+	PreparedChildProcess p;
 
-	auto p = Execute(cmd, slave_tty);
-	slave_tty.Close();
+	// TODO
+	if (geteuid() == 0) {
+		p.uid_gid.uid = 65535;
+		p.uid_gid.gid = 65535;
+	}
+
+	if (cmd != nullptr) {
+		p.args.push_back("/bin/sh");
+		p.args.push_back("-c");
+		p.args.push_back(cmd);
+	} else {
+		p.args.push_back("/bin/bash");
+		p.args.push_back("-");
+	}
 
 	if (tty.IsDefined()) {
+		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
+		p.tty = true;
+
 		tty.ScheduleRead();
 	} else {
-		stdin_pipe = std::move(p.stdin);
-		stdout_pipe.Open(p.stdout.Release());
+		UniqueFileDescriptor stdin_r, stdout_r, stdout_w, stderr_r, stderr_w;
+		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe) ||
+		    !UniqueFileDescriptor::CreatePipe(stdout_r, stdout_w) ||
+		    !UniqueFileDescriptor::CreatePipe(stderr_r, stderr_w))
+			throw MakeErrno("Failed to create pipe");
+
+		p.SetStdin(std::move(stdin_r));
+		p.SetStdout(std::move(stdout_w));
+		p.SetStderr(std::move(stderr_w));
+
+		stdout_pipe.Open(stdout_r.Release());
 		stdout_pipe.ScheduleRead();
-		stderr_pipe.Open(p.stderr.Release());
+		stderr_pipe.Open(stderr_r.Release());
 		stderr_pipe.ScheduleRead();
 	}
+
+	// TODO use a proper process name
+	child = spawn_service.SpawnChildProcess("foo", std::move(p));
+	child->SetExitListener(*this);
 }
 
 bool
@@ -158,6 +143,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 		return true;
 	} else
 		return false;
+
+	// TOOD "signal"
 }
 
 void
@@ -196,4 +183,17 @@ SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 	} else {
 		stderr_pipe.Close();
 	}
+}
+
+void
+SessionChannel::OnChildProcessExit(int status) noexcept
+{
+	// TODO submit status via "exit-status" or "exit-signal"
+	(void)status;
+
+	child = {};
+
+	// TODO flush pending data from pipes?
+
+	Close();
 }

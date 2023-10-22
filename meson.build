@@ -109,19 +109,30 @@ libcommon_enable_boost = false
 libcommon_require_avahi = get_option('zeroconf')
 libcommon_require_libcrypto = get_option('openssl')
 libcommon_enable_libssl = false
+libcommon_enable_libsystemd = libsystemd.found()
+libcommon_enable_spawn_local = false
 
 subdir('libcommon/src/util')
 subdir('libcommon/src/time')
 subdir('libcommon/src/lib/fmt')
 subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/lib/openssl')
+subdir('libcommon/src/lib/cap')
 subdir('libcommon/src/io')
 subdir('libcommon/src/io/config')
+subdir('libcommon/src/io/linux')
 subdir('libcommon/src/system')
 subdir('libcommon/src/event')
 subdir('libcommon/src/net')
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/lib/avahi')
+
+if libsystemd.found()
+subdir('libcommon/src/lib/dbus')
+endif
+
+subdir('libcommon/src/adata')
+subdir('libcommon/src/spawn')
 
 sources = []
 
@@ -135,7 +146,9 @@ if crypto_dep.found()
   ]
 endif
 
-conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+# already set by spawn_dep (TODO clean this up)
+#conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
 configure_file(output: 'config.h', configuration: conf)
@@ -150,6 +163,7 @@ executable(
   'src/Connection.cxx',
   'src/SessionChannel.cxx',
   'src/Digest.cxx',
+  'src/AllocatorPtr.cxx',
   'src/ssh/Cipher.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
@@ -172,6 +186,7 @@ executable(
     avahi_dep,
     crypto_dep,
     sodium_dep,
+    spawn_dep,
     dependency('libmd'),
   ],
   install: true,
