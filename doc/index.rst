@@ -15,6 +15,12 @@ Configuration
 Lukko loads the configuration file
 :file:`/etc/cm4all/lukko/lukko.conf`.
 
+The following top-level settings are recognized:
+
+- ``translation_server``: consult this translation server to configure
+  child processes; must start with :file:`/` (absolute path) or
+  :file:`@` (abstract socket).
+
 
 Listener
 --------

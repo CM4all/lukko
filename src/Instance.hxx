@@ -41,6 +41,10 @@ class Instance final
 
 	std::unique_ptr<Key> host_key;
 
+#ifdef ENABLE_TRANSLATION
+	const char *const translation_server;
+#endif
+
 	EventLoop event_loop;
 
 	bool should_exit = false;
@@ -73,6 +77,12 @@ public:
 	auto &GetEventLoop() noexcept {
 		return event_loop;
 	}
+
+#ifdef ENABLE_TRANSLATION
+	const char *GetTranslationServer() const noexcept {
+		return translation_server;
+	}
+#endif
 
 	[[gnu::const]]
 	SpawnService &GetSpawnService() const noexcept;

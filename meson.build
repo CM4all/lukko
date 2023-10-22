@@ -146,11 +146,22 @@ if crypto_dep.found()
   ]
 endif
 
+if get_option('translation')
+  subdir('libcommon/src/translation')
+  sources += [
+    'src/translation/LoginClient.cxx',
+    'src/translation/LoginGlue.cxx',
+  ]
+else
+  translation_dep = dependency('', required: false)
+endif
+
 # already set by spawn_dep (TODO clean this up)
 #conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
+conf.set('ENABLE_TRANSLATION', get_option('translation'))
 configure_file(output: 'config.h', configuration: conf)
 
 executable(
@@ -187,6 +198,7 @@ executable(
     crypto_dep,
     sodium_dep,
     spawn_dep,
+    translation_dep,
     dependency('libmd'),
   ],
   install: true,

@@ -2,5 +2,7 @@ option('systemd', type: 'feature', description: 'systemd support (using libsyste
 option('zeroconf', type: 'feature', description: 'Zeroconf support (using Avahi)')
 option('openssl', type: 'feature', description: 'Use OpenSSL (libcrypto)')
 
+option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
+
 option('documentation', type: 'feature',
   description: 'Build documentation')

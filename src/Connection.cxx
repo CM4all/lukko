@@ -36,6 +36,9 @@ Connection::OpenChannel(std::string_view channel_type,
 	if (channel_type == "session"sv) {
 		CConnection &connection = *this;
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
+#ifdef ENABLE_TRANSLATION
+							instance.GetTranslationServer(),
+#endif
 							connection, local_channel, peer_channel);
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, local_channel, peer_channel);

@@ -148,9 +148,13 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 	if (StringIsEqual(word, "listener")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<Listener>(config));
-	} else if (strcmp(word, "spawn") == 0) {
+	} else if (StringIsEqual(word, "spawn")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
+#ifdef ENABLE_TRANSLATION
+	} else if (StringIsEqual(word, "translation_server")) {
+		config.translation_server = line.ExpectValueAndEnd();
+#endif // ENABLE_TRANSLATION
 	} else
 		throw LineParser::Error("Unknown option");
 }

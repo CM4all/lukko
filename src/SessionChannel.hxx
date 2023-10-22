@@ -8,6 +8,7 @@
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "config.h"
 
 #include <memory>
 
@@ -18,6 +19,10 @@ class SessionChannel final : public SSH::Channel, ExitListener
 {
 	SpawnService &spawn_service;
 
+#ifdef ENABLE_TRANSLATION
+	const char *const translation_server;
+#endif
+
 	std::unique_ptr<ChildProcessHandle> child;
 
 	UniqueFileDescriptor stdin_pipe, slave_tty;
@@ -26,6 +31,9 @@ class SessionChannel final : public SSH::Channel, ExitListener
 
 public:
 	SessionChannel(SpawnService &_spawn_service,
+#ifdef ENABLE_TRANSLATION
+		       const char *_translation_server,
+#endif
 		       SSH::CConnection &_connection,
 		       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept;
 

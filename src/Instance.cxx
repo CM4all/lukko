@@ -31,6 +31,9 @@ Instance::Instance(const Config &config,
 		   std::unique_ptr<Key> _host_key,
 		   UniqueSocketDescriptor spawner_socket)
 	:host_key(std::move(_host_key)),
+#ifdef ENABLE_TRANSLATION
+	 translation_server(config.translation_server.empty() ? nullptr : config.translation_server.c_str()),
+#endif
 	 spawn_service(new SpawnServerClient(event_loop,
 					     config.spawn,
 					     std::move(spawner_socket)))

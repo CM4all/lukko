@@ -22,6 +22,10 @@ struct ListenerConfig : SocketConfig {
 };
 
 struct Config {
+#ifdef ENABLE_TRANSLATION
+	std::string translation_server;
+#endif
+
 	std::forward_list<ListenerConfig> listeners;
 
 	SpawnConfig spawn;

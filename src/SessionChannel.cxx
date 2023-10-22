@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "SessionChannel.hxx"
+#include "Connection.hxx"
 #include "DebugMode.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -10,6 +11,12 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
 #include "system/Error.hxx"
+#include "AllocatorPtr.hxx"
+
+#ifdef ENABLE_TRANSLATION
+#include "translation/LoginGlue.hxx"
+#include "translation/Response.hxx"
+#endif // ENABLE_TRANSLATION
 
 #include <fmt/core.h>
 
@@ -21,10 +28,16 @@
 using std::string_view_literals::operator""sv;
 
 SessionChannel::SessionChannel(SpawnService &_spawn_service,
+#ifdef ENABLE_TRANSLATION
+			       const char *_translation_server,
+#endif
 			       SSH::CConnection &_connection,
 			       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept
 	:SSH::Channel(_connection, _local_channel, _peer_channel),
 	 spawn_service(_spawn_service),
+#ifdef ENABLE_TRANSLATION
+	 translation_server(_translation_server),
+#endif
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -58,13 +71,31 @@ SessionChannel::OnEof()
 void
 SessionChannel::Exec(const char *cmd)
 {
+	Allocator alloc;
 	PreparedChildProcess p;
 
-	// TODO
-	if (!debug_mode) {
-		p.uid_gid.uid = 65535;
-		p.uid_gid.gid = 65535;
+#ifdef ENABLE_TRANSLATION
+	if (translation_server != nullptr) {
+		const auto &c = static_cast<Connection &>(GetConnection());
+
+		auto response = TranslateLogin(alloc, translation_server,
+					       "ssh"sv, "hosting"sv,
+					       c.GetUsername(), {});
+
+		if (response.status != HttpStatus{})
+			throw std::runtime_error{"Translation server failed"};
+
+		response.child_options.CopyTo(p);
+	} else {
+#endif // ENABLE_TRANSLATION
+		// TODO
+		if (!debug_mode) {
+			p.uid_gid.uid = 65535;
+			p.uid_gid.gid = 65535;
+		}
+#ifdef ENABLE_TRANSLATION
 	}
+#endif // ENABLE_TRANSLATION
 
 	if (cmd != nullptr) {
 		p.args.push_back("/bin/sh");
@@ -95,6 +126,11 @@ SessionChannel::Exec(const char *cmd)
 		stdout_pipe.ScheduleRead();
 		stderr_pipe.Open(stderr_r.Release());
 		stderr_pipe.ScheduleRead();
+	}
+
+	if (const char *mount_home = p.ns.mount.GetMountHome()) {
+		p.SetEnv("HOME", mount_home);
+		p.chdir = mount_home;
 	}
 
 	// TODO use a proper process name

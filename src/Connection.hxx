@@ -16,7 +16,7 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
-	  SSH::CConnection
+	  public SSH::CConnection
 {
 	Instance &instance;
 	const RootLogger &logger;
@@ -27,6 +27,10 @@ public:
 	Connection(Instance &_instance, UniqueSocketDescriptor fd,
 		   const Key &_host_key);
 	~Connection() noexcept;
+
+	std::string_view GetUsername() const noexcept {
+		return username;
+	}
 
 protected:
 	void Destroy() noexcept override {
