@@ -1,0 +1,10 @@
+/*.debhelper
+/*.debhelper.log
+/*.substvars
+/*-stamp
+/files
+
+/build/
+/tmp/
+/cm4all-lukko/
+/cm4all-lukko-doc/

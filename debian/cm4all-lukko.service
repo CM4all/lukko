@@ -1,0 +1,18 @@
+[Unit]
+Description=CM4all Lukko
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/sbin/cm4all-lukko
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+
+# This allows the kernel to merge CPU wakeups, the default of 50ns is
+# too fine.
+TimerSlackNSec=10ms
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,33 @@
+Source: cm4all-lukko
+Section: net
+Priority: extra
+Maintainer: Max Kellermann <mk@cm4all.com>
+Build-Depends: debhelper (>= 13.3~),
+ meson (>= 0.56),
+ python3-sphinx,
+ g++ (>= 4:10),
+ libfmt-dev (>= 9),
+ libmd-dev,
+ libsodium-dev,
+ libssl-dev,
+ libavahi-client-dev,
+ libsystemd-dev
+Standards-Version: 4.0.0
+Vcs-Browser: https://github.com/CM4all/lukko
+Vcs-Git: git://github.com/CM4all/lukko
+
+Package: cm4all-lukko
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv
+Description: MySQL proxy
+ lukko is a proxy server for MySQL connections with Lua scripting.
+
+Package: cm4all-lukko-doc
+Section: doc
+Architecture: all
+Built-Using: ${sphinxdoc:Built-Using}
+Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Description: MySQL proxy, documentation
+ lukko is a proxy server for MySQL connections with Lua scripting.
+ .
+ This package contains documentation.
