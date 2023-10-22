@@ -174,3 +174,5 @@ executable(
   install: true,
   install_dir: 'sbin',
 )
+
+subdir('doc')
