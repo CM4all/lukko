@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
+#include "Config.hxx"
 #include "key/Ed25519Key.hxx"
 #include "lib/avahi/Service.hxx"
 #include "system/SetupProcess.hxx"
@@ -44,6 +45,10 @@ LoadHostKey(bool use_ed25519_host_key)
 int
 main(int, char **) noexcept
 try {
+	Config config;
+	LoadConfigFile(config, "/etc/cm4all/lukko/lukko.conf");
+	config.Check();
+
 	const bool use_ed25519_host_key = true;
 
 	SetupProcess();
@@ -52,14 +57,8 @@ try {
 		LoadHostKey(use_ed25519_host_key),
 	};
 
-	{
-		SocketConfig config{IPv6Address{2200}};
-		config.listen = 256;
-		config.tcp_user_timeout = 60000;
-		config.tcp_no_delay = true;
-		config.keepalive = true;
-		instance.AddListener(config.Create(SOCK_STREAM));
-	}
+	for (const auto &i : config.listeners)
+		instance.AddListener(i);
 
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */

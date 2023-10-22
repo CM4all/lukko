@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 
+struct ListenerConfig;
 class Key;
 class UniqueSocketDescriptor;
 class Listener;
@@ -73,7 +74,7 @@ public:
 	void DisableZeroconf() noexcept;
 #endif // HAVE_AVAHI
 
-	void AddListener(UniqueSocketDescriptor s);
+	void AddListener(const ListenerConfig &config);
 	void AddConnection(UniqueSocketDescriptor s) noexcept;
 
 	void Run() noexcept {

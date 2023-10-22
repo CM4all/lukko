@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
+#include "Config.hxx"
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "key/Key.hxx"
@@ -72,9 +73,9 @@ Instance::DisableZeroconf() noexcept
 #endif // HAVE_AVAHI
 
 void
-Instance::AddListener(UniqueSocketDescriptor s)
+Instance::AddListener(const ListenerConfig &config)
 {
-	listeners.emplace_front(*this, std::move(s));
+	listeners.emplace_front(*this, config.Create(SOCK_STREAM));
 
 #ifdef HAVE_AVAHI
 	// TODO

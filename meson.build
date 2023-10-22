@@ -116,6 +116,7 @@ subdir('libcommon/src/lib/fmt')
 subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/lib/openssl')
 subdir('libcommon/src/io')
+subdir('libcommon/src/io/config')
 subdir('libcommon/src/system')
 subdir('libcommon/src/event')
 subdir('libcommon/src/net')
@@ -143,6 +144,7 @@ executable(
   'cm4all-lukko',
   sources,
   'src/Main.cxx',
+  'src/Config.cxx',
   'src/Instance.cxx',
   'src/Listener.cxx',
   'src/Connection.cxx',
@@ -166,6 +168,7 @@ executable(
     event_net_dep,
     system_dep,
     io_dep,
+    io_config_dep,
     avahi_dep,
     crypto_dep,
     sodium_dep,
