@@ -21,6 +21,10 @@ CConnection::~CConnection() noexcept
 		delete i;
 }
 
+/**
+ * A placeholder for the real #Channel instance after we sent
+ * CHANNEL_CLOSE, until we receive the peer's CHANNEL_CLOSE.
+ */
 class TombstoneChannel final : public Channel {
 public:
 	using Channel::Channel;
@@ -39,10 +43,14 @@ CConnection::CloseChannel(Channel &channel) noexcept
 	assert(!IsTombstoneChannel(channel));
 
 	const uint_least32_t local_channel = channel.GetLocalChannel();
+	const uint_least32_t peer_channel = channel.GetPeerChannel();
 	assert(local_channel < channels.size());
 	assert(channels[local_channel] == &channel);
 
-	channels[local_channel] = nullptr;
+	SendPacket(MakeChannelClose(peer_channel));
+	channels[local_channel] = new TombstoneChannel(*this, local_channel,
+						       peer_channel);
+
 	delete &channel;
 }
 
