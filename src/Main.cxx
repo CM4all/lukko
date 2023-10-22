@@ -60,6 +60,10 @@ try {
 	for (const auto &i : config.listeners)
 		instance.AddListener(i);
 
+#ifdef HAVE_AVAHI
+	instance.EnableZeroconf();
+#endif // HAVE_AVAHI
+
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */
 	sd_notify(0, "READY=1");

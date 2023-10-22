@@ -78,7 +78,23 @@ Instance::AddListener(const ListenerConfig &config)
 	listeners.emplace_front(*this, config.Create(SOCK_STREAM));
 
 #ifdef HAVE_AVAHI
-	// TODO
+	auto &listener = listeners.front();
+
+	if (!config.zeroconf_service.empty()) {
+		/* ask the kernel for the effective address via
+		   getsockname(), because it may have changed, e.g. if
+		   the kernel has selected a port for us */
+		const auto local_address = listener.GetLocalAddress();
+		if (local_address.IsDefined()) {
+			const char *const interface = config.interface.empty()
+				? nullptr
+				: config.interface.c_str();
+
+			avahi_services.emplace_front(config.zeroconf_service.c_str(),
+						     interface, local_address,
+						     config.v6only);
+		}
+	}
 #endif // HAVE_AVAHI
 }
 
