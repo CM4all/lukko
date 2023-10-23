@@ -24,7 +24,7 @@ Padding(std::size_t size) noexcept
 	if (size <= 12)
 		return 16 - size;
 
-	return 8 + (7 - ((size - 1) & 0x7));
+	return 11 - ((size - 5) & 0x7);
 }
 
 /**
