@@ -183,6 +183,7 @@ executable(
   'src/ssh/KexHash.cxx',
   'src/ssh/KexProposal.cxx',
   'src/ssh/KexState.cxx',
+  'src/ssh/TerminalMode.cxx',
   'src/key/Curve25519Key.cxx',
   'src/key/Ed25519Key.cxx',
   'src/system/SetupProcess.cxx',

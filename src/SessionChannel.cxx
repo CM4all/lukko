@@ -10,6 +10,7 @@
 #include "spawn/ProcessHandle.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
+#include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -194,6 +195,18 @@ SessionChannel::Exec(const char *cmd)
 	child->SetExitListener(*this);
 }
 
+static void
+ApplyTerminalModes(FileDescriptor fd, std::span<const std::byte> src) noexcept
+{
+	struct termios tio;
+
+	if (tcgetattr(fd.Get(), &tio) < 0)
+		return;
+
+	SSH::ParseTerminalModes(tio, src);
+	tcsetattr(fd.Get(), TCSANOW, &tio);
+}
+
 bool
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
@@ -219,7 +232,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		ws.ws_row = d.ReadU32();
 		ws.ws_xpixel = d.ReadU32();
 		ws.ws_ypixel = d.ReadU32();
-		d.ReadString(); // TODO encoded terminal modes
+		const auto encoded_terminal_modes = d.ReadLengthEncoded();
 
 		int master, slave;
 
@@ -232,6 +245,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		tty.Close();
 		tty.Open(FileDescriptor{master});
 		tty.GetFileDescriptor().EnableCloseOnExec();
+
+		if (!encoded_terminal_modes.empty())
+			ApplyTerminalModes(slave_tty, encoded_terminal_modes);
 
 		SetEnv("TERM"sv, term);
 
