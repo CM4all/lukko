@@ -17,9 +17,9 @@ Lukko loads the configuration file
 
 The following top-level settings are recognized:
 
-- ``translation_server``: consult this translation server to configure
-  child processes; must start with :file:`/` (absolute path) or
-  :file:`@` (abstract socket).
+- ``translation_server``: consult this :ref:`translation server <ts>`
+  to configure child processes; must start with :file:`/` (absolute
+  path) or :file:`@` (abstract socket).
 
 
 Listener
@@ -68,3 +68,27 @@ Known attributes:
 
 - ``zeroconf_interface``: publish the Zeroconf service only on the
   given interface.
+
+
+.. _ts:
+
+Translation Server
+==================
+
+Lukko can delegate certain decisions (user database, how to execute
+commands) to a different process running on the same computer, called
+a "translation server".  This translation server may, for example,
+consult a database to look up user accounts instead of reading
+:file:`/etc/passwd` and can make complex decicions based on that data.
+Only the translation server has access to all of Lukko's process
+spawner features, which includes a light-weight container engine.
+
+Information about the translation protocol can be found here:
+
+- `documentation
+  <https://beng-proxy.readthedocs.io/en/latest/translation.html#login-translation>`__
+
+- `definitions for C++ <https://github.com/CM4all/libcommon/blob/master/src/translation/Protocol.hxx>`__
+
+- `asynchronous framework for C++
+  <https://github.com/CM4all/libcommon/tree/master/src/translation/server>`__
