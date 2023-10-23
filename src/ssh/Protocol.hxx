@@ -18,8 +18,10 @@ struct PacketHeader {
 constexpr std::size_t
 Padding(std::size_t size) noexcept
 {
-	/* minimum packet size is 16 bytes */
-	if (size < 16)
+	/* minimum packet size is 16 bytes (see RFC 4253 section 6),
+	   and since the padding is at least 4 bytes, we need to check
+	   only for sizes up to 12 here */
+	if (size <= 12)
 		return 16 - size;
 
 	return 8 + (7 - ((size - 1) & 0x7));
