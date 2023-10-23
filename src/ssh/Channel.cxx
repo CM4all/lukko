@@ -77,6 +77,11 @@ Channel::SerializeOpenConfirmation([[maybe_unused]] Serializer &s) const
 }
 
 void
+Channel::OnWindowAdjust([[maybe_unused]] std::size_t nbytes)
+{
+}
+
+void
 Channel::OnData([[maybe_unused]] std::span<const std::byte> payload)
 {
 }

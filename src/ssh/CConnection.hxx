@@ -34,6 +34,7 @@ private:
 	Channel &GetChannel(uint_least32_t local_channel);
 
 	void HandleChannelOpen(std::span<const std::byte> payload);
+	void HandleChannelWindowAdjust(std::span<const std::byte> payload);
 	void HandleChannelData(std::span<const std::byte> payload);
 	void HandleChannelEof(std::span<const std::byte> payload);
 	void HandleChannelClose(std::span<const std::byte> payload);

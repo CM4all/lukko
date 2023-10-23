@@ -128,6 +128,17 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 }
 
 inline void
+CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
+{
+	Deserializer d{payload};
+	const uint_least32_t local_channel = d.ReadU32();
+	const uint_least32_t nbytes = d.ReadU32();
+
+	auto &channel = GetChannel(local_channel);
+	channel.OnWindowAdjust(nbytes);
+}
+
+inline void
 CConnection::HandleChannelData(std::span<const std::byte> payload)
 {
 	Deserializer d{payload};
@@ -193,6 +204,10 @@ CConnection::HandlePacket(MessageNumber msg,
 	switch (msg) {
 	case MessageNumber::CHANNEL_OPEN:
 		HandleChannelOpen(payload);
+		break;
+
+	case MessageNumber::CHANNEL_WINDOW_ADJUST:
+		HandleChannelWindowAdjust(payload);
 		break;
 
 	case MessageNumber::CHANNEL_DATA:

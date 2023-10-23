@@ -53,6 +53,7 @@ public:
 			    std::string_view error_message);
 
 	virtual void SerializeOpenConfirmation(Serializer &s) const;
+	virtual void OnWindowAdjust(std::size_t nbytes);
 	virtual void OnData(std::span<const std::byte> payload);
 	virtual void OnEof() {}
 
