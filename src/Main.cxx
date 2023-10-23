@@ -66,10 +66,12 @@ try {
 
 	SetupProcess();
 
+	auto spawner_socket = LaunchSpawnServer(config.spawn, nullptr);
+
 	Instance instance{
 		config,
 		LoadHostKey(use_ed25519_host_key),
-		LaunchSpawnServer(config.spawn, nullptr),
+		std::move(spawner_socket),
 	};
 
 	for (const auto &i : config.listeners)
