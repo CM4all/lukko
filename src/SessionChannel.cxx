@@ -114,18 +114,22 @@ LoginShellName(AllocatorPtr alloc, const char *shell) noexcept
 void
 SessionChannel::Exec(const char *cmd)
 {
+	const auto &c = static_cast<Connection &>(GetConnection());
+
 	Allocator alloc;
 	PreparedChildProcess p;
+
+	const std::string_view username = c.GetUsername();
+	p.SetEnv("USER", username);
+	p.SetEnv("LOGNAME", username);
 
 	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
 
 #ifdef ENABLE_TRANSLATION
 	if (translation_server != nullptr) {
-		const auto &c = static_cast<Connection &>(GetConnection());
-
 		auto response = TranslateLogin(alloc, translation_server,
 					       "ssh"sv, listener_tag,
-					       c.GetUsername(), {});
+					       username, {});
 
 		if (response.status != HttpStatus{})
 			throw std::runtime_error{"Translation server failed"};
