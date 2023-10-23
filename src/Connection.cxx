@@ -79,8 +79,6 @@ inline void
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
-	fmt::print(stderr, "Packet msg={} size={}\n", (int)msg, payload.size());
-
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
 		HandleServiceRequest(payload);
