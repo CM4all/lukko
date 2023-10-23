@@ -177,9 +177,9 @@ SessionChannel::Exec(const char *cmd)
 	if (GetSendWindow() > 0)
 		ScheduleRead();
 
-	if (const char *mount_home = p.ns.mount.GetMountHome()) {
-		p.SetEnv("HOME", mount_home);
-		p.chdir = mount_home;
+	if (const char *home = p.ns.mount.GetJailedHome()) {
+		p.SetEnv("HOME", home);
+		p.chdir = home;
 	}
 
 	for (const auto &i : env)
