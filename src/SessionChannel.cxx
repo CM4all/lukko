@@ -107,6 +107,8 @@ SessionChannel::Exec(const char *cmd)
 	Allocator alloc;
 	PreparedChildProcess p;
 
+	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
+
 #ifdef ENABLE_TRANSLATION
 	if (translation_server != nullptr) {
 		const auto &c = static_cast<Connection &>(GetConnection());
@@ -119,6 +121,9 @@ SessionChannel::Exec(const char *cmd)
 			throw std::runtime_error{"Translation server failed"};
 
 		response.child_options.CopyTo(p);
+
+		if (response.shell != nullptr)
+			shell = response.shell;
 	} else {
 #endif // ENABLE_TRANSLATION
 		// TODO
@@ -133,11 +138,11 @@ SessionChannel::Exec(const char *cmd)
 #endif // ENABLE_TRANSLATION
 
 	if (cmd != nullptr) {
-		p.args.push_back("/bin/sh");
+		p.args.push_back(shell);
 		p.args.push_back("-c");
 		p.args.push_back(cmd);
 	} else {
-		p.args.push_back("/bin/bash");
+		p.args.push_back(shell);
 		p.args.push_back("-");
 	}
 
