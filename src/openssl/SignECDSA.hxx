@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <openssl/ec.h>
+#include <openssl/evp.h>
 
 #include <cstddef>
 #include <span>
@@ -13,5 +13,5 @@ namespace SSH { class Serializer; }
 
 void
 SignECDSA(SSH::Serializer &s,
-	  EC_KEY &key, int ecdsa_nid,
+	  EVP_PKEY &key, int ecdsa_nid,
 	  std::span<const std::byte> src);

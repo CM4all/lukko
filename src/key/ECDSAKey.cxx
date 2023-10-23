@@ -44,11 +44,8 @@ ECDSAKey::SerializeKex(SSH::Serializer &s) const
 void
 ECDSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
 {
-	auto *ec_key = EVP_PKEY_get1_EC_KEY(key.get());
-	AtScopeExit(ec_key) { EC_KEY_free(ec_key); };
-
 	constexpr int ec_nid = NID_X9_62_prime256v1; // TODO
 
-	SignECDSA(s, *ec_key, ec_nid, src);
+	SignECDSA(s, *key, ec_nid, src);
 
 }

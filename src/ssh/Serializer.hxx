@@ -122,7 +122,15 @@ public:
 		return position;
 	}
 
+	constexpr void Rewind(std::size_t old_position) noexcept {
+		assert(position >= old_position);
+
+		position = old_position;
+	}
+
 	constexpr std::span<const std::byte> Since(std::size_t old_position) const noexcept {
+		assert(position >= old_position);
+
 		return std::span{buffer}.first(position).subspan(old_position);
 	}
 
