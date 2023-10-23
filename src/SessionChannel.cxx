@@ -22,6 +22,7 @@
 
 #include <pty.h> // for openpty()
 #include <signal.h>
+#include <sys/wait.h> // for WCOREDUMP()
 #include <unistd.h>
 #include <utmp.h> // for login_tty()
 
@@ -257,6 +258,16 @@ SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 void
 SessionChannel::OnChildProcessExit(int status) noexcept
 {
+	if (WIFSIGNALED(status)) {
+		const char *signal_name = sigdescr_np(WTERMSIG(status));
+
+		SendExitSignal(signal_name != nullptr ? signal_name : "UNKNOWN",
+			       WCOREDUMP(status),
+			       {});
+	} else {
+		SendExitStatus(WEXITSTATUS(status));
+	}
+
 	// TODO submit status via "exit-status" or "exit-signal"
 	(void)status;
 

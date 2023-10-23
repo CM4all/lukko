@@ -48,6 +48,9 @@ public:
 			      std::span<const std::byte> src);
 	void SendStderr(std::span<const std::byte> src);
 	void SendEof();
+	void SendExitStatus(uint_least32_t exit_status);
+	void SendExitSignal(std::string_view signal_name, bool core_dumped,
+			    std::string_view error_message);
 
 	virtual void SerializeOpenConfirmation(Serializer &s) const;
 	virtual void OnData(std::span<const std::byte> payload);

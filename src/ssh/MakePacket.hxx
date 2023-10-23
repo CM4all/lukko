@@ -87,4 +87,17 @@ MakeChannelClose(uint_least32_t recipient_channel) noexcept
 	return s;
 }
 
+[[gnu::pure]]
+inline PacketSerializer
+MakeChannelReqest(uint_least32_t recipient_channel,
+		  std::string_view request_type,
+		  bool want_reply) noexcept
+{
+	PacketSerializer s{MessageNumber::CHANNEL_REQUEST};
+	s.WriteU32(recipient_channel);
+	s.WriteString(request_type);
+	s.WriteBool(want_reply);
+	return s;
+}
+
 } // namespace SSH

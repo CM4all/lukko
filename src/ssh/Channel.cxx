@@ -5,6 +5,9 @@
 #include "Channel.hxx"
 #include "CConnection.hxx"
 #include "Serializer.hxx"
+#include "MakePacket.hxx"
+
+using std::string_view_literals::operator""sv;
 
 namespace SSH {
 
@@ -45,6 +48,26 @@ Channel::SendEof()
 {
 	PacketSerializer s{MessageNumber::CHANNEL_EOF};
 	s.WriteU32(GetPeerChannel());
+	connection.SendPacket(std::move(s));
+}
+
+void
+Channel::SendExitStatus(uint_least32_t exit_status)
+{
+	auto s = MakeChannelReqest(GetPeerChannel(), "exit-status"sv, false);
+	s.WriteU32(exit_status);
+	connection.SendPacket(std::move(s));
+}
+
+void
+Channel::SendExitSignal(std::string_view signal_name, bool core_dumped,
+			std::string_view error_message)
+{
+	auto s = MakeChannelReqest(GetPeerChannel(), "exit-signal"sv, false);
+	s.WriteString(signal_name);
+	s.WriteBool(core_dumped);
+	s.WriteString(error_message);
+	s.WriteString("en"sv);
 	connection.SendPacket(std::move(s));
 }
 
