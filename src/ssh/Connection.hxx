@@ -26,8 +26,6 @@ class Connection : BufferedSocketHandler
 
 	BufferedSocket socket;
 
-	DefaultFifoBuffer decrypted_input;
-
 	/**
 	 * If non-zero, then we're currently waiting for the payload
 	 * of a packet to be received.
@@ -93,7 +91,8 @@ protected:
 				  std::span<const std::byte> payload);
 
 private:
-	bool DecryptPacket();
+	[[nodiscard]]
+	AllocatedArray<std::byte> DecryptPacket();
 
 	virtual void HandleRawPacket(std::span<const std::byte> payload);
 

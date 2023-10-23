@@ -242,11 +242,10 @@ Connection::HandleRawPacket(std::span<const std::byte> payload)
 	HandlePacket(msg, payload);
 }
 
-inline bool
+inline AllocatedArray<std::byte>
 Connection::DecryptPacket()
 {
 	assert(receive_cipher);
-	assert(decrypted_input.IsNull());
 
 	const std::size_t need_src = sizeof(PacketHeader) +
 		packet_length +
@@ -254,23 +253,21 @@ Connection::DecryptPacket()
 
 	auto r = socket.ReadBuffer();
 	if (r.size() < need_src)
-		return false;
+		return nullptr;
 
 	r = r.first(need_src);
 
-	decrypted_input.Allocate();
-	auto w = decrypted_input.Write();
-	assert(w.size() >= packet_length);
+	AllocatedArray<std::byte> result{packet_length};
 
+	[[maybe_unused]]
 	const std::size_t nbytes =
 		receive_cipher->Decrypt(receive_seq, r,
 					sizeof(PacketHeader),
-					w);
+					result);
 	assert(nbytes == packet_length);
 	socket.DisposeConsumed(need_src);
-	decrypted_input.Append(nbytes);
 
-	return true;
+	return result;
 }
 
 BufferedResult
@@ -309,8 +306,6 @@ try {
 		if (packet_length == 0) {
 			/* read a new PacketHeader */
 
-			assert(decrypted_input.empty());
-
 			auto r = socket.ReadBuffer();
 			if (r.size() < sizeof(PacketHeader))
 				return BufferedResult::MORE;
@@ -339,11 +334,13 @@ try {
 
 		std::span<const std::byte> r;
 
+		AllocatedArray<std::byte> decrypted;
 		if (receive_cipher) {
-			if (!DecryptPacket())
+			decrypted = DecryptPacket();
+			if (decrypted == nullptr)
 				return BufferedResult::MORE;
 
-			r = decrypted_input.Read();
+			r = decrypted;
 			assert(r.size() == packet_length);
 		} else
 			r = socket.ReadBuffer();
@@ -357,9 +354,7 @@ try {
 			return BufferedResult::DESTROYED;
 		}
 
-		if (receive_cipher)
-			decrypted_input.Free();
-		else
+		if (!receive_cipher)
 			socket.KeepConsumed(packet_length);
 
 		const auto payload = r.subspan(1, packet_length - padding_length - 1);
