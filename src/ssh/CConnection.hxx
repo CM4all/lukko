@@ -12,6 +12,7 @@
 
 namespace SSH {
 
+struct ChannelInit;
 class Channel;
 
 /**
@@ -42,8 +43,7 @@ private:
 
 protected:
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
-						     uint_least32_t local_channel,
-						     uint_least32_t peer_channel);
+						     ChannelInit _init);
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,

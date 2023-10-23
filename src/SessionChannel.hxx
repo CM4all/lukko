@@ -44,7 +44,7 @@ public:
 		       std::string_view _listener_tag,
 #endif
 		       SSH::CConnection &_connection,
-		       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept;
+		       SSH::ChannelInit init) noexcept;
 
 	~SessionChannel() noexcept override;
 

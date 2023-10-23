@@ -34,8 +34,8 @@ SessionChannel::SessionChannel(SpawnService &_spawn_service,
 			       std::string_view _listener_tag,
 #endif
 			       SSH::CConnection &_connection,
-			       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept
-	:SSH::Channel(_connection, _local_channel, _peer_channel),
+			       SSH::ChannelInit init) noexcept
+	:SSH::Channel(_connection, init),
 	 spawn_service(_spawn_service),
 #ifdef ENABLE_TRANSLATION
 	 translation_server(_translation_server),

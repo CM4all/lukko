@@ -51,8 +51,7 @@ private:
 
 	/* virtual methods from class SSH::CConnection */
 	std::unique_ptr<SSH::Channel> OpenChannel(std::string_view channel_type,
-						  uint_least32_t local_channel,
-						  uint_least32_t peer_channel) override;
+						  SSH::ChannelInit init) override;
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,

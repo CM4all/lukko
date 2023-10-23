@@ -30,11 +30,10 @@ Connection::~Connection() noexcept = default;
 
 std::unique_ptr<SSH::Channel>
 Connection::OpenChannel(std::string_view channel_type,
-			uint_least32_t local_channel,
-			uint_least32_t peer_channel)
+			SSH::ChannelInit init)
 {
 	fmt::print(stderr, "ChannelOpen type={} local_channel={} peer_channel={}\n",
-		   channel_type, local_channel, peer_channel);
+		   channel_type, init.local_channel, init.peer_channel);
 
 	if (channel_type == "session"sv) {
 		CConnection &connection = *this;
@@ -43,9 +42,9 @@ Connection::OpenChannel(std::string_view channel_type,
 							instance.GetTranslationServer(),
 							listener.GetTag(),
 #endif
-							connection, local_channel, peer_channel);
+							connection, init);
 	} else
-		return SSH::CConnection::OpenChannel(channel_type, local_channel, peer_channel);
+		return SSH::CConnection::OpenChannel(channel_type, init);
 }
 
 inline void

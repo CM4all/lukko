@@ -15,17 +15,24 @@ enum class ChannelExtendedDataType : uint32_t;
 class CConnection;
 class Serializer;
 
+/**
+ * Structure passed to the #Channel constructor to reduce the
+ * boilerplate code for derived classes.
+ */
+struct ChannelInit {
+	uint_least32_t local_channel, peer_channel;
+};
+
 class Channel {
 	CConnection &connection;
 
 	const uint_least32_t local_channel, peer_channel;
 
 public:
-	Channel(CConnection &_connection,
-		uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept
+	Channel(CConnection &_connection, ChannelInit init) noexcept
 		:connection(_connection),
-		 local_channel(_local_channel),
-		 peer_channel(_peer_channel) {}
+		 local_channel(init.local_channel),
+		 peer_channel(init.peer_channel) {}
 
 	virtual ~Channel() noexcept = default;
 

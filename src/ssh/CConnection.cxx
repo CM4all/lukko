@@ -48,8 +48,13 @@ CConnection::CloseChannel(Channel &channel) noexcept
 	assert(channels[local_channel] == &channel);
 
 	SendPacket(MakeChannelClose(peer_channel));
-	channels[local_channel] = new TombstoneChannel(*this, local_channel,
-						       peer_channel);
+
+	const ChannelInit init{
+		.local_channel = local_channel,
+		.peer_channel = peer_channel,
+	};
+
+	channels[local_channel] = new TombstoneChannel(*this, init);
 
 	delete &channel;
 }
@@ -80,10 +85,9 @@ CConnection::GetChannel(uint_least32_t local_channel)
 
 std::unique_ptr<Channel>
 CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
-			 [[maybe_unused]] uint_least32_t local_channel,
-			 [[maybe_unused]] uint_least32_t peer_channel)
+			 [[maybe_unused]] ChannelInit init)
 {
-	SendPacket(MakeChannelOpenFailure(peer_channel,
+	SendPacket(MakeChannelOpenFailure(init.peer_channel,
 					  ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
 					  "Unknown channel type"sv));
 
@@ -106,7 +110,12 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 		return;
 	}
 
-	auto channel = OpenChannel(channel_type, local_channel, peer_channel);
+	const ChannelInit init{
+		.local_channel = local_channel,
+		.peer_channel = peer_channel,
+	};
+
+	auto channel = OpenChannel(channel_type, init);
 	if (!channel)
 		// method must have sent CHANNEL_OPEN_FAILURE
 		return;
