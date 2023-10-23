@@ -252,6 +252,13 @@ SessionChannel::OnRequest(std::string_view request_type,
 void
 SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 {
+	if (events == PipeEvent::HANGUP) {
+		tty.Close();
+		SendEof();
+		CloseIfInactive();
+		return;
+	}
+
 	std::byte buffer[4096];
 	std::span<std::byte> dest{buffer};
 
