@@ -55,6 +55,15 @@ public:
 		       std::span<const std::byte> type_specific) override;
 
 private:
+	bool IsActive() const noexcept {
+		return stdin_pipe.IsDefined() ||
+			stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||
+			tty.IsDefined() ||
+			child;
+	}
+
+	void CloseIfInactive() noexcept;
+
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
 	void Exec(const char *cmd);

@@ -56,6 +56,13 @@ SessionChannel::~SessionChannel() noexcept
 }
 
 void
+SessionChannel::CloseIfInactive() noexcept
+{
+	if (!IsActive())
+		Close();
+}
+
+void
 SessionChannel::SetEnv(std::string_view name, std::string_view value) noexcept
 {
 	// TODO check if already exists?
@@ -76,6 +83,7 @@ void
 SessionChannel::OnEof()
 {
 	stdin_pipe.Close();
+	CloseIfInactive();
 }
 
 void
@@ -215,6 +223,7 @@ SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 	} else {
 		tty.Close();
 		SendEof();
+		CloseIfInactive();
 	}
 }
 
@@ -228,6 +237,7 @@ SessionChannel::OnStdoutReady([[maybe_unused]] unsigned events) noexcept
 	} else {
 		stdout_pipe.Close();
 		SendEof();
+		CloseIfInactive();
 	}
 }
 
@@ -240,6 +250,7 @@ SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 		SendStderr(std::span{buffer}.first(nbytes));
 	} else {
 		stderr_pipe.Close();
+		CloseIfInactive();
 	}
 }
 
@@ -251,7 +262,5 @@ SessionChannel::OnChildProcessExit(int status) noexcept
 
 	child = {};
 
-	// TODO flush pending data from pipes?
-
-	Close();
+	CloseIfInactive();
 }
