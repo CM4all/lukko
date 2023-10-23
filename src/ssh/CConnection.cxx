@@ -165,6 +165,18 @@ CConnection::HandleChannelData(std::span<const std::byte> payload)
 }
 
 inline void
+CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
+{
+	Deserializer d{payload};
+	const uint_least32_t local_channel = d.ReadU32();
+	const auto data_type = static_cast<ChannelExtendedDataType>(d.ReadU32());
+	std::span<const std::byte> data = d.ReadLengthEncoded();
+
+	auto &channel = GetChannel(local_channel);
+	channel.OnExtendedData(data_type, data);
+}
+
+inline void
 CConnection::HandleChannelEof(std::span<const std::byte> payload)
 {
 	Deserializer d{payload};
@@ -227,6 +239,10 @@ CConnection::HandlePacket(MessageNumber msg,
 
 	case MessageNumber::CHANNEL_DATA:
 		HandleChannelData(payload);
+		break;
+
+	case MessageNumber::CHANNEL_EXTENDED_DATA:
+		HandleChannelExtendedData(payload);
 		break;
 
 	case MessageNumber::CHANNEL_EOF:

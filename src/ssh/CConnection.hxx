@@ -37,6 +37,7 @@ private:
 	void HandleChannelOpen(std::span<const std::byte> payload);
 	void HandleChannelWindowAdjust(std::span<const std::byte> payload);
 	void HandleChannelData(std::span<const std::byte> payload);
+	void HandleChannelExtendedData(std::span<const std::byte> payload);
 	void HandleChannelEof(std::span<const std::byte> payload);
 	void HandleChannelClose(std::span<const std::byte> payload);
 	void HandleChannelRequest(std::span<const std::byte> payload);

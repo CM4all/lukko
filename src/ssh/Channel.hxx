@@ -76,6 +76,8 @@ public:
 	virtual void SerializeOpenConfirmation(Serializer &s) const;
 	virtual void OnWindowAdjust(std::size_t nbytes);
 	virtual void OnData(std::span<const std::byte> payload);
+	virtual void OnExtendedData(ChannelExtendedDataType data_type,
+				    std::span<const std::byte> payload);
 	virtual void OnEof() {}
 
 	[[nodiscard]]

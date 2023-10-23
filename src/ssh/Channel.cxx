@@ -101,6 +101,12 @@ Channel::OnData([[maybe_unused]] std::span<const std::byte> payload)
 {
 }
 
+void
+Channel::OnExtendedData([[maybe_unused]] ChannelExtendedDataType data_type,
+			[[maybe_unused]] std::span<const std::byte> payload)
+{
+}
+
 bool
 Channel::OnRequest([[maybe_unused]] std::string_view request_type,
 		   [[maybe_unused]] std::span<const std::byte> type_specific)
