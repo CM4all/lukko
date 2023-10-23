@@ -56,6 +56,14 @@ SessionChannel::~SessionChannel() noexcept
 }
 
 void
+SessionChannel::SetEnv(std::string_view name, std::string_view value) noexcept
+{
+	// TODO check if already exists?
+
+	env.emplace_front(fmt::format("{}={}", name, value));
+}
+
+void
 SessionChannel::OnData(std::span<const std::byte> payload)
 {
 	if (stdin_pipe.IsDefined())
@@ -181,6 +189,13 @@ SessionChannel::OnRequest(std::string_view request_type,
 		tty.Open(FileDescriptor{master});
 		tty.GetFileDescriptor().EnableCloseOnExec();
 
+		return true;
+	} else if (request_type == "env"sv) {
+		SSH::Deserializer d{type_specific};
+		const auto name = d.ReadString();
+		const auto value = d.ReadString();
+
+		SetEnv(name, value);
 		return true;
 	} else
 		return false;

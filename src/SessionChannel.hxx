@@ -10,6 +10,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "config.h"
 
+#include <forward_list>
 #include <memory>
 
 class SpawnService;
@@ -30,6 +31,12 @@ class SessionChannel final : public SSH::Channel, ExitListener
 
 	PipeEvent stdout_pipe, stderr_pipe, tty;
 
+	/**
+	 * Environment variables for the new process: a linked list of
+	 * "NAME=VALUE" strings.
+	 */
+	std::forward_list<std::string> env;
+
 public:
 	SessionChannel(SpawnService &_spawn_service,
 #ifdef ENABLE_TRANSLATION
@@ -48,6 +55,8 @@ public:
 		       std::span<const std::byte> type_specific) override;
 
 private:
+	void SetEnv(std::string_view name, std::string_view value) noexcept;
+
 	void Exec(const char *cmd);
 
 	void OnTtyReady(unsigned events) noexcept;
