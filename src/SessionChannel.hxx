@@ -49,6 +49,7 @@ public:
 	~SessionChannel() noexcept override;
 
 	/* virtual methods from class SSH::Channel */
+	void OnWindowAdjust(std::size_t nbytes) override;
 	void OnData(std::span<const std::byte> payload) override;
 	void OnEof() override;
 	bool OnRequest(std::string_view request_type,
@@ -67,6 +68,21 @@ private:
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
 	void Exec(const char *cmd);
+
+	void CancelRead() noexcept {
+		stdout_pipe.CancelRead();
+		stderr_pipe.CancelRead();
+		tty.CancelRead();
+	}
+
+	void ScheduleRead() noexcept {
+		if (stdout_pipe.IsDefined())
+			stdout_pipe.ScheduleRead();
+		if (stderr_pipe.IsDefined())
+			stderr_pipe.ScheduleRead();
+		if (tty.IsDefined())
+			tty.ScheduleRead();
+	}
 
 	void OnTtyReady(unsigned events) noexcept;
 	void OnStdoutReady(unsigned events) noexcept;

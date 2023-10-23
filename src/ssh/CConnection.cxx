@@ -52,6 +52,7 @@ CConnection::CloseChannel(Channel &channel) noexcept
 	const ChannelInit init{
 		.local_channel = local_channel,
 		.peer_channel = peer_channel,
+		.send_window = channel.GetSendWindow(),
 	};
 
 	channels[local_channel] = new TombstoneChannel(*this, init);
@@ -101,6 +102,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 
 	const auto channel_type = d.ReadString();
 	const uint_least32_t peer_channel = d.ReadU32();
+	const uint_least32_t initial_window_size = d.ReadU32();
 
 	const uint_least32_t local_channel = AllocateChannelIndex();
 	if (local_channel >= channels.size()) {
@@ -113,6 +115,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 	const ChannelInit init{
 		.local_channel = local_channel,
 		.peer_channel = peer_channel,
+		.send_window = initial_window_size,
 	};
 
 	auto channel = OpenChannel(channel_type, init);

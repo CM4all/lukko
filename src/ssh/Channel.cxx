@@ -20,21 +20,29 @@ Channel::Close() noexcept
 void
 Channel::SendData(std::span<const std::byte> src)
 {
+	assert(src.size() < send_window);
+
 	PacketSerializer s{MessageNumber::CHANNEL_DATA};
 	s.WriteU32(GetPeerChannel());
 	s.WriteLengthEncoded(src);
 	connection.SendPacket(std::move(s));
+
+	send_window -= src.size();
 }
 
 void
 Channel::SendExtendedData(ChannelExtendedDataType data_type,
 			  std::span<const std::byte> src)
 {
+	assert(src.size() < send_window);
+
 	PacketSerializer s{MessageNumber::CHANNEL_EXTENDED_DATA};
 	s.WriteU32(GetPeerChannel());
 	s.WriteU32(static_cast<uint_least32_t>(data_type));
 	s.WriteLengthEncoded(src);
 	connection.SendPacket(std::move(s));
+
+	send_window -= src.size();
 }
 
 void
@@ -77,8 +85,9 @@ Channel::SerializeOpenConfirmation([[maybe_unused]] Serializer &s) const
 }
 
 void
-Channel::OnWindowAdjust([[maybe_unused]] std::size_t nbytes)
+Channel::OnWindowAdjust(std::size_t nbytes)
 {
+	send_window += nbytes;
 }
 
 void

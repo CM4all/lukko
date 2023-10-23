@@ -72,6 +72,17 @@ SessionChannel::SetEnv(std::string_view name, std::string_view value) noexcept
 }
 
 void
+SessionChannel::OnWindowAdjust(std::size_t nbytes)
+{
+	if (GetSendWindow() == 0)
+		/* re-schedule all read events, because we are now
+		   allowed to send data again */
+		ScheduleRead();
+
+	Channel::OnWindowAdjust(nbytes);
+}
+
+void
 SessionChannel::OnData(std::span<const std::byte> payload)
 {
 	if (stdin_pipe.IsDefined())
@@ -130,8 +141,6 @@ SessionChannel::Exec(const char *cmd)
 	if (tty.IsDefined()) {
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
 		p.tty = true;
-
-		tty.ScheduleRead();
 	} else {
 		UniqueFileDescriptor stdin_r, stdout_r, stdout_w, stderr_r, stderr_w;
 		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe) ||
@@ -144,10 +153,11 @@ SessionChannel::Exec(const char *cmd)
 		p.SetStderr(std::move(stderr_w));
 
 		stdout_pipe.Open(stdout_r.Release());
-		stdout_pipe.ScheduleRead();
 		stderr_pipe.Open(stderr_r.Release());
-		stderr_pipe.ScheduleRead();
 	}
+
+	if (GetSendWindow() > 0)
+		ScheduleRead();
 
 	if (const char *mount_home = p.ns.mount.GetMountHome()) {
 		p.SetEnv("HOME", mount_home);
@@ -218,9 +228,19 @@ void
 SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 {
 	std::byte buffer[4096];
-	auto nbytes = tty.GetFileDescriptor().Read(buffer);
+	std::span<std::byte> dest{buffer};
+
+	if (GetSendWindow() < dest.size()) {
+		dest = dest.first(GetSendWindow());
+		assert(!dest.empty());
+	}
+
+	auto nbytes = tty.GetFileDescriptor().Read(dest);
 	if (nbytes > 0) {
-		SendData(std::span{buffer}.first(nbytes));
+		SendData(dest.first(nbytes));
+
+		if (GetSendWindow() == 0)
+			CancelRead();
 	} else {
 		tty.Close();
 		SendEof();
@@ -232,9 +252,18 @@ void
 SessionChannel::OnStdoutReady([[maybe_unused]] unsigned events) noexcept
 {
 	std::byte buffer[4096];
-	auto nbytes = stdout_pipe.GetFileDescriptor().Read(buffer);
+	std::span<std::byte> dest{buffer};
+	if (GetSendWindow() < dest.size()) {
+		dest = dest.first(GetSendWindow());
+		assert(!dest.empty());
+	}
+
+	auto nbytes = stdout_pipe.GetFileDescriptor().Read(dest);
 	if (nbytes > 0) {
-		SendData(std::span{buffer}.first(nbytes));
+		SendData(dest.first(nbytes));
+
+		if (GetSendWindow() == 0)
+			CancelRead();
 	} else {
 		stdout_pipe.Close();
 		SendEof();
@@ -246,9 +275,18 @@ void
 SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 {
 	std::byte buffer[4096];
-	auto nbytes = stderr_pipe.GetFileDescriptor().Read(buffer);
+	std::span<std::byte> dest{buffer};
+	if (GetSendWindow() < dest.size()) {
+		dest = dest.first(GetSendWindow());
+		assert(!dest.empty());
+	}
+
+	auto nbytes = stderr_pipe.GetFileDescriptor().Read(dest);
 	if (nbytes > 0) {
-		SendStderr(std::span{buffer}.first(nbytes));
+		SendStderr(dest.first(nbytes));
+
+		if (GetSendWindow() == 0)
+			CancelRead();
 	} else {
 		stderr_pipe.Close();
 		CloseIfInactive();

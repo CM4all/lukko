@@ -21,6 +21,8 @@ class Serializer;
  */
 struct ChannelInit {
 	uint_least32_t local_channel, peer_channel;
+
+	std::size_t send_window;
 };
 
 class Channel {
@@ -28,11 +30,18 @@ class Channel {
 
 	const uint_least32_t local_channel, peer_channel;
 
+	/**
+	 * How much data are we allowed to send?  If this reaches
+	 * zero, then we need to wait for CHANNEL_WINDOW_ADJUST.
+	 */
+	std::size_t send_window;
+
 public:
 	Channel(CConnection &_connection, ChannelInit init) noexcept
 		:connection(_connection),
 		 local_channel(init.local_channel),
-		 peer_channel(init.peer_channel) {}
+		 peer_channel(init.peer_channel),
+		 send_window(init.send_window) {}
 
 	virtual ~Channel() noexcept = default;
 
@@ -46,6 +55,10 @@ public:
 
 	uint_least32_t GetPeerChannel() const noexcept {
 		return peer_channel;
+	}
+
+	std::size_t GetSendWindow() const noexcept {
+		return send_window;
 	}
 
 	void Close() noexcept;
