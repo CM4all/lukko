@@ -39,7 +39,7 @@ Channel::SendWindowAdjust(uint_least32_t nbytes)
 void
 Channel::SendData(std::span<const std::byte> src)
 {
-	assert(src.size() < send_window);
+	assert(src.size() <= send_window);
 
 	PacketSerializer s{MessageNumber::CHANNEL_DATA};
 	s.WriteU32(GetPeerChannel());
@@ -53,7 +53,7 @@ void
 Channel::SendExtendedData(ChannelExtendedDataType data_type,
 			  std::span<const std::byte> src)
 {
-	assert(src.size() < send_window);
+	assert(src.size() <= send_window);
 
 	PacketSerializer s{MessageNumber::CHANNEL_EXTENDED_DATA};
 	s.WriteU32(GetPeerChannel());
