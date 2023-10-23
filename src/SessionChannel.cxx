@@ -101,6 +101,16 @@ SessionChannel::OnEof()
 	CloseIfInactive();
 }
 
+static const char *
+LoginShellName(AllocatorPtr alloc, const char *shell) noexcept
+{
+	const char *slash = strrchr(shell, '/');
+	if (slash != nullptr && slash[1] != 0)
+		shell = slash + 1;
+
+	return alloc.Concat('-', shell);
+}
+
 void
 SessionChannel::Exec(const char *cmd)
 {
@@ -142,8 +152,8 @@ SessionChannel::Exec(const char *cmd)
 		p.args.push_back("-c");
 		p.args.push_back(cmd);
 	} else {
-		p.args.push_back(shell);
-		p.args.push_back("-");
+		p.exec_path = shell;
+		p.args.push_back(LoginShellName(alloc, shell));
 	}
 
 	if (tty.IsDefined()) {
