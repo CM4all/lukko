@@ -17,10 +17,23 @@ Channel::Close() noexcept
 	connection.CloseChannel(*this);
 }
 
+std::size_t
+Channel::ConsumeReceiveWindow(std::size_t nbytes) noexcept
+{
+	assert(nbytes <= receive_window);
+
+	return receive_window -= nbytes;
+}
+
 void
 Channel::SendWindowAdjust(uint_least32_t nbytes)
 {
+	assert(nbytes > 0);
+	assert(nbytes <= SIZE_MAX - receive_window);
+
 	connection.SendPacket(MakeChannelWindowAdjust(GetPeerChannel(), nbytes));
+
+	receive_window += nbytes;
 }
 
 void
@@ -99,12 +112,14 @@ Channel::OnWindowAdjust(std::size_t nbytes)
 void
 Channel::OnData([[maybe_unused]] std::span<const std::byte> payload)
 {
+	ConsumeReceiveWindow(payload.size());
 }
 
 void
 Channel::OnExtendedData([[maybe_unused]] ChannelExtendedDataType data_type,
 			[[maybe_unused]] std::span<const std::byte> payload)
 {
+	ConsumeReceiveWindow(payload.size());
 }
 
 bool

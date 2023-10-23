@@ -35,7 +35,7 @@ SessionChannel::SessionChannel(SpawnService &_spawn_service,
 #endif
 			       SSH::CConnection &_connection,
 			       SSH::ChannelInit init) noexcept
-	:SSH::Channel(_connection, init),
+	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
 	 spawn_service(_spawn_service),
 #ifdef ENABLE_TRANSLATION
 	 translation_server(_translation_server),
@@ -89,6 +89,9 @@ SessionChannel::OnData(std::span<const std::byte> payload)
 		stdin_pipe.Write(payload);
 	else if (tty.IsDefined())
 		tty.GetFileDescriptor().Write(payload);
+
+	if (ConsumeReceiveWindow(payload.size()) < RECEIVE_WINDOW/ 2)
+		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
 }
 
 void

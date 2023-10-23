@@ -18,6 +18,8 @@ class ChildProcessHandle;
 
 class SessionChannel final : public SSH::Channel, ExitListener
 {
+	static constexpr std::size_t RECEIVE_WINDOW = 16384;
+
 	SpawnService &spawn_service;
 
 #ifdef ENABLE_TRANSLATION

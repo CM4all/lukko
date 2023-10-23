@@ -55,7 +55,8 @@ CConnection::CloseChannel(Channel &channel) noexcept
 		.send_window = channel.GetSendWindow(),
 	};
 
-	channels[local_channel] = new TombstoneChannel(*this, init);
+	channels[local_channel] = new TombstoneChannel(*this, init,
+						       channel.GetReceiveWindow());
 
 	delete &channel;
 }
@@ -130,7 +131,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 		PacketSerializer s{MessageNumber::CHANNEL_OPEN_CONFIRMATION};
 		s.WriteU32(peer_channel);
 		s.WriteU32(local_channel);
-		s.WriteU32(1 << 20); // TODO
+		s.WriteU32(channel->GetReceiveWindow()); // TODO
 		s.WriteU32(32768);
 		channel->SerializeOpenConfirmation(s);
 		SendPacket(std::move(s));
@@ -161,6 +162,9 @@ CConnection::HandleChannelData(std::span<const std::byte> payload)
 	std::span<const std::byte> data = d.ReadLengthEncoded();
 
 	auto &channel = GetChannel(local_channel);
+	if (data.size() > channel.GetReceiveWindow())
+		throw std::invalid_argument{"Receive window exceeded"};
+
 	channel.OnData(data);
 }
 
@@ -173,6 +177,9 @@ CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
 	std::span<const std::byte> data = d.ReadLengthEncoded();
 
 	auto &channel = GetChannel(local_channel);
+	if (data.size() > channel.GetReceiveWindow())
+		throw std::invalid_argument{"Receive window exceeded"};
+
 	channel.OnExtendedData(data_type, data);
 }
 
