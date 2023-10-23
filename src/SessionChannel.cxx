@@ -95,6 +95,8 @@ SessionChannel::Exec(const char *cmd)
 			p.uid_gid.uid = 65535;
 			p.uid_gid.gid = 65535;
 		}
+
+		p.ns.mount.home = getenv("HOME");
 #ifdef ENABLE_TRANSLATION
 	}
 #endif // ENABLE_TRANSLATION
