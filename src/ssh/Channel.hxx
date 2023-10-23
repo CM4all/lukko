@@ -63,6 +63,7 @@ public:
 
 	void Close() noexcept;
 
+	void SendWindowAdjust(uint_least32_t nbytes);
 	void SendData(std::span<const std::byte> src);
 	void SendExtendedData(ChannelExtendedDataType data_type,
 			      std::span<const std::byte> src);

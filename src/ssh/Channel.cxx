@@ -18,6 +18,12 @@ Channel::Close() noexcept
 }
 
 void
+Channel::SendWindowAdjust(uint_least32_t nbytes)
+{
+	connection.SendPacket(MakeChannelWindowAdjust(GetPeerChannel(), nbytes));
+}
+
+void
 Channel::SendData(std::span<const std::byte> src)
 {
 	assert(src.size() < send_window);

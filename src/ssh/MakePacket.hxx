@@ -80,6 +80,17 @@ MakeChannelOpenFailure(uint_least32_t recipient_channel,
 
 [[gnu::pure]]
 inline PacketSerializer
+MakeChannelWindowAdjust(uint_least32_t recipient_channel,
+			uint_least32_t nbytes) noexcept
+{
+	PacketSerializer s{MessageNumber::CHANNEL_WINDOW_ADJUST};
+	s.WriteU32(recipient_channel);
+	s.WriteU32(nbytes);
+	return s;
+}
+
+[[gnu::pure]]
+inline PacketSerializer
 MakeChannelClose(uint_least32_t recipient_channel) noexcept
 {
 	PacketSerializer s{MessageNumber::CHANNEL_CLOSE};
