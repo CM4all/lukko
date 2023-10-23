@@ -20,6 +20,9 @@ static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
 
 Config::Config()
 {
+	if (!debug_mode)
+		spawn.spawner_uid_gid.Lookup("cm4all-lukko-spawn");
+
 	if (debug_mode)
 		spawn.default_uid_gid.LoadEffective();
 

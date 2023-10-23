@@ -1,2 +1,3 @@
 config/lukko.conf etc/cm4all/lukko
 usr/sbin/cm4all-lukko
+debian/cm4all-lukko.rules usr/share/polkit-1/rules.d

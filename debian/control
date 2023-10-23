@@ -19,7 +19,8 @@ Vcs-Git: git://github.com/CM4all/lukko
 
 Package: cm4all-lukko
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv
+Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv,
+ policykit-1 (>= 121)
 Description: MySQL proxy
  lukko is a proxy server for MySQL connections with Lua scripting.
 

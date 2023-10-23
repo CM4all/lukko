@@ -10,6 +10,14 @@ ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure
 
+# run as non-root user so it can't read root-owned files
+User=cm4all-lukko
+
+# ... but keep all capabilities because some are needed for
+# initialization (dropped afterwards) and the others are needed by the
+# spawner
+AmbientCapabilities=~
+
 # This allows the kernel to merge CPU wakeups, the default of 50ns is
 # too fine.
 TimerSlackNSec=10ms
