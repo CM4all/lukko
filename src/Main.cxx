@@ -9,6 +9,7 @@
 #include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/cap/Glue.hxx"
+#include "lib/cap/State.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketConfig.hxx"
@@ -76,6 +77,9 @@ try {
 
 	for (const auto &i : config.listeners)
 		instance.AddListener(i);
+
+	/* drop all capabilities, we don't need them anymore */
+	CapabilityState::Empty().Install();
 
 #ifdef HAVE_AVAHI
 	instance.EnableZeroconf();
