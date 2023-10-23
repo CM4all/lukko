@@ -123,6 +123,10 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw std::runtime_error{"Zeroconf support is disabled"};
 #endif // HAVE_AVAHI
+	} else if (StringIsEqual(word, "tag")) {
+#ifdef ENABLE_TRANSLATION
+		config.tag = line.ExpectValueAndEnd();
+#endif // ENABLE_TRANSLATION
 	} else
 		throw LineParser::Error("Unknown option");
 }

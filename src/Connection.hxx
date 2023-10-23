@@ -8,6 +8,7 @@
 #include "util/IntrusiveList.hxx"
 
 class Instance;
+class Listener;
 class RootLogger;
 
 namespace SSH {
@@ -19,14 +20,20 @@ class Connection final
 	  public SSH::CConnection
 {
 	Instance &instance;
+	Listener &listener;
 	const RootLogger &logger;
 
 	std::string username;
 
 public:
-	Connection(Instance &_instance, UniqueSocketDescriptor fd,
+	Connection(Instance &_instance, Listener &_listener,
+		   UniqueSocketDescriptor fd,
 		   const Key &_host_key);
 	~Connection() noexcept;
+
+	Listener &GetListener() const noexcept {
+		return listener;
+	}
 
 	std::string_view GetUsername() const noexcept {
 		return username;

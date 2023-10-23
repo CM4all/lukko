@@ -113,10 +113,10 @@ Instance::AddListener(const ListenerConfig &config)
 }
 
 void
-Instance::AddConnection(UniqueSocketDescriptor fd) noexcept
+Instance::AddConnection(Listener &listener, UniqueSocketDescriptor fd) noexcept
 {
 	try {
-		auto *c = new Connection(*this, std::move(fd), *host_key);
+		auto *c = new Connection(*this, listener, std::move(fd), *host_key);
 		connections.push_front(*c);
 	} catch (...) {
 		logger(1, std::current_exception());

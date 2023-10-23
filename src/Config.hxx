@@ -15,6 +15,10 @@ struct ListenerConfig : SocketConfig {
 	std::string zeroconf_service;
 #endif
 
+#ifdef ENABLE_TRANSLATION
+	std::string tag;
+#endif
+
 	ListenerConfig() {
 		listen = 256;
 		tcp_no_delay = true;

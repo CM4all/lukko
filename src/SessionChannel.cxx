@@ -30,6 +30,7 @@ using std::string_view_literals::operator""sv;
 SessionChannel::SessionChannel(SpawnService &_spawn_service,
 #ifdef ENABLE_TRANSLATION
 			       const char *_translation_server,
+			       std::string_view _listener_tag,
 #endif
 			       SSH::CConnection &_connection,
 			       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept
@@ -37,6 +38,7 @@ SessionChannel::SessionChannel(SpawnService &_spawn_service,
 	 spawn_service(_spawn_service),
 #ifdef ENABLE_TRANSLATION
 	 translation_server(_translation_server),
+	 listener_tag(_listener_tag),
 #endif
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
@@ -79,7 +81,7 @@ SessionChannel::Exec(const char *cmd)
 		const auto &c = static_cast<Connection &>(GetConnection());
 
 		auto response = TranslateLogin(alloc, translation_server,
-					       "ssh"sv, "hosting"sv,
+					       "ssh"sv, listener_tag,
 					       c.GetUsername(), {});
 
 		if (response.status != HttpStatus{})

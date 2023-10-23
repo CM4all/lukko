@@ -21,6 +21,7 @@ class SessionChannel final : public SSH::Channel, ExitListener
 
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
+	const std::string_view listener_tag;
 #endif
 
 	std::unique_ptr<ChildProcessHandle> child;
@@ -33,6 +34,7 @@ public:
 	SessionChannel(SpawnService &_spawn_service,
 #ifdef ENABLE_TRANSLATION
 		       const char *_translation_server,
+		       std::string_view _listener_tag,
 #endif
 		       SSH::CConnection &_connection,
 		       uint_least32_t _local_channel, uint_least32_t _peer_channel) noexcept;

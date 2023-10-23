@@ -4,6 +4,7 @@
 
 #include "Connection.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "SessionChannel.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
@@ -15,11 +16,13 @@
 
 using std::string_view_literals::operator""sv;
 
-Connection::Connection(Instance &_instance, UniqueSocketDescriptor _fd,
+Connection::Connection(Instance &_instance, Listener &_listener,
+		       UniqueSocketDescriptor _fd,
 		       const Key &_host_key)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
 			 _host_key),
-	 instance(_instance), logger(instance.GetLogger())
+	 instance(_instance), listener(_listener),
+	 logger(instance.GetLogger())
 {
 }
 
@@ -38,6 +41,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
 #ifdef ENABLE_TRANSLATION
 							instance.GetTranslationServer(),
+							listener.GetTag(),
 #endif
 							connection, local_channel, peer_channel);
 	} else

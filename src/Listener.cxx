@@ -12,13 +12,16 @@
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
 	 instance(_instance),
+#ifdef ENABLE_TRANSLATION
+	 tag(config.tag.empty() ? std::string_view{} : config.tag),
+#endif
 	 logger(instance.GetLogger()) {}
 
 void
 Listener::OnAccept(UniqueSocketDescriptor &&connection_fd,
 		   SocketAddress) noexcept
 {
-	instance.AddConnection(std::move(connection_fd));
+	instance.AddConnection(*this, std::move(connection_fd));
 }
 
 void

@@ -95,7 +95,7 @@ public:
 #endif // HAVE_AVAHI
 
 	void AddListener(const ListenerConfig &config);
-	void AddConnection(UniqueSocketDescriptor s) noexcept;
+	void AddConnection(Listener &listener, UniqueSocketDescriptor s) noexcept;
 
 	void Run() noexcept {
 		event_loop.Run();

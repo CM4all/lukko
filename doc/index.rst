@@ -69,6 +69,9 @@ Known attributes:
 - ``zeroconf_interface``: publish the Zeroconf service only on the
   given interface.
 
+- ``tag``: a string sent to the :ref:`translation server <ts>` in a
+  ``LISTENER_TAG`` packet.
+
 
 .. _ts:
 
