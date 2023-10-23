@@ -143,6 +143,9 @@ CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 	const uint_least32_t local_channel = d.ReadU32();
 	const uint_least32_t nbytes = d.ReadU32();
 
+	if (nbytes == 0)
+		throw std::invalid_argument{"Bad window adjustment"};
+
 	auto &channel = GetChannel(local_channel);
 	channel.OnWindowAdjust(nbytes);
 }
