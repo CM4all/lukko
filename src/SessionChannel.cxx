@@ -170,7 +170,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		struct winsize ws{};
 
 		SSH::Deserializer d{type_specific};
-		d.ReadString(); // TODO TERM environment variable
+		const auto term = d.ReadString();
 		ws.ws_col = d.ReadU32();
 		ws.ws_row = d.ReadU32();
 		ws.ws_xpixel = d.ReadU32();
@@ -188,6 +188,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 		tty.Close();
 		tty.Open(FileDescriptor{master});
 		tty.GetFileDescriptor().EnableCloseOnExec();
+
+		SetEnv("TERM"sv, term);
 
 		return true;
 	} else if (request_type == "env"sv) {
