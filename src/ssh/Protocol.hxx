@@ -27,6 +27,19 @@ Padding(std::size_t size) noexcept
 	return 11 - ((size - 5) & 0x7);
 }
 
+static_assert(Padding(0) == 16);
+static_assert(Padding(7) == 9);
+static_assert(Padding(8) == 8);
+static_assert(Padding(11) == 5);
+static_assert(Padding(12) == 4);
+static_assert(Padding(13) == 11);
+static_assert(Padding(15) == 9);
+static_assert(Padding(16) == 8);
+static_assert(Padding(17) == 7);
+static_assert(Padding(26) == 6);
+static_assert(Padding(28) == 4);
+static_assert(Padding(29) == 11);
+
 /**
  * @see RFC 4253 section 12
  */
