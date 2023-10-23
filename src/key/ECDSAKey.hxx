@@ -14,6 +14,9 @@ public:
 	struct Generate {};
 	explicit ECDSAKey(Generate);
 
+	explicit ECDSAKey(UniqueEVP_PKEY &&_key) noexcept
+		:key(std::move(_key)) {}
+
 	std::string_view GetAlgorithm() const noexcept override;
 	void SerializePublic(SSH::Serializer &s) const override;
 	void SerializeKex(SSH::Serializer &s) const override;

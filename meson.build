@@ -138,6 +138,8 @@ sources = []
 
 if crypto_dep.found()
   sources += [
+    'src/openssl/DeserializeBN.cxx',
+    'src/openssl/DeserializeEC.cxx',
     'src/openssl/SerializeBN.cxx',
     'src/openssl/SerializeEC.cxx',
     'src/openssl/SerializeEVP.cxx',
@@ -186,6 +188,8 @@ executable(
   'src/ssh/TerminalMode.cxx',
   'src/key/Curve25519Key.cxx',
   'src/key/Ed25519Key.cxx',
+  'src/key/Parser.cxx',
+  'src/key/LoadFile.cxx',
   'src/system/SetupProcess.cxx',
   include_directories: inc,
   dependencies: [

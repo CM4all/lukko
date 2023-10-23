@@ -20,6 +20,13 @@ Ed25519Key::Ed25519Key(Generate) noexcept
 				    reinterpret_cast<unsigned char *>(secret_key.data()));
 }
 
+Ed25519Key::Ed25519Key(std::span<const std::byte, 32> _public_key,
+		       std::span<const std::byte, 64> _secret_key) noexcept
+{
+	std::copy(_public_key.begin(), _public_key.end(), public_key.begin());
+	std::copy(_secret_key.begin(), _secret_key.end(), secret_key.begin());
+}
+
 Ed25519Key::~Ed25519Key() noexcept
 {
 	sodium_memzero(&secret_key, sizeof(secret_key));

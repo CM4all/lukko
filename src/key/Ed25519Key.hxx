@@ -16,6 +16,9 @@ public:
 	struct Generate{};
 	explicit Ed25519Key(Generate) noexcept;
 
+	Ed25519Key(std::span<const std::byte, 32> _public_key,
+		   std::span<const std::byte, 64> _secret_key) noexcept;
+
 	~Ed25519Key() noexcept override;
 
 	std::string_view GetAlgorithm() const noexcept override;

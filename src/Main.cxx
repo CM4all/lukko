@@ -6,15 +6,18 @@
 #include "Config.hxx"
 #include "DebugMode.hxx"
 #include "key/Ed25519Key.hxx"
+#include "key/LoadFile.hxx"
 #include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/cap/Glue.hxx"
 #include "lib/cap/State.hxx"
+#include "system/Error.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/IPv6Address.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
 #include "config.h"
 
@@ -29,8 +32,27 @@
 #include <stdlib.h>
 
 static std::unique_ptr<Key>
+LoadOptionalKeyFile(const char *path)
+{
+	UniqueFileDescriptor fd;
+	if (!fd.OpenReadOnly(path)) {
+		if (const int e = errno; e != ENOENT)
+			throw MakeErrno("Failed to open file");
+
+		return {};
+	}
+
+	return LoadKeyFile(fd);
+}
+
+static std::unique_ptr<Key>
 LoadHostKey(bool use_ed25519_host_key)
 {
+	if (auto key = LoadOptionalKeyFile(use_ed25519_host_key
+					   ? "/etc/cm4all/lukko/host_ed25519_key"
+					   : "/etc/cm4all/lukko/host_ecdsa_key"))
+		return key;
+
 	if (use_ed25519_host_key) {
 		return std::make_unique<Ed25519Key>(Ed25519Key::Generate{});
 	} else {
