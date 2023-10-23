@@ -167,6 +167,9 @@ SessionChannel::Exec(const char *cmd)
 		p.chdir = mount_home;
 	}
 
+	for (const auto &i : env)
+		p.PutEnv(i.c_str());
+
 	// TODO use a proper process name
 	child = spawn_service.SpawnChildProcess("foo", std::move(p));
 	child->SetExitListener(*this);
