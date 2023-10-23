@@ -6,6 +6,7 @@
 
 #include "event/net/ServerSocket.hxx"
 
+struct ListenerConfig;
 class Instance;
 class RootLogger;
 
@@ -14,7 +15,7 @@ class Listener final : ServerSocket {
 	const RootLogger &logger;
 
 public:
-	Listener(Instance &_instance, UniqueSocketDescriptor &&fd);
+	Listener(Instance &_instance, const ListenerConfig &_config);
 
 	using ServerSocket::GetLocalAddress;
 

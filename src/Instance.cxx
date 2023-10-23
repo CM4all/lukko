@@ -23,7 +23,6 @@
 
 #include <cassert>
 
-#include <sys/socket.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -90,7 +89,7 @@ Instance::DisableZeroconf() noexcept
 void
 Instance::AddListener(const ListenerConfig &config)
 {
-	listeners.emplace_front(*this, config.Create(SOCK_STREAM));
+	listeners.emplace_front(*this, config);
 
 #ifdef HAVE_AVAHI
 	auto &listener = listeners.front();

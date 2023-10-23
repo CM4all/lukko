@@ -4,11 +4,15 @@
 
 #include "Listener.hxx"
 #include "Instance.hxx"
+#include "Config.hxx"
 #include "net/SocketAddress.hxx"
 
-Listener::Listener(Instance &_instance, UniqueSocketDescriptor &&_fd)
-	:ServerSocket(_instance.GetEventLoop(), std::move(_fd)),
-	 instance(_instance), logger(instance.GetLogger()) {}
+#include <sys/socket.h>
+
+Listener::Listener(Instance &_instance, const ListenerConfig &config)
+	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
+	 instance(_instance),
+	 logger(instance.GetLogger()) {}
 
 void
 Listener::OnAccept(UniqueSocketDescriptor &&connection_fd,
