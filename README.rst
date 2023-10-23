@@ -5,6 +5,9 @@ Lukko
 
 This project is work in progress.
 
+For more information, `read the manual
+<https://lukko.readthedocs.io/en/latest/>`__ in the ``doc`` directory.
+
 
 Building Lukko
 --------------
