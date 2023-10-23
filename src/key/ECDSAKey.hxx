@@ -11,7 +11,8 @@ class ECDSAKey final : public Key {
 	UniqueEVP_PKEY key;
 
 public:
-	void Generate();
+	struct Generate {};
+	explicit ECDSAKey(Generate);
 
 	std::string_view GetAlgorithm() const noexcept override;
 	void SerializePublic(SSH::Serializer &s) const override;

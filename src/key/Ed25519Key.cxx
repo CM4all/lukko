@@ -11,19 +11,18 @@
 
 using std::string_view_literals::operator""sv;
 
-Ed25519Key::~Ed25519Key() noexcept
-{
-	sodium_memzero(&secret_key, sizeof(secret_key));
-}
-
-void
-Ed25519Key::Generate()
+Ed25519Key::Ed25519Key(Generate) noexcept
 {
 	static_assert(sizeof(public_key) == crypto_sign_ed25519_PUBLICKEYBYTES);
 	static_assert(sizeof(secret_key) == crypto_sign_ed25519_SECRETKEYBYTES);
 
 	crypto_sign_ed25519_keypair(reinterpret_cast<unsigned char *>(public_key.data()),
 				    reinterpret_cast<unsigned char *>(secret_key.data()));
+}
+
+Ed25519Key::~Ed25519Key() noexcept
+{
+	sodium_memzero(&secret_key, sizeof(secret_key));
 }
 
 std::string_view

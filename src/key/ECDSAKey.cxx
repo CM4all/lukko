@@ -11,8 +11,7 @@
 
 using std::string_view_literals::operator""sv;
 
-void
-ECDSAKey::Generate()
+ECDSAKey::ECDSAKey(Generate)
 {
 	key = GenerateEcKey();
 }

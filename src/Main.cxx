@@ -32,14 +32,10 @@ static std::unique_ptr<Key>
 LoadHostKey(bool use_ed25519_host_key)
 {
 	if (use_ed25519_host_key) {
-		auto key = std::make_unique<Ed25519Key>();
-		key->Generate();
-		return key;
+		return std::make_unique<Ed25519Key>(Ed25519Key::Generate{});
 	} else {
 #ifdef HAVE_OPENSSL
-		auto key = std::make_unique<ECDSAKey>();
-		key->Generate();
-		return key;
+		return std::make_unique<ECDSAKey>(ECDSAKey::Generate{});
 #else
 		// TODO
 		std::terminate();

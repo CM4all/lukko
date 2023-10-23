@@ -13,9 +13,10 @@ class Ed25519Key final : public Key {
 	std::array<std::byte, 64> secret_key;
 
 public:
-	~Ed25519Key() noexcept override;
+	struct Generate{};
+	explicit Ed25519Key(Generate) noexcept;
 
-	void Generate();
+	~Ed25519Key() noexcept override;
 
 	std::string_view GetAlgorithm() const noexcept override;
 	void SerializePublic(SSH::Serializer &s) const override;
