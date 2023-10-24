@@ -15,7 +15,6 @@
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
-#include "translation/LoginGlue.hxx"
 #include "translation/Response.hxx"
 #endif // ENABLE_TRANSLATION
 
@@ -30,18 +29,10 @@
 using std::string_view_literals::operator""sv;
 
 SessionChannel::SessionChannel(SpawnService &_spawn_service,
-#ifdef ENABLE_TRANSLATION
-			       const char *_translation_server,
-			       std::string_view _listener_tag,
-#endif
 			       SSH::CConnection &_connection,
 			       SSH::ChannelInit init) noexcept
 	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
 	 spawn_service(_spawn_service),
-#ifdef ENABLE_TRANSLATION
-	 translation_server(_translation_server),
-	 listener_tag(_listener_tag),
-#endif
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -127,18 +118,11 @@ SessionChannel::Exec(const char *cmd)
 	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
 
 #ifdef ENABLE_TRANSLATION
-	if (translation_server != nullptr) {
-		auto response = TranslateLogin(alloc, translation_server,
-					       "ssh"sv, listener_tag,
-					       username, {});
+	if (const auto *tr = c.GetTranslationResponse()) {
+		tr->child_options.CopyTo(p);
 
-		if (response.status != HttpStatus{})
-			throw std::runtime_error{"Translation server failed"};
-
-		response.child_options.CopyTo(p);
-
-		if (response.shell != nullptr)
-			shell = response.shell;
+		if (tr->shell != nullptr)
+			shell = tr->shell;
 	} else {
 #endif // ENABLE_TRANSLATION
 		// TODO

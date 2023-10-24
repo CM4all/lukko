@@ -6,7 +6,11 @@
 
 #include "ssh/CConnection.hxx"
 #include "util/IntrusiveList.hxx"
+#include "config.h"
 
+#include <memory>
+
+struct TranslateResponse;
 class Instance;
 class Listener;
 class RootLogger;
@@ -25,6 +29,11 @@ class Connection final
 
 	std::string username;
 
+#ifdef ENABLE_TRANSLATION
+	struct Translation;
+	std::unique_ptr<Translation> translation;
+#endif // ENABLE_TRANSLATION
+
 public:
 	Connection(Instance &_instance, Listener &_listener,
 		   UniqueSocketDescriptor fd,
@@ -38,6 +47,11 @@ public:
 	std::string_view GetUsername() const noexcept {
 		return username;
 	}
+
+#ifdef ENABLE_TRANSLATION
+	[[gnu::pure]]
+	const TranslateResponse *GetTranslationResponse() const noexcept;
+#endif
 
 protected:
 	void Destroy() noexcept override {

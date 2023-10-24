@@ -12,9 +12,29 @@
 #include "ssh/Channel.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
+#ifdef ENABLE_TRANSLATION
+#include "translation/LoginGlue.hxx"
+#include "translation/Response.hxx"
+#include "AllocatorPtr.hxx"
+#endif // ENABLE_TRANSLATION
+
 #include <fmt/core.h>
 
 using std::string_view_literals::operator""sv;
+
+#ifdef ENABLE_TRANSLATION
+
+struct Connection::Translation {
+	Allocator alloc;
+	TranslateResponse response;
+
+	Translation(Allocator &&_alloc,
+		    TranslateResponse &&_response) noexcept
+		:alloc(std::move(_alloc)),
+		 response(std::move(_response)) {}
+};
+
+#endif // ENABLE_TRANSLATION
 
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       UniqueSocketDescriptor _fd,
@@ -28,6 +48,18 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 
 Connection::~Connection() noexcept = default;
 
+#ifdef ENABLE_TRANSLATION
+
+const TranslateResponse *
+Connection::GetTranslationResponse() const noexcept
+{
+	return translation
+		? &translation->response
+		: nullptr;
+}
+
+#endif
+
 std::unique_ptr<SSH::Channel>
 Connection::OpenChannel(std::string_view channel_type,
 			SSH::ChannelInit init)
@@ -38,10 +70,6 @@ Connection::OpenChannel(std::string_view channel_type,
 	if (channel_type == "session"sv) {
 		CConnection &connection = *this;
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
-#ifdef ENABLE_TRANSLATION
-							instance.GetTranslationServer(),
-							listener.GetTag(),
-#endif
 							connection, init);
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, init);
@@ -68,6 +96,21 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	SSH::Deserializer d{payload};
 	const auto new_username = d.ReadString();
 	fmt::print(stderr, "Userauth '{}'\n", new_username);
+
+#ifdef ENABLE_TRANSLATION
+	if (const char *translation_server = instance.GetTranslationServer()) {
+		Allocator alloc;
+		auto response = TranslateLogin(alloc, translation_server,
+					       "ssh"sv, listener.GetTag(),
+					       new_username, {});
+
+		if (response.status != HttpStatus{})
+			throw std::runtime_error{"Translation server failed"};
+
+		translation = std::make_unique<Translation>(std::move(alloc),
+							    std::move(response));
+	}
+#endif // ENABLE_TRANSLATION
 
 	username.assign(new_username);
 

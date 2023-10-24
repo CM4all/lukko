@@ -8,7 +8,6 @@
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "config.h"
 
 #include <forward_list>
 #include <memory>
@@ -21,11 +20,6 @@ class SessionChannel final : public SSH::Channel, ExitListener
 	static constexpr std::size_t RECEIVE_WINDOW = 16384;
 
 	SpawnService &spawn_service;
-
-#ifdef ENABLE_TRANSLATION
-	const char *const translation_server;
-	const std::string_view listener_tag;
-#endif
 
 	std::unique_ptr<ChildProcessHandle> child;
 
@@ -41,10 +35,6 @@ class SessionChannel final : public SSH::Channel, ExitListener
 
 public:
 	SessionChannel(SpawnService &_spawn_service,
-#ifdef ENABLE_TRANSLATION
-		       const char *_translation_server,
-		       std::string_view _listener_tag,
-#endif
 		       SSH::CConnection &_connection,
 		       SSH::ChannelInit init) noexcept;
 
