@@ -66,6 +66,10 @@ public:
 		return socket.GetEventLoop();
 	}
 
+	bool IsEncrypted() const noexcept {
+		return receive_cipher && send_cipher;
+	}
+
 protected:
 	virtual void Destroy() noexcept = 0;
 

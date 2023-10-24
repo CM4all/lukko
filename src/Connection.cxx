@@ -139,6 +139,9 @@ inline void
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
+	if (!IsEncrypted())
+		return CConnection::HandlePacket(msg, payload);
+
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
 		HandleServiceRequest(payload);

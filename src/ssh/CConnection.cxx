@@ -235,6 +235,9 @@ void
 CConnection::HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload)
 {
+	if (!IsEncrypted())
+		return Connection::HandlePacket(msg, payload);
+
 	switch (msg) {
 	case MessageNumber::CHANNEL_OPEN:
 		HandleChannelOpen(payload);
