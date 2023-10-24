@@ -230,6 +230,26 @@ SessionChannel::OnRequest(std::string_view request_type,
 	} else if (request_type == "shell"sv) {
 		Exec(nullptr);
 		return true;
+	} else if (request_type == "subsystem"sv) {
+		SSH::Deserializer d{type_specific};
+		const std::string_view subsystem_name{d.ReadString()};
+
+		fmt::print(stderr, "  subsystem '{}'\n", subsystem_name);
+
+		if (subsystem_name == "sftp"sv) {
+			// TODO repeat translation request with service="sftp"
+
+			Allocator alloc;
+			PreparedChildProcess p;
+
+			PrepareChildProcess(p);
+
+			p.Append("/usr/lib/openssh/sftp-server");
+
+			SpawnChildProcess(std::move(p));
+			return true;
+		} else
+			return false;
 	} else if (request_type == "pty-req"sv) {
 		struct winsize ws{};
 
