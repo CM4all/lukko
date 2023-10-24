@@ -45,24 +45,25 @@ LoadOptionalKeyFile(const char *path)
 	return LoadKeyFile(fd);
 }
 
-static std::unique_ptr<Key>
-LoadHostKey(bool use_ed25519_host_key)
+static KeyList
+LoadHostKeys()
 {
-	if (auto key = LoadOptionalKeyFile(use_ed25519_host_key
-					   ? "/etc/cm4all/lukko/host_ed25519_key"
-					   : "/etc/cm4all/lukko/host_ecdsa_key"))
-		return key;
+	KeyList keys;
 
-	if (use_ed25519_host_key) {
-		return std::make_unique<Ed25519Key>(Ed25519Key::Generate{});
-	} else {
+	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ed25519_key"))
+		keys.Add(std::move(key));
+
+	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ecdsa_key"))
+		keys.Add(std::move(key));
+
+	if (keys.empty()) {
+		keys.Add(std::make_unique<Ed25519Key>(Ed25519Key::Generate{}));
 #ifdef HAVE_OPENSSL
-		return std::make_unique<ECDSAKey>(ECDSAKey::Generate{});
-#else
-		// TODO
-		std::terminate();
+		keys.Add(std::make_unique<ECDSAKey>(ECDSAKey::Generate{}));
 #endif // HAVE_OPENSSL
 	}
+
+	return keys;
 }
 
 int
@@ -81,15 +82,13 @@ try {
 	LoadConfigFile(config, "/etc/cm4all/lukko/lukko.conf");
 	config.Check();
 
-	const bool use_ed25519_host_key = true;
-
 	SetupProcess();
 
 	auto spawner_socket = LaunchSpawnServer(config.spawn, nullptr);
 
 	Instance instance{
 		config,
-		LoadHostKey(use_ed25519_host_key),
+		LoadHostKeys(),
 		std::move(spawner_socket),
 	};
 

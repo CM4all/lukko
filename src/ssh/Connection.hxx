@@ -13,6 +13,7 @@
 #include <span>
 #include <string>
 
+class KeyList;
 class Key;
 
 namespace SSH {
@@ -22,7 +23,9 @@ class Cipher;
 
 class Connection : BufferedSocketHandler
 {
-	const Key &host_key;
+	const KeyList &host_keys;
+
+	const Key *host_key;
 
 	BufferedSocket socket;
 
@@ -56,7 +59,7 @@ protected:
 
 public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor fd,
-		   const Key &_host_key);
+		   const KeyList &_host_keys);
 	~Connection() noexcept;
 
 	auto &GetEventLoop() const noexcept {

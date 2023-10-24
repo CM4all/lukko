@@ -28,7 +28,7 @@ class Connection final
 public:
 	Connection(Instance &_instance, Listener &_listener,
 		   UniqueSocketDescriptor fd,
-		   const Key &_host_key);
+		   const KeyList &_host_keys);
 	~Connection() noexcept;
 
 	Listener &GetListener() const noexcept {

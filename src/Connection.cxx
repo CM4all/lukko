@@ -18,9 +18,9 @@ using std::string_view_literals::operator""sv;
 
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       UniqueSocketDescriptor _fd,
-		       const Key &_host_key)
+		       const KeyList &_host_keys)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
-			 _host_key),
+			  _host_keys),
 	 instance(_instance), listener(_listener),
 	 logger(instance.GetLogger())
 {

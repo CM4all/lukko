@@ -27,9 +27,9 @@
 #include <unistd.h>
 
 Instance::Instance(const Config &config,
-		   std::unique_ptr<Key> _host_key,
+		   KeyList &&_host_keys,
 		   UniqueSocketDescriptor spawner_socket)
-	:host_key(std::move(_host_key)),
+	:host_keys(std::move(_host_keys)),
 #ifdef ENABLE_TRANSLATION
 	 translation_server(config.translation_server.empty() ? nullptr : config.translation_server.c_str()),
 #endif
@@ -116,7 +116,7 @@ void
 Instance::AddConnection(Listener &listener, UniqueSocketDescriptor fd) noexcept
 {
 	try {
-		auto *c = new Connection(*this, listener, std::move(fd), *host_key);
+		auto *c = new Connection(*this, listener, std::move(fd), host_keys);
 		connections.push_front(*c);
 	} catch (...) {
 		logger(1, std::current_exception());

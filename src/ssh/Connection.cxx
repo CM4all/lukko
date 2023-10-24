@@ -12,6 +12,7 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "key/Key.hxx"
+#include "key/List.hxx"
 #include "system/Error.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -36,8 +37,8 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 }
 
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
-		       const Key &_host_key)
-	:host_key(_host_key),
+		       const KeyList &_host_keys)
+	:host_keys(_host_keys),
 	 socket(event_loop)
 {
 	socket.Init(_fd.Release(), FD_TCP,
@@ -96,7 +97,7 @@ Connection::SendKexInit()
 
 	const KexProposal proposal{
 		.kex_algorithms = "curve25519-sha256"sv,
-		.server_host_key_algorithms = host_key.GetAlgorithm(),
+		.server_host_key_algorithms = host_keys.GetAlgorithms(),
 		.encryption_algorithms_client_to_server = "chacha20-poly1305@openssh.com"sv,
 		.encryption_algorithms_server_to_client = "chacha20-poly1305@openssh.com"sv,
 		.mac_algorithms_client_to_server = "hmac-sha2-256,hmac-sha2-512"sv,
@@ -124,7 +125,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	const auto kex_host_key_length = s.PrepareLength();
 	const auto kex_host_key_mark = s.Mark();
-	host_key.SerializeKex(s);
+	host_key->SerializeKex(s);
 	s.CommitLength(kex_host_key_length);
 	const auto server_host_key_blob = s.Since(kex_host_key_mark);
 
@@ -159,7 +160,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	const auto hash = std::span{hash_buffer}.first(hashlen);
 
 	const auto signature_length = s.PrepareLength();
-	host_key.Sign(s, hash);
+	host_key->Sign(s, hash);
 	s.CommitLength(signature_length);
 
 	SendPacket(std::move(s));
@@ -179,6 +180,28 @@ inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
 	client_kexinit = payload;
+
+	Deserializer d{payload};
+	d.ReadN(16); // cookie
+	d.ReadString(); // kex_algorithms
+	const auto server_host_key_algorithms = d.ReadString(); // server_host_key_algorithms
+	d.ReadString(); // encryption_algorithms_client_to_server
+	d.ReadString(); // encryption_algorithms_server_to_client
+	d.ReadString(); // mac_algorithms_client_to_server
+	d.ReadString(); // mac_algorithms_server_to_client
+	d.ReadString(); // compression_algorithms_client_to_server
+	d.ReadString(); // compression_algorithms_server_to_client
+	d.ReadString(); // languages_client_to_server
+	d.ReadString(); // languages_server_to_client
+	d.ReadBool(); // first_kex_packet_follows
+	d.ReadU32(); // reserved
+
+	host_key = host_keys.Choose(server_host_key_algorithms);
+	if (host_key == nullptr)
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"No supported host key"sv,
+		};
 
 	SendKexInit();
 }

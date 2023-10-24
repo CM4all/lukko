@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "key/List.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/SignalEvent.hxx"
@@ -39,7 +40,7 @@ class Instance final
 
 	const RootLogger logger;
 
-	std::unique_ptr<Key> host_key;
+	KeyList host_keys;
 
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
@@ -66,7 +67,7 @@ class Instance final
 
 public:
 	Instance(const Config &config,
-		 std::unique_ptr<Key> _host_key,
+		 KeyList &&_host_key,
 		 UniqueSocketDescriptor spawner_socket);
 	~Instance() noexcept;
 
