@@ -115,7 +115,6 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	username.assign(new_username);
 
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
-	SendPacket(SSH::MakeUserauthBanner("Hello, world!\n"));
 }
 
 inline void
