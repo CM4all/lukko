@@ -11,6 +11,8 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "util/CharUtil.hxx"
+#include "util/StringVerify.hxx"
 
 #ifdef ENABLE_TRANSLATION
 #include "translation/LoginGlue.hxx"
@@ -90,12 +92,26 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 			"Unsupported service"sv};
 }
 
+static bool
+IsValidUsername(std::string_view username) noexcept
+{
+	return username.size() <= 255 && CheckCharsNonEmpty(username, [](char ch){
+		return IsAlphaNumericASCII(ch) || ch == '-' || ch == '_';
+	});
+}
+
 inline void
 Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 {
 	SSH::Deserializer d{payload};
 	const auto new_username = d.ReadString();
 	fmt::print(stderr, "Userauth '{}'\n", new_username);
+
+	if (!IsValidUsername(new_username))
+		throw Disconnect{
+			SSH::DisconnectReasonCode::ILLEGAL_USER_NAME,
+			"Illegal user name"sv,
+		};
 
 #ifdef ENABLE_TRANSLATION
 	if (const char *translation_server = instance.GetTranslationServer()) {
