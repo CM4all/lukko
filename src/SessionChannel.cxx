@@ -104,25 +104,17 @@ LoginShellName(AllocatorPtr alloc, const char *shell) noexcept
 }
 
 void
-SessionChannel::Exec(const char *cmd)
+SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
-
-	Allocator alloc;
-	PreparedChildProcess p;
 
 	const std::string_view username = c.GetUsername();
 	p.SetEnv("USER", username);
 	p.SetEnv("LOGNAME", username);
 
-	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
-
 #ifdef ENABLE_TRANSLATION
 	if (const auto *tr = c.GetTranslationResponse()) {
 		tr->child_options.CopyTo(p);
-
-		if (tr->shell != nullptr)
-			shell = tr->shell;
 	} else {
 #endif // ENABLE_TRANSLATION
 		// TODO
@@ -135,15 +127,6 @@ SessionChannel::Exec(const char *cmd)
 #ifdef ENABLE_TRANSLATION
 	}
 #endif // ENABLE_TRANSLATION
-
-	if (cmd != nullptr) {
-		p.args.push_back(shell);
-		p.args.push_back("-c");
-		p.args.push_back(cmd);
-	} else {
-		p.exec_path = shell;
-		p.args.push_back(LoginShellName(alloc, shell));
-	}
 
 	if (tty.IsDefined()) {
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
@@ -163,13 +146,17 @@ SessionChannel::Exec(const char *cmd)
 		stderr_pipe.Open(stderr_r.Release());
 	}
 
-	if (GetSendWindow() > 0)
-		ScheduleRead();
-
 	if (const char *home = p.ns.mount.GetJailedHome()) {
 		p.SetEnv("HOME", home);
 		p.chdir = home;
 	}
+}
+
+void
+SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
+{
+	if (GetSendWindow() > 0)
+		ScheduleRead();
 
 	for (const auto &i : env)
 		p.PutEnv(i.c_str());
@@ -177,6 +164,37 @@ SessionChannel::Exec(const char *cmd)
 	// TODO use a proper process name
 	child = spawn_service.SpawnChildProcess("foo", std::move(p));
 	child->SetExitListener(*this);
+}
+
+void
+SessionChannel::Exec(const char *cmd)
+{
+	const auto &c = static_cast<Connection &>(GetConnection());
+
+	Allocator alloc;
+	PreparedChildProcess p;
+
+	PrepareChildProcess(p);
+
+	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
+
+#ifdef ENABLE_TRANSLATION
+	if (const auto *tr = c.GetTranslationResponse()) {
+		if (tr->shell != nullptr)
+			shell = tr->shell;
+	}
+#endif // ENABLE_TRANSLATION
+
+	if (cmd != nullptr) {
+		p.args.push_back(shell);
+		p.args.push_back("-c");
+		p.args.push_back(cmd);
+	} else {
+		p.exec_path = shell;
+		p.args.push_back(LoginShellName(alloc, shell));
+	}
+
+	SpawnChildProcess(std::move(p));
 }
 
 static void

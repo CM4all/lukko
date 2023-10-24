@@ -12,6 +12,7 @@
 #include <forward_list>
 #include <memory>
 
+struct PreparedChildProcess;
 class SpawnService;
 class ChildProcessHandle;
 
@@ -63,6 +64,8 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
+	void PrepareChildProcess(PreparedChildProcess &p);
+	void SpawnChildProcess(PreparedChildProcess &&p);
 	void Exec(const char *cmd);
 
 	void CancelRead() noexcept {
