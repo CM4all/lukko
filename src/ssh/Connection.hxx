@@ -47,6 +47,8 @@ class Connection : BufferedSocketHandler
 
 	bool version_exchanged = false;
 
+	bool authenticated = false;
+
 protected:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
@@ -70,11 +72,22 @@ public:
 		return receive_cipher && send_cipher;
 	}
 
+	bool IsAuthenticated() const noexcept {
+		return authenticated;
+	}
+
 protected:
 	virtual void Destroy() noexcept = 0;
 
 	SocketDescriptor GetSocket() const noexcept {
 		return socket.GetSocket();
+	}
+
+	void SetAuthenticated() noexcept {
+		assert(IsEncrypted());
+		assert(!authenticated);
+
+		authenticated = true;
 	}
 
 	void SendPacket(std::span<const std::byte> src);

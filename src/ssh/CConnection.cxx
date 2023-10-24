@@ -235,7 +235,7 @@ void
 CConnection::HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload)
 {
-	if (!IsEncrypted())
+	if (!IsEncrypted() || !IsAuthenticated())
 		return Connection::HandlePacket(msg, payload);
 
 	switch (msg) {

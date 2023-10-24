@@ -103,6 +103,13 @@ IsValidUsername(std::string_view username) noexcept
 inline void
 Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 {
+	if (IsAuthenticated())
+		/* RFC 4252 section 5.1: "When
+		   SSH_MSG_USERAUTH_SUCCESS has been sent, any further
+		   authentication requests received after that SHOULD
+		   be silently ignored" */
+		return;
+
 	SSH::Deserializer d{payload};
 	const auto new_username = d.ReadString();
 	fmt::print(stderr, "Userauth '{}'\n", new_username);
@@ -132,6 +139,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 	username.assign(new_username);
 
+	SetAuthenticated();
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 }
 
