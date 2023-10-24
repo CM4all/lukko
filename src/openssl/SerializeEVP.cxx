@@ -7,6 +7,7 @@
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h>
 
@@ -59,6 +60,8 @@ SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
 	BIGNUM *priv_key = nullptr;
 	if (!EVP_PKEY_get_bn_param(&key, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key))
 		throw SslError{};
+
+	AtScopeExit(priv_key) { BN_clear_free(priv_key); };
 
 	if (!EC_POINT_mul(ec_group.get(), pub_key.get(), priv_key,
 			  nullptr, nullptr, nullptr))
