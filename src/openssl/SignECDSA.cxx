@@ -6,6 +6,7 @@
 #include "SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
+#include "lib/openssl/UniqueEC.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 #include "util/ScopeExit.hxx"
 #include "Digest.hxx"
@@ -114,14 +115,12 @@ SignECDSA(SSH::Serializer &s,
 	s.Rewind(signature_mark);
 
 	auto signature_data = reinterpret_cast<const unsigned char *>(signature.data());
-	ECDSA_SIG *esig = d2i_ECDSA_SIG(nullptr, &signature_data, signature.size());
+	const UniqueECDSA_SIG esig{d2i_ECDSA_SIG(nullptr, &signature_data, signature.size())};
         if (esig == nullptr)
 		throw SslError{};
 
-	AtScopeExit(esig) { ECDSA_SIG_free(esig); };
-
 	const BIGNUM *sig_r, *sig_s;
-	ECDSA_SIG_get0(esig, &sig_r, &sig_s);
+	ECDSA_SIG_get0(esig.get(), &sig_r, &sig_s);
 
 	/* now serialize in SSH format */
 
