@@ -48,6 +48,10 @@ public:
 		       std::span<const std::byte> type_specific) override;
 
 private:
+	bool WasStarted() const noexcept {
+		return child != nullptr;
+	}
+
 	bool IsActive() const noexcept {
 		return stdin_pipe.IsDefined() ||
 			stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||

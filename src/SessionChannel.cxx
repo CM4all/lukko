@@ -197,6 +197,11 @@ SessionChannel::OnRequest(std::string_view request_type,
 {
 	fmt::print(stderr, "ChannelRequest '{}'\n", request_type);
 
+	if (WasStarted())
+		/* the program was already started, and there's no
+		   point in handling further requests */
+		return false;
+
 	if (request_type == "exec"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string command{d.ReadString()};
