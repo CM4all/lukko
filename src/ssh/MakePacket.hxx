@@ -41,6 +41,17 @@ MakeServiceAccept(std::string_view service_name) noexcept
 
 [[gnu::pure]]
 inline PacketSerializer
+MakeUserauthFailure(std::string_view continue_authentications,
+		    bool partial_success) noexcept
+{
+	PacketSerializer s{MessageNumber::USERAUTH_FAILURE};
+	s.WriteString(continue_authentications);
+	s.WriteBool(partial_success);
+	return s;
+}
+
+[[gnu::pure]]
+inline PacketSerializer
 MakeUserauthBanner(std::string_view msg) noexcept
 {
 	PacketSerializer s{MessageNumber::USERAUTH_BANNER};

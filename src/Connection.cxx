@@ -104,8 +104,10 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 					       "ssh"sv, listener.GetTag(),
 					       new_username, {});
 
-		if (response.status != HttpStatus{})
-			throw std::runtime_error{"Translation server failed"};
+		if (response.status != HttpStatus{}) {
+			SendPacket(SSH::MakeUserauthFailure({}, false));
+			return;
+		}
 
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response));
