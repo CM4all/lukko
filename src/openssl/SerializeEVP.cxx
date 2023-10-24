@@ -7,7 +7,7 @@
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
-#include "util/ScopeExit.hxx"
+ #include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h>
 
@@ -28,21 +28,9 @@ GetStringParam(const EVP_PKEY &key, const char *name)
 	return result;
 }
 
-void
-SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
+static void
+SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
 {
-	std::size_t pub_key_size;
-	if (!EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, nullptr, 0, &pub_key_size))
-		throw SslError{};
-
-	auto dest = FromBytesStrict<unsigned char>(s.BeginWriteN(pub_key_size));
-
-	if (EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, dest.data(), dest.size(),
-					    &pub_key_size)) {
-		s.CommitWriteN(pub_key_size);
-		return;
-	}
-
 	const auto group_name = GetStringParam(key, OSSL_PKEY_PARAM_GROUP_NAME);
 
 	const int group_nid = OBJ_sn2nid(group_name.get());
@@ -70,3 +58,27 @@ SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
 	Serialize(s, *pub_key, *ec_group);
 }
 
+void
+SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
+{
+	switch (EVP_PKEY_get_base_id(&key)) {
+	case EVP_PKEY_EC:
+		SerializePublicKeyEC(s, key);
+		return;
+
+	default:
+		break;
+	}
+
+	std::size_t pub_key_size;
+	if (!EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, nullptr, 0, &pub_key_size))
+		throw SslError{};
+
+	auto dest = FromBytesStrict<unsigned char>(s.BeginWriteN(pub_key_size));
+
+	if (!EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, dest.data(), dest.size(),
+					     &pub_key_size))
+		throw SslError();
+
+	s.CommitWriteN(pub_key_size);
+}
