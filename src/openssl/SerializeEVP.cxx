@@ -56,7 +56,7 @@ SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
 	if (pub_key == nullptr)
 		throw SslError{};
 
-	BIGNUM *priv_key;
+	BIGNUM *priv_key = nullptr;
 	if (!EVP_PKEY_get_bn_param(&key, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key))
 		throw SslError{};
 
