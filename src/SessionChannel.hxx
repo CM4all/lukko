@@ -66,7 +66,7 @@ private:
 
 	void PrepareChildProcess(PreparedChildProcess &p);
 	void SpawnChildProcess(PreparedChildProcess &&p);
-	void Exec(const char *cmd);
+	bool Exec(const char *cmd);
 
 	void CancelRead() noexcept {
 		stdout_pipe.CancelRead();

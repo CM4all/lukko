@@ -12,6 +12,7 @@
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
+#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -166,7 +167,7 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 	child->SetExitListener(*this);
 }
 
-void
+bool
 SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
@@ -182,6 +183,12 @@ SessionChannel::Exec(const char *cmd)
 	if (const auto *tr = c.GetTranslationResponse()) {
 		if (tr->shell != nullptr)
 			shell = tr->shell;
+
+		if (tr->token != nullptr &&
+		    StringIsEqual(tr->token, "sftp-only"))
+			/* the translation server asks us not to
+			   provide this user with a shell */
+			return false;
 	}
 #endif // ENABLE_TRANSLATION
 
@@ -195,6 +202,8 @@ SessionChannel::Exec(const char *cmd)
 	}
 
 	SpawnChildProcess(std::move(p));
+
+	return true;
 }
 
 static void
@@ -225,11 +234,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string command{d.ReadString()};
 		fmt::print(stderr, "  exec '{}'\n", command);
 
-		Exec(command.c_str());
-		return true;
+		return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
-		Exec(nullptr);
-		return true;
+		return Exec(nullptr);
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string_view subsystem_name{d.ReadString()};
