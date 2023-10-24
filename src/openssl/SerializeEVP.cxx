@@ -7,7 +7,7 @@
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
- #include "util/ScopeExit.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h>
 
