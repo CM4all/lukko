@@ -239,6 +239,10 @@ SessionChannel::OnRequest(std::string_view request_type,
 		if (subsystem_name == "sftp"sv) {
 			// TODO repeat translation request with service="sftp"
 
+			if (tty.IsDefined())
+				/* refuse to run sftp with a pty */
+				return false;
+
 			Allocator alloc;
 			PreparedChildProcess p;
 
