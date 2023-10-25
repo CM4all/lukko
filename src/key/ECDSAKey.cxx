@@ -22,12 +22,6 @@ ECDSAKey::GetAlgorithm() const noexcept
 }
 
 void
-ECDSAKey::SerializePublic(SSH::Serializer &s) const
-{
-	SerializePublicKey(s, *key);
-}
-
-void
 ECDSAKey::SerializeKex(SSH::Serializer &s) const
 {
 	constexpr auto ecdsa_curve_id = "nistp256"sv;
@@ -36,7 +30,7 @@ ECDSAKey::SerializeKex(SSH::Serializer &s) const
 	s.WriteString(ecdsa_curve_id);
 
 	const auto key_length = s.PrepareLength();
-	SerializePublic(s);
+	SerializePublicKey(s, *key);
 	s.CommitLength(key_length);
 }
 

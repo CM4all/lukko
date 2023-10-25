@@ -39,16 +39,10 @@ Curve25519Key::GetAlgorithm() const noexcept
 }
 
 void
-Curve25519Key::SerializePublic(SSH::Serializer &s) const
-{
-	s.WriteN(pub);
-}
-
-void
 Curve25519Key::SerializeKex(SSH::Serializer &s) const
 {
 	// TODO
-	(void)s;
+	s.WriteN(pub);
 }
 
 void

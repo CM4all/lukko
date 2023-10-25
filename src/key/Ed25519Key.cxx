@@ -39,18 +39,12 @@ Ed25519Key::GetAlgorithm() const noexcept
 }
 
 void
-Ed25519Key::SerializePublic(SSH::Serializer &s) const
-{
-	s.WriteN(public_key);
-}
-
-void
 Ed25519Key::SerializeKex(SSH::Serializer &s) const
 {
 	s.WriteString(GetAlgorithm());
 
 	const auto key_length = s.PrepareLength();
-	SerializePublic(s);
+	s.WriteN(public_key);
 	s.CommitLength(key_length);
 }
 
