@@ -179,6 +179,12 @@ Connection::SendNewKeys()
 inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
+	if (IsPastKexInit())
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Duplicate KEXINIT"sv,
+		};
+
 	client_kexinit = payload;
 
 	Deserializer d{payload};
