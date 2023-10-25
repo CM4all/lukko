@@ -112,7 +112,11 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 	SSH::Deserializer d{payload};
 	const auto new_username = d.ReadString();
-	fmt::print(stderr, "Userauth '{}'\n", new_username);
+	const auto service_name = d.ReadString();
+	const auto method_name = d.ReadString();
+
+	fmt::print(stderr, "Userauth '{}' service='{}' method='{}'\n",
+		   new_username, service_name, method_name);
 
 	if (!IsValidUsername(new_username))
 		throw Disconnect{
