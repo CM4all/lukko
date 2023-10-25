@@ -111,6 +111,10 @@ protected:
 				  std::span<const std::byte> payload);
 
 private:
+	bool IsPastKexInit() const noexcept {
+		return server_kexinit != nullptr;
+	}
+
 	[[nodiscard]]
 	AllocatedArray<std::byte> DecryptPacket();
 

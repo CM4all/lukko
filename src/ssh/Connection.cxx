@@ -217,6 +217,12 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 inline void
 Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 {
+	if (!IsPastKexInit())
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"No KEXINIT"sv,
+		};
+
 	Deserializer d{payload};
 
 	const auto client_ephemeral_public_key = d.ReadLengthEncoded();
