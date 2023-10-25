@@ -12,9 +12,6 @@
 #include "util/ScopeExit.hxx"
 #include "Digest.hxx"
 
-#include <openssl/ec.h>
-#include <openssl/rsa.h>
-
 #include <sodium/utils.h>
 
 using std::string_view_literals::operator""sv;
