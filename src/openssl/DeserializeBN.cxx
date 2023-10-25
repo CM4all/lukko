@@ -27,10 +27,10 @@ StripLeadingZeroes(std::span<const std::byte> s) noexcept
 UniqueBIGNUM<true>
 DeserializeBIGNUM(std::span<const std::byte> src)
 {
-	src = StripLeadingZeroes(src);
-
 	if (IsNegative(src))
 		throw std::invalid_argument{"Negative BIGNUM"};
+
+	src = StripLeadingZeroes(src);
 
 	if (src.size() > MAX_BIGNUM)
 		throw std::invalid_argument{"BIGNUM too large"};
