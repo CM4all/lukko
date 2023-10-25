@@ -27,6 +27,7 @@
 
 #ifdef HAVE_OPENSSL
 #include "key/ECDSAKey.hxx"
+#include "key/RSAKey.hxx"
 #endif // HAVE_OPENSSL
 
 #include <stdlib.h>
@@ -56,10 +57,14 @@ LoadHostKeys()
 	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ecdsa_key"))
 		keys.Add(std::move(key));
 
+	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_rsa_key"))
+		keys.Add(std::move(key));
+
 	if (keys.empty()) {
 		keys.Add(std::make_unique<Ed25519Key>(Ed25519Key::Generate{}));
 #ifdef HAVE_OPENSSL
 		keys.Add(std::make_unique<ECDSAKey>(ECDSAKey::Generate{}));
+		keys.Add(std::make_unique<RSAKey>(RSAKey::Generate{}));
 #endif // HAVE_OPENSSL
 	}
 

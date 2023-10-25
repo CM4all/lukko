@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "SignECDSA.hxx"
+#include "Sign.hxx"
 #include "SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
@@ -67,6 +67,19 @@ SignOpenSSL(SSH::Serializer &s,
 
 	const std::span digest{digest_buffer, DigestSize(hash_alg)};
 	SignDigestOpenSSL(s, key, digest);
+}
+
+void
+SignGeneric(SSH::Serializer &s,
+	    EVP_PKEY &key, DigestAlgorithm hash_alg,
+	    std::string_view signature_type,
+	    std::span<const std::byte> src)
+{
+	s.WriteString(signature_type);
+
+	const auto signature_length = s.PrepareLength();
+	SignOpenSSL(s, key, hash_alg, src);
+	s.CommitLength(signature_length);
 }
 
 void

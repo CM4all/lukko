@@ -10,8 +10,15 @@
 
 #include <cstddef>
 #include <span>
+#include <string_view>
 
 namespace SSH { class Serializer; }
+
+void
+SignGeneric(SSH::Serializer &s,
+	    EVP_PKEY &key, DigestAlgorithm hash_alg,
+	    std::string_view signature_type,
+	    std::span<const std::byte> src);
 
 void
 SignECDSA(SSH::Serializer &s,

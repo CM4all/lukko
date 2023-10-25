@@ -5,7 +5,7 @@
 #include "ECDSAKey.hxx"
 #include "ssh/Serializer.hxx"
 #include "openssl/SerializeEVP.hxx"
-#include "openssl/SignECDSA.hxx"
+#include "openssl/Sign.hxx"
 #include "lib/openssl/Key.hxx"
 
 using std::string_view_literals::operator""sv;

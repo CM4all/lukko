@@ -140,11 +140,13 @@ if crypto_dep.found()
   sources += [
     'src/openssl/DeserializeBN.cxx',
     'src/openssl/DeserializeEC.cxx',
+    'src/openssl/DeserializeRSA.cxx',
     'src/openssl/SerializeBN.cxx',
     'src/openssl/SerializeEC.cxx',
     'src/openssl/SerializeEVP.cxx',
-    'src/openssl/SignECDSA.cxx',
+    'src/openssl/Sign.cxx',
     'src/key/ECDSAKey.cxx',
+    'src/key/RSAKey.cxx',
   ]
 endif
 

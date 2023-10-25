@@ -13,8 +13,10 @@
 #include "config.h"
 
 #ifdef HAVE_OPENSSL
+#include "key/RSAKey.hxx"
 #include "key/ECDSAKey.hxx"
 #include "openssl/DeserializeEC.hxx"
+#include "openssl/DeserializeRSA.hxx"
 #include "lib/openssl/Error.hxx"
 #endif
 
@@ -61,6 +63,15 @@ ParseSSHAgentKey(SSH::Deserializer &d)
 		return std::make_unique<Ed25519Key>(public_key.first<32>(),
 						    secret_key.first<64>());
 #ifdef HAVE_OPENSSL
+	} else if (key_type == "ssh-rsa"sv) {
+		const auto n = d.ReadLengthEncoded();
+		const auto e = d.ReadLengthEncoded();
+		const auto d_ = d.ReadLengthEncoded();
+		const auto iqmp = d.ReadLengthEncoded();
+		const auto p = d.ReadLengthEncoded();
+		const auto q = d.ReadLengthEncoded();
+
+		return std::make_unique<RSAKey>(DeserializeRSA(n, e, d_, iqmp, p, q));
 	} else if (key_type == "ecdsa-sha2-nistp256"sv) {
 		const auto ecdsa_curve_name = d.ReadString();
 		if (ecdsa_curve_name != "nistp256"sv)

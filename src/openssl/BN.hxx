@@ -42,3 +42,14 @@ BN_sub(const BIGNUM &a, const BIGNUM &b)
 
 	return result;
 }
+
+template<bool clear>
+inline UniqueBIGNUM<clear>
+BN_mod_(const BIGNUM &a, const BIGNUM &m, BN_CTX &ctx)
+{
+	auto result = NewUniqueBIGNUM<clear>();
+	if (!BN_mod(result.get(), &a, &m, &ctx))
+		throw SslError{};
+
+	return result;
+}
