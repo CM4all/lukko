@@ -15,12 +15,13 @@
 namespace SSH {
 
 static void
-KexCurve25519GenerateKey(std::byte *key, std::byte *pub)
+KexCurve25519GenerateKey(std::span<std::byte, crypto_scalarmult_curve25519_SCALARBYTES> key,
+			 std::span<std::byte, crypto_scalarmult_curve25519_BYTES> pub)
 {
-	UrandomFill({key, crypto_scalarmult_curve25519_SCALARBYTES});
+	UrandomFill(key);
 
-	if (crypto_scalarmult_curve25519_base(reinterpret_cast<unsigned char *>(pub),
-					      reinterpret_cast<const unsigned char *>(key)) != 0)
+	if (crypto_scalarmult_curve25519_base(reinterpret_cast<unsigned char *>(pub.data()),
+					      reinterpret_cast<const unsigned char *>(key.data())) != 0)
 		throw std::runtime_error{"crypto_scalarmult_curve25519_base() failed"};
 }
 
@@ -59,7 +60,7 @@ Curve25519Kex(std::span<const std::byte> client_ephemeral_public_key,
 
 	std::byte server_key[crypto_scalarmult_curve25519_SCALARBYTES];
 	KexCurve25519GenerateKey(server_key,
-				 server_ephemeral_public_key.WriteN(crypto_scalarmult_curve25519_BYTES).data());
+				 server_ephemeral_public_key.WriteN<crypto_scalarmult_curve25519_BYTES>());
 	AtScopeExit(&server_key) { sodium_memzero(server_key, sizeof(server_key)); };
 
 	KexCurve25519CalcSharedKey(server_key,
