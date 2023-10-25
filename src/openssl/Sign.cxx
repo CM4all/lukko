@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Sign.hxx"
+#include "Digest.hxx"
 #include "SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
@@ -40,7 +41,7 @@ SignDigestOpenSSL(SSH::Serializer &s,
 
 static void
 SignDigestOpenSSL(SSH::Serializer &s,
-		  EVP_PKEY &key,
+		  EVP_PKEY &key, const EVP_MD &md,
 		  std::span<const std::byte> digest)
 {
 	const UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(&key, nullptr));
@@ -50,7 +51,7 @@ SignDigestOpenSSL(SSH::Serializer &s,
 	if (EVP_PKEY_sign_init(ctx.get()) <= 0)
 		throw SslError("EVP_PKEY_sign_init() failed");
 
-	if (EVP_PKEY_CTX_set_signature_md(ctx.get(), EVP_sha256()) <= 0)
+	if (EVP_PKEY_CTX_set_signature_md(ctx.get(), &md) <= 0)
 		throw SslError("EVP_PKEY_CTX_set_signature_md() failed");
 
 	SignDigestOpenSSL(s, *ctx, digest);
@@ -61,12 +62,16 @@ SignOpenSSL(SSH::Serializer &s,
 	    EVP_PKEY &key, DigestAlgorithm hash_alg,
 	    std::span<const std::byte> src)
 {
+	const auto *const md = ToEvpMD(hash_alg);
+	if (md == nullptr)
+		throw std::invalid_argument{"Digest algorithm not supported by OpenSSL"};
+
 	std::byte digest_buffer[DIGEST_MAX_SIZE];
 	Digest(hash_alg, src, digest_buffer);
 	AtScopeExit(&digest_buffer) { sodium_memzero(digest_buffer, sizeof(digest_buffer)); };
 
 	const std::span digest{digest_buffer, DigestSize(hash_alg)};
-	SignDigestOpenSSL(s, key, digest);
+	SignDigestOpenSSL(s, key, *md, digest);
 }
 
 void
