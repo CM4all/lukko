@@ -40,6 +40,24 @@ GetBNParam(const EVP_PKEY &key, const char *name)
 	return UniqueBIGNUM<clear>{result};
 }
 
+static void
+SerializeOctetStringParam(SSH::Serializer &s,
+			  const EVP_PKEY &key, const char *name)
+{
+	std::size_t size;
+	if (!EVP_PKEY_get_octet_string_param(&key, name, nullptr, 0, &size))
+		throw SslError{};
+
+	auto dest = s.BeginWriteN(size);
+
+	if (!EVP_PKEY_get_octet_string_param(&key, name,
+					     reinterpret_cast<unsigned char *>(dest.data()),
+					     dest.size(), &size))
+		throw SslError();
+
+	s.CommitWriteN(size);
+}
+
 static UniqueEC_GROUP
 GetCurveGroup(const EVP_PKEY &key)
 {
@@ -74,21 +92,9 @@ SerializePublicKey(SSH::Serializer &s, const EVP_PKEY &key)
 	switch (EVP_PKEY_get_base_id(&key)) {
 	case EVP_PKEY_EC:
 		SerializePublicKeyEC(s, key);
-		return;
+		break;
 
 	default:
-		break;
+		SerializeOctetStringParam(s, key, OSSL_PKEY_PARAM_PUB_KEY);
 	}
-
-	std::size_t pub_key_size;
-	if (!EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, nullptr, 0, &pub_key_size))
-		throw SslError{};
-
-	auto dest = FromBytesStrict<unsigned char>(s.BeginWriteN(pub_key_size));
-
-	if (!EVP_PKEY_get_octet_string_param(&key, OSSL_PKEY_PARAM_PUB_KEY, dest.data(), dest.size(),
-					     &pub_key_size))
-		throw SslError();
-
-	s.CommitWriteN(pub_key_size);
 }
