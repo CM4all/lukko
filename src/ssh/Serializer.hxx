@@ -201,8 +201,6 @@ public:
 		const auto result = Serializer::Finish();
 		header.length = result.size() - sizeof(header);
 
-		// TODO MAC
-
 		return result;
 	}
 };
