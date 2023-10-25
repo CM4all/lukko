@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 13.3~),
  libfmt-dev (>= 9),
  libmd-dev,
  libsodium-dev,
- libssl-dev,
+ libssl-dev (>= 3),
  libavahi-client-dev,
  libcap-dev, libseccomp-dev
  libsystemd-dev
