@@ -128,8 +128,6 @@ DeserializeEC(int curve_nid, std::span<const std::byte> q,
 	if (!EC_KEY_set_public_key(ec.get(), p.get()))
 		throw SslError{};
 
-	p.release();
-
 	const auto exponent = DeserializeBIGNUM(d);
 	if (!EC_KEY_set_private_key(ec.get(), exponent.get()))
 		throw SslError{};
