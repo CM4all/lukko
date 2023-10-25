@@ -4,10 +4,10 @@
 
 #include "SerializeEVP.hxx"
 #include "SerializeEC.hxx"
+#include "BN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
-#include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h>
 
@@ -28,6 +28,17 @@ GetStringParam(const EVP_PKEY &key, const char *name)
 	return result;
 }
 
+template<bool clear>
+static UniqueBIGNUM<clear>
+GetBNParam(const EVP_PKEY &key, const char *name)
+{
+	BIGNUM *result = nullptr;
+	if (!EVP_PKEY_get_bn_param(&key, name, &result))
+		throw SslError{};
+
+	return UniqueBIGNUM<clear>{result};
+}
+
 static void
 SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
 {
@@ -45,13 +56,9 @@ SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
 	if (pub_key == nullptr)
 		throw SslError{};
 
-	BIGNUM *priv_key = nullptr;
-	if (!EVP_PKEY_get_bn_param(&key, OSSL_PKEY_PARAM_PRIV_KEY, &priv_key))
-		throw SslError{};
+	const auto priv_key = GetBNParam<true>(key, OSSL_PKEY_PARAM_PRIV_KEY);
 
-	AtScopeExit(priv_key) { BN_clear_free(priv_key); };
-
-	if (!EC_POINT_mul(ec_group.get(), pub_key.get(), priv_key,
+	if (!EC_POINT_mul(ec_group.get(), pub_key.get(), priv_key.get(),
 			  nullptr, nullptr, nullptr))
 		throw SslError{};
 
