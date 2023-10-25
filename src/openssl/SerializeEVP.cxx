@@ -5,6 +5,7 @@
 #include "SerializeEVP.hxx"
 #include "SerializeEC.hxx"
 #include "BN.hxx"
+#include "EC.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
@@ -52,15 +53,9 @@ SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
 	if (ec_group == nullptr)
 		throw SslError{};
 
-	const UniqueEC_POINT pub_key{EC_POINT_new(ec_group.get())};
-	if (pub_key == nullptr)
-		throw SslError{};
-
 	const auto priv_key = GetBNParam<true>(key, OSSL_PKEY_PARAM_PRIV_KEY);
-
-	if (!EC_POINT_mul(ec_group.get(), pub_key.get(), priv_key.get(),
-			  nullptr, nullptr, nullptr))
-		throw SslError{};
+	const auto pub_key = EC_POINT_mul(*ec_group, priv_key.get(),
+					  nullptr, nullptr);
 
 	Serialize(s, *pub_key, *ec_group);
 }

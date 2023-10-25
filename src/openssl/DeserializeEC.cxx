@@ -5,6 +5,7 @@
 #include "DeserializeEC.hxx"
 #include "DeserializeBN.hxx"
 #include "BN.hxx"
+#include "EC.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueBN.hxx"
 #include "lib/openssl/UniqueEC.hxx"
@@ -87,13 +88,7 @@ ValidatePublicKey(const EC_GROUP &group, const EC_POINT &p)
 	    BN_num_bits(x_y.second.get()) <= min_bits)
 		throw std::invalid_argument{"Not enough bits"};
 
-	UniqueEC_POINT nq{EC_POINT_new(&group)};
-	if (!nq)
-		throw SslError{};
-
-	if (!EC_POINT_mul(&group, nq.get(), nullptr, &p, order.get(), nullptr))
-		throw SslError{};
-
+	const auto nq = EC_POINT_mul(group, nullptr, &p, order.get());
 	if (!EC_POINT_is_at_infinity(&group, nq.get()))
 		throw std::invalid_argument{"Not at infinity"};
 
