@@ -40,8 +40,8 @@ GetBNParam(const EVP_PKEY &key, const char *name)
 	return UniqueBIGNUM<clear>{result};
 }
 
-static void
-SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
+static UniqueEC_GROUP
+GetCurveGroup(const EVP_PKEY &key)
 {
 	const auto group_name = GetStringParam(key, OSSL_PKEY_PARAM_GROUP_NAME);
 
@@ -49,9 +49,17 @@ SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
 	if (group_nid == NID_undef)
 		throw SslError{};
 
-	const UniqueEC_GROUP ec_group{EC_GROUP_new_by_curve_name(group_nid)};
-	if (ec_group == nullptr)
+	UniqueEC_GROUP group{EC_GROUP_new_by_curve_name(group_nid)};
+	if (group == nullptr)
 		throw SslError{};
+
+	return group;
+}
+
+static void
+SerializePublicKeyEC(SSH::Serializer &s, const EVP_PKEY &key)
+{
+	const auto ec_group = GetCurveGroup(key);
 
 	const auto priv_key = GetBNParam<true>(key, OSSL_PKEY_PARAM_PRIV_KEY);
 	const auto pub_key = EC_POINT_mul(*ec_group, priv_key.get(),
