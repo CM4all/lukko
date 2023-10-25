@@ -49,9 +49,6 @@ static UniqueBIGNUM<false>
 EC_GROUP_get_order(const EC_GROUP &group, BN_CTX *ctx)
 {
 	auto order = NewUniqueBIGNUM<false>();
-	if (!order)
-		throw SslError{};
-
 	if (!EC_GROUP_get_order(&group, order.get(), ctx))
 		throw SslError{};
 
