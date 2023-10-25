@@ -46,6 +46,13 @@ public:
 		return result;
 	}
 
+	template<std::size_t size>
+	constexpr std::span<std::byte, size> WriteN() {
+		auto result = BeginWriteN(size);
+		CommitWriteN(size);
+		return result.first<size>();
+	}
+
 	/**
 	 * Write a number of zero bytes.
 	 */
