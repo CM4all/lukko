@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "Digest.hxx"
+
 #include <openssl/evp.h>
 
 #include <cstddef>
@@ -13,5 +15,5 @@ namespace SSH { class Serializer; }
 
 void
 SignECDSA(SSH::Serializer &s,
-	  EVP_PKEY &key, int ecdsa_nid,
+	  EVP_PKEY &key, DigestAlgorithm hash_alg,
 	  std::span<const std::byte> src);

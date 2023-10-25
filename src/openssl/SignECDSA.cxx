@@ -18,36 +18,6 @@
 
 using std::string_view_literals::operator""sv;
 
-static constexpr u_int
-sshkey_curve_nid_to_bits(int nid) noexcept
-{
-	switch (nid) {
-	case NID_X9_62_prime256v1:
-		return 256;
-	case NID_secp384r1:
-		return 384;
-	case NID_secp521r1:
-		return 521;
-	default:
-		return 0;
-	}
-}
-
-static constexpr DigestAlgorithm
-sshkey_ec_nid_to_hash_alg(int nid)
-{
-	int bits = sshkey_curve_nid_to_bits(nid);
-	if (bits <= 0)
-		throw std::invalid_argument{"Invalid nid"};
-
-	if (bits <= 256)
-		return DigestAlgorithm::SHA256;
-	else if (bits <= 384)
-		return DigestAlgorithm::SHA384;
-	else
-		return DigestAlgorithm::SHA512;
-}
-
 static void
 SignDigestOpenSSL(SSH::Serializer &s,
 		  EVP_PKEY_CTX &ctx, std::span<const std::byte> digest)
@@ -88,11 +58,9 @@ SignDigestOpenSSL(SSH::Serializer &s,
 
 static void
 SignOpenSSL(SSH::Serializer &s,
-	    EVP_PKEY &key, int ecdsa_nid,
+	    EVP_PKEY &key, DigestAlgorithm hash_alg,
 	    std::span<const std::byte> src)
 {
-	const auto hash_alg = sshkey_ec_nid_to_hash_alg(ecdsa_nid);
-
 	std::byte digest_buffer[DIGEST_MAX_SIZE];
 	Digest(hash_alg, src, digest_buffer);
 	AtScopeExit(&digest_buffer) { sodium_memzero(digest_buffer, sizeof(digest_buffer)); };
@@ -103,14 +71,14 @@ SignOpenSSL(SSH::Serializer &s,
 
 void
 SignECDSA(SSH::Serializer &s,
-	  EVP_PKEY &key, int ecdsa_nid,
+	  EVP_PKEY &key, DigestAlgorithm hash_alg,
 	  std::span<const std::byte> src)
 {
 	/* write the raw signature to the serializer, convert to
 	   ECDSA_SIG (and rewind so we can serialize it again, but
 	   this time in SSH format) */
 	const auto signature_mark = s.Mark();
-	SignOpenSSL(s, key, ecdsa_nid, src);
+	SignOpenSSL(s, key, hash_alg, src);
 	const auto signature = s.Since(signature_mark);
 	s.Rewind(signature_mark);
 
