@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "lib/openssl/UniqueEC.hxx"
+#include "lib/openssl/UniqueEVP.hxx"
 
 #include <cstddef>
 #include <span>
 
-UniqueEC_KEY
-DeserializeEC(int curve_nid, std::span<const std::byte> q,
+UniqueEVP_PKEY
+DeserializeEC(std::string_view curve_name, std::span<const std::byte> q,
 	      std::span<const std::byte> d);

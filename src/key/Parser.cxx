@@ -77,20 +77,12 @@ ParseSSHAgentKey(SSH::Deserializer &d)
 		if (ecdsa_curve_name != "nistp256"sv)
 			throw std::invalid_argument{"Unsupported ECDSA curve"};
 
-		constexpr int nid = NID_X9_62_prime256v1;
+		constexpr std::string_view curve_name = "P-256";
 
 		const auto q = d.ReadLengthEncoded();
 		const auto d_ = d.ReadLengthEncoded();
 
-		auto ec_key = DeserializeEC(nid, q, d_);
-
-		UniqueEVP_PKEY evp{EVP_PKEY_new()};
-		if (!evp)
-			throw SslError{};
-
-		EVP_PKEY_assign_EC_KEY(evp.get(), ec_key.release());
-
-		return std::make_unique<ECDSAKey>(std::move(evp));
+		return std::make_unique<ECDSAKey>(DeserializeEC(curve_name, q, d_));
 #endif // HAVE_OPENSSL
 	} else
 		throw std::invalid_argument{"Unsupported key type"};
