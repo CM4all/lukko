@@ -24,7 +24,7 @@ StripLeadingZeroes(std::span<const std::byte> s) noexcept
 	return s;
 }
 
-UniqueBIGNUM
+UniqueBIGNUM<true>
 DeserializeBIGNUM(std::span<const std::byte> src)
 {
 	src = StripLeadingZeroes(src);
@@ -35,5 +35,5 @@ DeserializeBIGNUM(std::span<const std::byte> src)
 	if (src.size() > MAX_BIGNUM)
 		throw std::invalid_argument{"BIGNUM too large"};
 
-	return BN_bin2bn(src);
+	return BN_bin2bn<true>(src);
 }

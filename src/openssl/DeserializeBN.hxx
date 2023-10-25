@@ -9,5 +9,5 @@
 #include <cstddef>
 #include <span>
 
-UniqueBIGNUM
+UniqueBIGNUM<true>
 DeserializeBIGNUM(std::span<const std::byte> src);

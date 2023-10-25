@@ -45,10 +45,10 @@ DeserializeEC_POINT(const EC_GROUP &group, std::span<const std::byte> src)
 	return p;
 }
 
-static UniqueBIGNUM
+static UniqueBIGNUM<false>
 EC_GROUP_get_order(const EC_GROUP &group, BN_CTX *ctx)
 {
-	auto order = NewUniqueBIGNUM();
+	auto order = NewUniqueBIGNUM<false>();
 	if (!order)
 		throw SslError{};
 
@@ -58,11 +58,11 @@ EC_GROUP_get_order(const EC_GROUP &group, BN_CTX *ctx)
 	return order;
 }
 
-static std::pair<UniqueBIGNUM, UniqueBIGNUM>
+static std::pair<UniqueBIGNUM<false>, UniqueBIGNUM<false>>
 EC_POINT_get_affine_coordinates_GFp(const EC_GROUP &group, const EC_POINT &p,
 				    BN_CTX *ctx)
 {
-	std::pair<UniqueBIGNUM, UniqueBIGNUM> result{BN_new(), BN_new()};
+	std::pair<UniqueBIGNUM<false>, UniqueBIGNUM<false>> result{BN_new(), BN_new()};
 	if (!result.first || !result.second)
 		throw SslError{};
 
@@ -100,7 +100,7 @@ ValidatePublicKey(const EC_GROUP &group, const EC_POINT &p)
 	if (!EC_POINT_is_at_infinity(&group, nq.get()))
 		throw std::invalid_argument{"Not at infinity"};
 
-	const auto tmp = BN_sub(*order, *BN_value_one());
+	const auto tmp = BN_sub<false>(*order, *BN_value_one());
 	if (BN_cmp(x_y.first.get(), tmp.get()) >= 0 ||
 	    BN_cmp(x_y.second.get(), tmp.get()) >= 0)
 		throw std::invalid_argument{"Public key mismatch"};
@@ -117,7 +117,7 @@ ValidatePrivateKey(const EC_KEY &key)
 	if (BN_num_bits(&private_key) <= BN_num_bits(order.get()) / 2)
 		throw std::invalid_argument{"Not enough bits"};
 
-	const auto tmp = BN_sub(*order, *BN_value_one());
+	const auto tmp = BN_sub<false>(*order, *BN_value_one());
 	if (BN_cmp(&private_key, tmp.get()) >= 0)
 		throw std::invalid_argument{"Private key mismatch"};
 }
