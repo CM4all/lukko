@@ -6,6 +6,8 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "SessionChannel.hxx"
+#include "key/Parser.hxx"
+#include "key/Key.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
@@ -145,6 +147,60 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 							    std::move(response));
 	}
 #endif // ENABLE_TRANSLATION
+
+	if (method_name == "publickey"sv) {
+		const bool with_signature = d.ReadBool();
+		const auto public_key_algorithm = d.ReadString();
+		const auto public_key_blob = d.ReadLengthEncoded();
+		fmt::print(stderr, "  public_key_algorithm='{}'\n",
+			   public_key_algorithm);
+
+		std::unique_ptr<PublicKey> public_key;
+
+		try {
+			public_key = ParsePublicKeyBlob(public_key_blob);
+		} catch (...) {
+			logger(1, "Failed to parse the client's public key: ",
+			       std::current_exception());
+			SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+			return;
+		}
+
+		// TODO check if this key is acceptable
+
+		if (!with_signature) {
+			SendPacket(SSH::MakeUserauthPkOk(public_key_algorithm,
+							 public_key_blob));
+			return;
+		} else {
+			const auto signature = d.ReadLengthEncoded();
+
+			try {
+				SSH::Serializer s;
+				s.WriteLengthEncoded(GetSessionId());
+				s.WriteU8(static_cast<uint_least8_t>(SSH::MessageNumber::USERAUTH_REQUEST));
+				s.WriteString(new_username);
+				s.WriteString(service_name);
+				s.WriteString(method_name);
+				s.WriteBool(true);
+				s.WriteString(public_key_algorithm);
+				s.WriteLengthEncoded(public_key_blob);
+
+				if (!public_key->Verify(s.Finish(), signature)) {
+					SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+					return;
+				}
+			} catch (...) {
+				logger(1, "Failed to verify the client's public key: ",
+				       std::current_exception());
+				SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+				return;
+			}
+		}
+	} else {
+		SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+		return;
+	}
 
 	username.assign(new_username);
 

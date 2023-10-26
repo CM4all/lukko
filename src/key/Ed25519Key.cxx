@@ -4,6 +4,7 @@
 
 #include "Ed25519Key.hxx"
 #include "ssh/Serializer.hxx"
+#include "ssh/Deserializer.hxx"
 #include "system/Urandom.hxx"
 
 #include <sodium/crypto_sign_ed25519.h>
@@ -54,6 +55,12 @@ bool
 Ed25519Key::Verify(std::span<const std::byte> message,
 		   std::span<const std::byte> signature) const
 {
+	SSH::Deserializer d{signature};
+	const auto algorithm = d.ReadString();
+	if (algorithm != GetAlgorithm())
+		throw std::invalid_argument{"Wrong algorithm"};
+
+	signature = d.ReadLengthEncoded();
 	if (signature.size() != crypto_sign_ed25519_BYTES)
 		throw std::invalid_argument{"Malformed Ed25519 signature"};
 

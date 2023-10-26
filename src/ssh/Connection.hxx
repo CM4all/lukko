@@ -83,6 +83,10 @@ protected:
 		return socket.GetSocket();
 	}
 
+	std::span<const std::byte> GetSessionId() const noexcept {
+		return kex_state.session_id;
+	}
+
 	void SetAuthenticated() noexcept {
 		assert(IsEncrypted());
 		assert(!authenticated);

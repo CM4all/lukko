@@ -62,6 +62,17 @@ MakeUserauthBanner(std::string_view msg) noexcept
 
 [[gnu::pure]]
 inline PacketSerializer
+MakeUserauthPkOk(std::string_view public_key_algorithm,
+		 std::span<const std::byte> public_key) noexcept
+{
+	PacketSerializer s{MessageNumber::USERAUTH_PK_OK};
+	s.WriteString(public_key_algorithm);
+	s.WriteLengthEncoded(public_key);
+	return s;
+}
+
+[[gnu::pure]]
+inline PacketSerializer
 MakeChannelOpenConfirmation(uint_least32_t recipient_channel,
 			    uint_least32_t sender_channel,
 			    uint_least32_t initial_window_size,
