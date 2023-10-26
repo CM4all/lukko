@@ -22,7 +22,7 @@ ECDSAKey::GetAlgorithm() const noexcept
 }
 
 void
-ECDSAKey::SerializeKex(SSH::Serializer &s) const
+ECDSAKey::SerializePublic(SSH::Serializer &s) const
 {
 	constexpr auto ecdsa_curve_id = "nistp256"sv;
 

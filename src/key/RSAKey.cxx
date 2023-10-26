@@ -26,7 +26,7 @@ RSAKey::GetAlgorithm() const noexcept
 }
 
 void
-RSAKey::SerializeKex(SSH::Serializer &s) const
+RSAKey::SerializePublic(SSH::Serializer &s) const
 {
 	s.WriteString(GetAlgorithm());
 

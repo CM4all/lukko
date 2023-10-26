@@ -19,6 +19,6 @@ public:
 	Key &operator=(const Key &) = delete;
 
 	virtual std::string_view GetAlgorithm() const noexcept = 0;
-	virtual void SerializeKex(SSH::Serializer &s) const = 0;
+	virtual void SerializePublic(SSH::Serializer &s) const = 0;
 	virtual void Sign(SSH::Serializer &s, std::span<const std::byte> src) const = 0;
 };

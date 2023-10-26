@@ -39,7 +39,7 @@ Ed25519Key::GetAlgorithm() const noexcept
 }
 
 void
-Ed25519Key::SerializeKex(SSH::Serializer &s) const
+Ed25519Key::SerializePublic(SSH::Serializer &s) const
 {
 	s.WriteString(GetAlgorithm());
 

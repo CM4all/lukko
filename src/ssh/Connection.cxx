@@ -125,7 +125,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	const auto kex_host_key_length = s.PrepareLength();
 	const auto kex_host_key_mark = s.Mark();
-	host_key->SerializeKex(s);
+	host_key->SerializePublic(s);
 	s.CommitLength(kex_host_key_length);
 	const auto server_host_key_blob = s.Since(kex_host_key_mark);
 

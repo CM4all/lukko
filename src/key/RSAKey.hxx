@@ -18,6 +18,6 @@ public:
 		:key(std::move(_key)) {}
 
 	std::string_view GetAlgorithm() const noexcept override;
-	void SerializeKex(SSH::Serializer &s) const override;
+	void SerializePublic(SSH::Serializer &s) const override;
 	void Sign(SSH::Serializer &s, std::span<const std::byte> src) const override;
 };
