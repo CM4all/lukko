@@ -16,8 +16,10 @@ ToEvpMD(DigestAlgorithm a) noexcept
 	case DigestAlgorithm::SHA256:
 		return EVP_sha256();
 
+#ifdef HAVE_LIBMD
 	case DigestAlgorithm::SHA384:
 		return EVP_sha256();
+#endif
 
 	case DigestAlgorithm::SHA512:
 		return EVP_sha512();
