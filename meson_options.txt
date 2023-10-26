@@ -1,6 +1,7 @@
 option('systemd', type: 'feature', description: 'systemd support (using libsystemd)')
 option('zeroconf', type: 'feature', description: 'Zeroconf support (using Avahi)')
 option('openssl', type: 'feature', description: 'Use OpenSSL (libcrypto)')
+option('libmd', type: 'feature', description: 'Use libmd for additional digest algorithms')
 
 option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
 

@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include "config.h"
+
 #include <cstddef>
 #include <span>
 
 enum class DigestAlgorithm {
 	SHA256,
+#ifdef HAVE_LIBMD
 	SHA384,
+#endif
 	SHA512,
 };
 

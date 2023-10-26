@@ -6,6 +6,7 @@ MESON_OPTIONS = \
 	-Dsystemd=enabled \
 	-Dzeroconf=enabled \
 	-Dopenssl=enabled \
+	-Dmd=enabled \
 	--werror
 
 %:

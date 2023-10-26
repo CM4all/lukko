@@ -25,6 +25,8 @@ CalcSHA256(std::initializer_list<std::span<const std::byte>> src, std::byte *des
 	state.Final(std::span<std::byte, crypto_hash_sha256_BYTES>{dest, crypto_hash_sha256_BYTES});
 }
 
+#ifdef HAVE_LIBMD
+
 static void
 CalcSHA384(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
 {
@@ -34,6 +36,8 @@ CalcSHA384(std::initializer_list<std::span<const std::byte>> src, std::byte *des
 		SHA384Update(&ctx, reinterpret_cast<const uint8_t *>(i.data()), i.size());
 	SHA384Final(reinterpret_cast<uint8_t *>(dest), &ctx);
 }
+
+#endif // HAVE_LIBMD
 
 static void
 CalcSHA512(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
@@ -51,10 +55,12 @@ static constexpr DigestImplementation digest_implementations[] = {
 		crypto_hash_sha256_BYTES,
 		CalcSHA256,
 	},
+#ifdef HAVE_LIBMD
 	{
 		SHA384_DIGEST_LENGTH,
 		CalcSHA384,
 	},
+#endif // HAVE_LIBMD
 	{
 		SHA512_DIGEST_LENGTH,
 		CalcSHA512,

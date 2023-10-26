@@ -102,6 +102,7 @@ add_global_arguments(compiler.get_supported_arguments(test_global_cxxflags), lan
 add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 
 libsystemd = dependency('libsystemd', required: get_option('systemd'))
+libmd = dependency('libmd', required: get_option('libmd'))
 
 inc = include_directories('src', 'libcommon/src')
 
@@ -168,6 +169,7 @@ endif
 
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
+conf.set('HAVE_LIBMD', libmd.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
 configure_file(output: 'config.h', configuration: conf)
 
@@ -210,7 +212,7 @@ executable(
     sodium_dep,
     spawn_dep,
     translation_dep,
-    dependency('libmd'),
+    libmd,
   ],
   install: true,
   install_dir: 'sbin',
