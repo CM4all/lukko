@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Digest.hxx"
+#include "lib/sodium/SHA256.hxx"
 
 #include <sha2.h>
 
@@ -15,11 +16,10 @@ struct DigestImplementation {
 static void
 CalcSHA256(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
 {
-	SHA2_CTX ctx;
-	SHA256Init(&ctx);
+	SHA256State state;
 	for (const auto i : src)
-		SHA256Update(&ctx, reinterpret_cast<const uint8_t *>(i.data()), i.size());
-	SHA256Final(reinterpret_cast<uint8_t *>(dest), &ctx);
+		state.Update(i);
+	state.Final(dest);
 }
 
 static void
@@ -44,7 +44,7 @@ CalcSHA512(std::initializer_list<std::span<const std::byte>> src, std::byte *des
 
 static constexpr DigestImplementation digest_implementations[] = {
 	{
-		SHA256_DIGEST_LENGTH,
+		crypto_hash_sha256_BYTES,
 		CalcSHA256,
 	},
 	{
