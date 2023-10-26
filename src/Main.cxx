@@ -32,7 +32,7 @@
 
 #include <stdlib.h>
 
-static std::unique_ptr<Key>
+static std::unique_ptr<SecretKey>
 LoadOptionalKeyFile(const char *path)
 {
 	UniqueFileDescriptor fd;
@@ -46,10 +46,10 @@ LoadOptionalKeyFile(const char *path)
 	return LoadKeyFile(fd);
 }
 
-static KeyList
+static SecretKeyList
 LoadHostKeys()
 {
-	KeyList keys;
+	SecretKeyList keys;
 
 	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ed25519_key"))
 		keys.Add(std::move(key));

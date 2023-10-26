@@ -8,7 +8,7 @@
 
 #include <array>
 
-class Ed25519Key final : public Key {
+class Ed25519Key final : public SecretKey {
 	std::array<std::byte, 32> public_key;
 	std::array<std::byte, 64> secret_key;
 

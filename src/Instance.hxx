@@ -23,7 +23,7 @@
 
 struct Config;
 struct ListenerConfig;
-class Key;
+class SecretKey;
 class UniqueSocketDescriptor;
 class Listener;
 class Connection;
@@ -40,7 +40,7 @@ class Instance final
 
 	const RootLogger logger;
 
-	KeyList host_keys;
+	SecretKeyList host_keys;
 
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
@@ -67,7 +67,7 @@ class Instance final
 
 public:
 	Instance(const Config &config,
-		 KeyList &&_host_key,
+		 SecretKeyList &&_host_key,
 		 UniqueSocketDescriptor spawner_socket);
 	~Instance() noexcept;
 

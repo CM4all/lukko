@@ -7,7 +7,7 @@
 #include "Key.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 
-class RSAKey final : public Key {
+class RSAKey final : public SecretKey {
 	UniqueEVP_PKEY key;
 
 public:

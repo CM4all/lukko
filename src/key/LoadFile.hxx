@@ -7,7 +7,7 @@
 #include <memory>
 
 class FileDescriptor;
-class Key;
+class SecretKey;
 
-std::unique_ptr<Key>
+std::unique_ptr<SecretKey>
 LoadKeyFile(FileDescriptor fd);

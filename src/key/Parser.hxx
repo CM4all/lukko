@@ -8,7 +8,7 @@
 #include <memory>
 #include <span>
 
-class Key;
+class SecretKey;
 
-std::unique_ptr<Key>
-ParseKey(std::span<const std::byte> src);
+std::unique_ptr<SecretKey>
+ParseSecretKey(std::span<const std::byte> src);

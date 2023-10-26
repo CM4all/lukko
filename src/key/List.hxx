@@ -8,25 +8,25 @@
 #include <memory>
 #include <string>
 
-class Key;
+class SecretKey;
 
-class KeyList {
-	std::map<std::string_view, std::unique_ptr<Key>> keys;
+class SecretKeyList {
+	std::map<std::string_view, std::unique_ptr<SecretKey>> keys;
 
 	std::string algorithms;
 
 public:
-	KeyList() noexcept;
-	~KeyList() noexcept;
+	SecretKeyList() noexcept;
+	~SecretKeyList() noexcept;
 
-	KeyList(KeyList &&) noexcept = default;
-	KeyList &operator=(KeyList &&) noexcept = default;
+	SecretKeyList(SecretKeyList &&) noexcept = default;
+	SecretKeyList &operator=(SecretKeyList &&) noexcept = default;
 
 	bool empty() const noexcept {
 		return keys.empty();
 	}
 
-	void Add(std::unique_ptr<Key> key) noexcept;
+	void Add(std::unique_ptr<SecretKey> key) noexcept;
 
 	/**
 	 * @return a comma-separated list of available server host key
@@ -46,5 +46,5 @@ public:
 	 * algorithms
 	 */
 	[[gnu::pure]]
-	const Key *Choose(std::string_view peer_algorithms) const noexcept;
+	const SecretKey *Choose(std::string_view peer_algorithms) const noexcept;
 };

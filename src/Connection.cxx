@@ -40,7 +40,7 @@ struct Connection::Translation {
 
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       UniqueSocketDescriptor _fd,
-		       const KeyList &_host_keys)
+		       const SecretKeyList &_host_keys)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
 			  _host_keys),
 	 instance(_instance), listener(_listener),

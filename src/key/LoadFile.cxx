@@ -15,7 +15,7 @@
 
 #include <sys/stat.h>
 
-std::unique_ptr<Key>
+std::unique_ptr<SecretKey>
 LoadKeyFile(FileDescriptor fd)
 {
 	struct stat st;
@@ -36,5 +36,5 @@ LoadKeyFile(FileDescriptor fd)
 	if (nbytes < 0)
 		throw MakeErrno("Failed to read file");
 
-	return ParseKey(std::span{buffer}.first(nbytes));
+	return ParseSecretKey(std::span{buffer}.first(nbytes));
 }

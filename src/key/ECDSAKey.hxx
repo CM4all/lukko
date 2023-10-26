@@ -7,7 +7,7 @@
 #include "Key.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 
-class ECDSAKey final : public Key {
+class ECDSAKey final : public SecretKey {
 	UniqueEVP_PKEY key;
 
 public:

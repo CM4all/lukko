@@ -48,7 +48,7 @@ SkipPrefix(std::span<const std::byte> &s, std::string_view prefix) noexcept
  *
  * @see https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-04
  */
-static std::unique_ptr<Key>
+static std::unique_ptr<SecretKey>
 ParseSSHAgentKey(SSH::Deserializer &d)
 {
 	//SSH::Deserializer d{src};
@@ -88,7 +88,7 @@ ParseSSHAgentKey(SSH::Deserializer &d)
 		throw std::invalid_argument{"Unsupported key type"};
 }
 
-static std::unique_ptr<Key>
+static std::unique_ptr<SecretKey>
 ParseOpenSSHV1PrivateKeys(std::span<const std::byte> src)
 {
 	SSH::Deserializer d{src};
@@ -101,7 +101,7 @@ ParseOpenSSHV1PrivateKeys(std::span<const std::byte> src)
 	return ParseSSHAgentKey(d);
 }
 
-static std::unique_ptr<Key>
+static std::unique_ptr<SecretKey>
 ParseOpenSSHV1(std::span<const std::byte> src)
 {
 	SSH::Deserializer d{src};
@@ -125,7 +125,7 @@ ParseOpenSSHV1(std::span<const std::byte> src)
 	return ParseOpenSSHV1PrivateKeys(private_keys);
 }
 
-static std::unique_ptr<Key>
+static std::unique_ptr<SecretKey>
 ParseOpenSSHBase64PrivateKey(std::string_view src)
 {
 	src = Strip(src);
@@ -136,11 +136,11 @@ ParseOpenSSHBase64PrivateKey(std::string_view src)
 	if (bin == nullptr)
 		throw std::invalid_argument{"base64 decoding failed"};
 
-	return ParseKey(bin);
+	return ParseSecretKey(bin);
 }
 
-std::unique_ptr<Key>
-ParseKey(std::span<const std::byte> src)
+std::unique_ptr<SecretKey>
+ParseSecretKey(std::span<const std::byte> src)
 try {
 	if (SkipPrefix(src, openssh_key_v1_magic))
 		return ParseOpenSSHV1(src);

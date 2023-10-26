@@ -6,11 +6,11 @@
 #include "Key.hxx"
 #include "util/IterableSplitString.hxx"
 
-KeyList::KeyList() noexcept = default;
-KeyList::~KeyList() noexcept = default;
+SecretKeyList::SecretKeyList() noexcept = default;
+SecretKeyList::~SecretKeyList() noexcept = default;
 
 void
-KeyList::Add(std::unique_ptr<Key> key) noexcept
+SecretKeyList::Add(std::unique_ptr<SecretKey> key) noexcept
 {
 	auto [it, inserted] = keys.try_emplace(key->GetAlgorithm(), std::move(key));
 	if (inserted) {
@@ -20,8 +20,8 @@ KeyList::Add(std::unique_ptr<Key> key) noexcept
 	}
 }
 
-const Key *
-KeyList::Choose(std::string_view peer_algorithms) const noexcept
+const SecretKey *
+SecretKeyList::Choose(std::string_view peer_algorithms) const noexcept
 {
 	for (const std::string_view a : IterableSplitString(peer_algorithms, ',')) {
 		if (a.empty())

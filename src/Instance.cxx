@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 Instance::Instance(const Config &config,
-		   KeyList &&_host_keys,
+		   SecretKeyList &&_host_keys,
 		   UniqueSocketDescriptor spawner_socket)
 	:host_keys(std::move(_host_keys)),
 #ifdef ENABLE_TRANSLATION

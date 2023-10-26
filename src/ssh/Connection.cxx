@@ -37,7 +37,7 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 }
 
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
-		       const KeyList &_host_keys)
+		       const SecretKeyList &_host_keys)
 	:host_keys(_host_keys),
 	 socket(event_loop)
 {
