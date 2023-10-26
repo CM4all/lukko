@@ -154,6 +154,13 @@ try {
 
 		return std::make_unique<Ed25519Key>(public_key.first<32>(),
 						    fake_secret_key);
+#ifdef HAVE_OPENSSL
+	} else if (algorithm == "ssh-rsa"sv) {
+		const auto e = d.ReadLengthEncoded();
+		const auto n = d.ReadLengthEncoded();
+
+		return std::make_unique<RSAKey>(DeserializeRSAPublic(e, n));
+#endif // HAVE_OPENSSL
 	} else
 		throw std::invalid_argument{"Unsupported key algorithm"};
 } catch (SSH::MalformedPacket) {

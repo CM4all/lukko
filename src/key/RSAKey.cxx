@@ -4,6 +4,7 @@
 
 #include "RSAKey.hxx"
 #include "ssh/Serializer.hxx"
+#include "ssh/Deserializer.hxx"
 #include "openssl/EVP.hxx"
 #include "openssl/SerializeBN.hxx"
 #include "openssl/Sign.hxx"
@@ -44,7 +45,23 @@ bool
 RSAKey::Verify(std::span<const std::byte> message,
 	       std::span<const std::byte> signature) const
 {
-	return VerifyGeneric(*key, DigestAlgorithm::SHA256, message, signature);
+	SSH::Deserializer d{signature};
+	const auto algorithm = d.ReadString();
+
+	DigestAlgorithm hash_alg;
+	if (algorithm == "rsa-sha2-256"sv)
+		hash_alg = DigestAlgorithm::SHA256;
+	else if (algorithm == "rsa-sha2-512"sv)
+		hash_alg = DigestAlgorithm::SHA512;
+#ifdef HAVE_LIBMD
+	else if (algorithm == "ssh-rsa"sv)
+		hash_alg = DigestAlgorithm::SHA1;
+#endif // HAVE_LIBMD
+	else
+		throw std::invalid_argument{"Wrong algorithm"};
+
+	signature = d.ReadLengthEncoded();
+	return VerifyGeneric(*key, hash_alg, message, signature);
 }
 
 void

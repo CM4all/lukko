@@ -10,6 +10,10 @@
 #include <span>
 
 UniqueEVP_PKEY
+DeserializeRSAPublic(std::span<const std::byte> e,
+		     std::span<const std::byte> n);
+
+UniqueEVP_PKEY
 DeserializeRSA(std::span<const std::byte> n,
 	       std::span<const std::byte> e,
 	       std::span<const std::byte> d,

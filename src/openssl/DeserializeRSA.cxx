@@ -11,6 +11,54 @@
 #include <openssl/core_names.h> // for OSSL_PKEY_PARAM_RSA_*
 #include <openssl/param_build.h>
 
+static OSSL_PARAM *
+ToParamPublic(const BIGNUM &e, const BIGNUM &n)
+{
+	OSSL_PARAM_BLD *const bld = OSSL_PARAM_BLD_new();
+	if (bld == nullptr)
+		throw SslError{};
+
+	AtScopeExit(bld) { OSSL_PARAM_BLD_free(bld); };
+
+	OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, &n);
+	OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, &e);
+
+	OSSL_PARAM *param = OSSL_PARAM_BLD_to_param(bld);
+	if (param == nullptr)
+		throw SslError{};
+
+	return param;
+}
+
+static OSSL_PARAM *
+ToParamPublic(std::span<const std::byte> e,
+	      std::span<const std::byte> n)
+{
+	return ToParamPublic(*DeserializeBIGNUM(e),
+			     *DeserializeBIGNUM(n));
+}
+
+UniqueEVP_PKEY
+DeserializeRSAPublic(std::span<const std::byte> e,
+		     std::span<const std::byte> n)
+{
+	OSSL_PARAM *param = ToParamPublic(e, n);
+	AtScopeExit(param) { OSSL_PARAM_free(param); };
+
+	const UniqueEVP_PKEY_CTX ctx{EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr)};
+	if (!ctx)
+		throw SslError{"EVP_PKEY_CTX_new_id() failed"};
+
+	if (EVP_PKEY_fromdata_init(ctx.get()) != 1)
+		throw SslError{"EVP_PKEY_fromdata_init() failed"};
+
+	EVP_PKEY *pkey = nullptr;
+	if (EVP_PKEY_fromdata(ctx.get(), &pkey, EVP_PKEY_KEYPAIR, param) != 1)
+		throw SslError{"EVP_PKEY_fromdata() failed"};
+
+	return UniqueEVP_PKEY{pkey};
+}
+
 static UniqueBIGNUM<false>
 CalcFactorExponent(const BIGNUM &factor, const BIGNUM &d, BN_CTX &ctx)
 {
