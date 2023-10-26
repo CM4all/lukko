@@ -4,6 +4,7 @@
 
 #include "Digest.hxx"
 #include "lib/sodium/SHA256.hxx"
+#include "lib/sodium/SHA512.hxx"
 
 #include <sha2.h>
 
@@ -37,11 +38,12 @@ CalcSHA384(std::initializer_list<std::span<const std::byte>> src, std::byte *des
 static void
 CalcSHA512(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
 {
-	SHA2_CTX ctx;
-	SHA512Init(&ctx);
+	static_assert(DIGEST_MAX_SIZE >= crypto_hash_sha512_BYTES);
+
+	SHA512State state;
 	for (const auto i : src)
-		SHA512Update(&ctx, reinterpret_cast<const uint8_t *>(i.data()), i.size());
-	SHA512Final(reinterpret_cast<uint8_t *>(dest), &ctx);
+		state.Update(i);
+	state.Final(std::span<std::byte, crypto_hash_sha512_BYTES>{dest, crypto_hash_sha512_BYTES});
 }
 
 static constexpr DigestImplementation digest_implementations[] = {
