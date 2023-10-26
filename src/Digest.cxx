@@ -16,10 +16,12 @@ struct DigestImplementation {
 static void
 CalcSHA256(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
 {
+	static_assert(DIGEST_MAX_SIZE >= crypto_hash_sha256_BYTES);
+
 	SHA256State state;
 	for (const auto i : src)
 		state.Update(i);
-	state.Final(dest);
+	state.Final(std::span<std::byte, crypto_hash_sha256_BYTES>{dest, crypto_hash_sha256_BYTES});
 }
 
 static void
