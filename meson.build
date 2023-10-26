@@ -149,6 +149,7 @@ if crypto_dep.found()
     'src/openssl/SerializeEC.cxx',
     'src/openssl/SerializeEVP.cxx',
     'src/openssl/Sign.cxx',
+    'src/openssl/Verify.cxx',
     'src/key/ECDSAKey.cxx',
     'src/key/RSAKey.cxx',
   ]

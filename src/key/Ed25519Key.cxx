@@ -9,6 +9,8 @@
 #include <sodium/crypto_sign_ed25519.h>
 #include <sodium/utils.h>
 
+#include <stdexcept>
+
 using std::string_view_literals::operator""sv;
 
 Ed25519Key::Ed25519Key(Generate) noexcept
@@ -46,6 +48,19 @@ Ed25519Key::SerializePublic(SSH::Serializer &s) const
 	const auto key_length = s.PrepareLength();
 	s.WriteN(public_key);
 	s.CommitLength(key_length);
+}
+
+bool
+Ed25519Key::Verify(std::span<const std::byte> message,
+		   std::span<const std::byte> signature) const
+{
+	if (signature.size() != crypto_sign_ed25519_BYTES)
+		throw std::invalid_argument{"Malformed Ed25519 signature"};
+
+	return crypto_sign_ed25519_verify_detached(reinterpret_cast<const unsigned char *>(signature.data()),
+						   reinterpret_cast<const unsigned char *>(message.data()),
+						   message.size(),
+						   reinterpret_cast<const unsigned char *>(public_key.data())) == 0;
 }
 
 void

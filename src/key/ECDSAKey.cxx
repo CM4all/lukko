@@ -6,6 +6,7 @@
 #include "ssh/Serializer.hxx"
 #include "openssl/SerializeEVP.hxx"
 #include "openssl/Sign.hxx"
+#include "openssl/Verify.hxx"
 #include "lib/openssl/Key.hxx"
 
 using std::string_view_literals::operator""sv;
@@ -32,6 +33,14 @@ ECDSAKey::SerializePublic(SSH::Serializer &s) const
 	const auto key_length = s.PrepareLength();
 	SerializePublicKey(s, *key);
 	s.CommitLength(key_length);
+}
+
+bool
+ECDSAKey::Verify(std::span<const std::byte> message,
+	       std::span<const std::byte> signature) const
+{
+	// TODO do we a special ECDSA verifier?
+	return VerifyGeneric(*key, DigestAlgorithm::SHA256, message, signature);
 }
 
 void

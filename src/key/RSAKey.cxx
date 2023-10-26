@@ -7,6 +7,7 @@
 #include "openssl/EVP.hxx"
 #include "openssl/SerializeBN.hxx"
 #include "openssl/Sign.hxx"
+#include "openssl/Verify.hxx"
 #include "lib/openssl/Key.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -37,6 +38,13 @@ RSAKey::SerializePublic(SSH::Serializer &s) const
 	const auto n_length = s.PrepareLength();
 	Serialize(s, *GetBNParam<false>(*key, OSSL_PKEY_PARAM_RSA_N));
 	s.CommitLength(n_length);
+}
+
+bool
+RSAKey::Verify(std::span<const std::byte> message,
+	       std::span<const std::byte> signature) const
+{
+	return VerifyGeneric(*key, DigestAlgorithm::SHA256, message, signature);
 }
 
 void
