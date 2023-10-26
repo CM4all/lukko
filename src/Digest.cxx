@@ -62,7 +62,7 @@ static constexpr DigestImplementation digest_implementations[] = {
 	},
 #endif // HAVE_LIBMD
 	{
-		SHA512_DIGEST_LENGTH,
+		crypto_hash_sha512_BYTES,
 		CalcSHA512,
 	},
 };
