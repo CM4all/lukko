@@ -7,6 +7,7 @@
 #include "lib/sodium/SHA512.hxx"
 
 #ifdef HAVE_LIBMD
+#include <sha1.h>
 #include <sha2.h>
 #endif
 
@@ -15,6 +16,20 @@ struct DigestImplementation {
 	void (*calculate)(std::initializer_list<std::span<const std::byte>> src,
 			  std::byte *dest) noexcept;
 };
+
+#ifdef HAVE_LIBMD
+
+static void
+CalcSHA1(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
+{
+	SHA1_CTX ctx;
+	SHA1Init(&ctx);
+	for (const auto i : src)
+		SHA1Update(&ctx, reinterpret_cast<const uint8_t *>(i.data()), i.size());
+	SHA1Final(reinterpret_cast<uint8_t *>(dest), &ctx);
+}
+
+#endif // HAVE_LIBMD
 
 static void
 CalcSHA256(std::initializer_list<std::span<const std::byte>> src, std::byte *dest) noexcept
@@ -53,6 +68,12 @@ CalcSHA512(std::initializer_list<std::span<const std::byte>> src, std::byte *des
 }
 
 static constexpr DigestImplementation digest_implementations[] = {
+#ifdef HAVE_LIBMD
+	{
+		SHA1_DIGEST_LENGTH,
+		CalcSHA1,
+	},
+#endif // HAVE_LIBMD
 	{
 		crypto_hash_sha256_BYTES,
 		CalcSHA256,

@@ -10,6 +10,9 @@
 #include <span>
 
 enum class DigestAlgorithm {
+#ifdef HAVE_LIBMD
+	SHA1,
+#endif
 	SHA256,
 #ifdef HAVE_LIBMD
 	SHA384,

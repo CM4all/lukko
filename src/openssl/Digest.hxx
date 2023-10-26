@@ -13,6 +13,11 @@ inline const EVP_MD *
 ToEvpMD(DigestAlgorithm a) noexcept
 {
 	switch (a) {
+#ifdef HAVE_LIBMD
+	case DigestAlgorithm::SHA1:
+		return EVP_sha1();
+#endif
+
 	case DigestAlgorithm::SHA256:
 		return EVP_sha256();
 
