@@ -194,7 +194,6 @@ executable(
   'src/ssh/KexState.cxx',
   'src/ssh/TerminalMode.cxx',
   'src/key/List.cxx',
-  'src/key/Curve25519Key.cxx',
   'src/key/Ed25519Key.cxx',
   'src/key/Parser.cxx',
   'src/key/LoadFile.cxx',
