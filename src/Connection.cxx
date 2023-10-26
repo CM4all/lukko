@@ -118,6 +118,11 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	fmt::print(stderr, "Userauth '{}' service='{}' method='{}'\n",
 		   new_username, service_name, method_name);
 
+	if (service_name != "ssh-connection"sv) {
+		SendPacket(SSH::MakeUserauthFailure({}, false));
+		return;
+	}
+
 	if (!IsValidUsername(new_username))
 		throw Disconnect{
 			SSH::DisconnectReasonCode::ILLEGAL_USER_NAME,
