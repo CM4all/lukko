@@ -139,6 +139,27 @@ ParseOpenSSHBase64PrivateKey(std::string_view src)
 	return ParseSecretKey(bin);
 }
 
+std::unique_ptr<PublicKey>
+ParsePublicKeyBlob(std::span<const std::byte> src)
+try {
+	SSH::Deserializer d{src};
+	const auto algorithm = d.ReadString();
+
+	if (algorithm == "ssh-ed25519"sv) {
+		const auto public_key = d.ReadLengthEncoded();
+		if (public_key.size() != 32)
+			throw std::invalid_argument{"Malformed ed25519 key"};
+
+		std::array<std::byte, 64> fake_secret_key{};
+
+		return std::make_unique<Ed25519Key>(public_key.first<32>(),
+						    fake_secret_key);
+	} else
+		throw std::invalid_argument{"Unsupported key algorithm"};
+} catch (SSH::MalformedPacket) {
+	throw std::invalid_argument{"Malformed key file"};
+}
+
 std::unique_ptr<SecretKey>
 ParseSecretKey(std::span<const std::byte> src)
 try {

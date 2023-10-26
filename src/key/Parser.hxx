@@ -8,7 +8,11 @@
 #include <memory>
 #include <span>
 
+class PublicKey;
 class SecretKey;
+
+std::unique_ptr<PublicKey>
+ParsePublicKeyBlob(std::span<const std::byte> src);
 
 std::unique_ptr<SecretKey>
 ParseSecretKey(std::span<const std::byte> src);
