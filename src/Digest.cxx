@@ -6,7 +6,9 @@
 #include "lib/sodium/SHA256.hxx"
 #include "lib/sodium/SHA512.hxx"
 
+#ifdef HAVE_LIBMD
 #include <sha2.h>
+#endif
 
 struct DigestImplementation {
 	std::size_t size;
