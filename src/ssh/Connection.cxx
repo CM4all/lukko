@@ -13,6 +13,7 @@
 #include "key/Key.hxx"
 #include "key/List.hxx"
 #include "cipher/Cipher.hxx"
+#include "cipher/Factory.hxx"
 #include "system/Error.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -98,8 +99,8 @@ Connection::SendKexInit()
 	const KexProposal proposal{
 		.kex_algorithms = "curve25519-sha256"sv,
 		.server_host_key_algorithms = host_keys.GetAlgorithms(),
-		.encryption_algorithms_client_to_server = "chacha20-poly1305@openssh.com"sv,
-		.encryption_algorithms_server_to_client = "chacha20-poly1305@openssh.com"sv,
+		.encryption_algorithms_client_to_server = all_encryption_algorithms,
+		.encryption_algorithms_server_to_client = all_encryption_algorithms,
 		.mac_algorithms_client_to_server = "hmac-sha2-256,hmac-sha2-512"sv,
 		.mac_algorithms_server_to_client = "hmac-sha2-256,hmac-sha2-512"sv,
 		.compression_algorithms_client_to_server = "none"sv,
