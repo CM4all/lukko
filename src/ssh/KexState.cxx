@@ -69,7 +69,7 @@ KexState::MakeCipher(kex_modes mode)
 {
 	const auto &k = new_keys[mode];
 
-	return std::make_unique<ChaCha20Poly1305Cipher>(k.enc_key, k.enc_iv);
+	return std::make_unique<ChaCha20Poly1305Cipher>(k.enc_key);
 }
 
 } // namespace SSH

@@ -36,8 +36,7 @@ public:
 
 namespace SSH {
 
-ChaCha20Poly1305Cipher::ChaCha20Poly1305Cipher(std::span<const std::byte> key,
-					       [[maybe_unused]] std::span<const std::byte> iv)
+ChaCha20Poly1305Cipher::ChaCha20Poly1305Cipher(std::span<const std::byte> key)
 {
 	static_assert(sizeof(payload_key) == crypto_stream_chacha20_KEYBYTES);
 	static_assert(sizeof(header_key) == crypto_stream_chacha20_KEYBYTES);

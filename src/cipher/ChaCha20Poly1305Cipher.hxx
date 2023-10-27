@@ -14,8 +14,7 @@ class ChaCha20Poly1305Cipher final : public Cipher {
 	std::array<std::byte, 32> payload_key, header_key;
 
 public:
-	ChaCha20Poly1305Cipher(std::span<const std::byte> key,
-			       std::span<const std::byte> iv);
+	explicit ChaCha20Poly1305Cipher(std::span<const std::byte> key);
 	~ChaCha20Poly1305Cipher() noexcept override;
 
 	[[gnu::pure]]
