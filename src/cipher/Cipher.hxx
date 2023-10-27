@@ -33,7 +33,7 @@ public:
 	virtual std::size_t Encrypt(uint_least64_t seqnr,
 				    std::span<const std::byte> src,
 				    std::size_t header_size,
-				    std::byte *dest) noexcept = 0;
+				    std::byte *dest) = 0;
 };
 
 } // namespace SSH

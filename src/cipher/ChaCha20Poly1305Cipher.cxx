@@ -94,7 +94,7 @@ std::size_t
 ChaCha20Poly1305Cipher::Encrypt(uint_least64_t seqnr,
 				std::span<const std::byte> src,
 				std::size_t header_size,
-				std::byte *dest) noexcept
+				std::byte *dest)
 {
 	assert(src.size() > header_size);
 
