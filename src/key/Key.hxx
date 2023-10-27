@@ -33,5 +33,6 @@ public:
 	SecretKey(const SecretKey &) = delete;
 	SecretKey &operator=(const SecretKey &) = delete;
 
-	virtual void Sign(SSH::Serializer &s, std::span<const std::byte> src) const = 0;
+	virtual void Sign(SSH::Serializer &s, std::span<const std::byte> src,
+			  std::string_view algorithm) const = 0;
 };

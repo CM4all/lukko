@@ -160,7 +160,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	const auto hash = std::span{hash_buffer}.first(hashlen);
 
 	const auto signature_length = s.PrepareLength();
-	host_key->Sign(s, hash);
+	host_key->Sign(s, hash, host_key_algorithm);
 	s.CommitLength(signature_length);
 
 	SendPacket(std::move(s));
@@ -202,7 +202,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	d.ReadBool(); // first_kex_packet_follows
 	d.ReadU32(); // reserved
 
-	host_key = host_keys.Choose(server_host_key_algorithms);
+	std::tie(host_key, host_key_algorithm) =
+		host_keys.Choose(server_host_key_algorithms);
 	if (host_key == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,

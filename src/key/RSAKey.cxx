@@ -47,6 +47,21 @@ RSAKey::SerializePublic(SSH::Serializer &s) const
 	s.CommitLength(n_length);
 }
 
+static DigestAlgorithm
+GetDigestAlgorithmRSA(std::string_view algorithm)
+{
+	if (algorithm == "rsa-sha2-256"sv)
+		return DigestAlgorithm::SHA256;
+	else if (algorithm == "rsa-sha2-512"sv)
+		return DigestAlgorithm::SHA512;
+#ifdef HAVE_LIBMD
+	else if (algorithm == "ssh-rsa"sv)
+		return DigestAlgorithm::SHA1;
+#endif // HAVE_LIBMD
+	else
+		throw std::invalid_argument{"Unsupported algorithm"};
+}
+
 bool
 RSAKey::Verify(std::span<const std::byte> message,
 	       std::span<const std::byte> signature) const
@@ -54,24 +69,14 @@ RSAKey::Verify(std::span<const std::byte> message,
 	SSH::Deserializer d{signature};
 	const auto algorithm = d.ReadString();
 
-	DigestAlgorithm hash_alg;
-	if (algorithm == "rsa-sha2-256"sv)
-		hash_alg = DigestAlgorithm::SHA256;
-	else if (algorithm == "rsa-sha2-512"sv)
-		hash_alg = DigestAlgorithm::SHA512;
-#ifdef HAVE_LIBMD
-	else if (algorithm == "ssh-rsa"sv)
-		hash_alg = DigestAlgorithm::SHA1;
-#endif // HAVE_LIBMD
-	else
-		throw std::invalid_argument{"Wrong algorithm"};
-
 	signature = d.ReadLengthEncoded();
-	return VerifyGeneric(*key, hash_alg, message, signature);
+	return VerifyGeneric(*key, GetDigestAlgorithmRSA(algorithm),
+			     message, signature);
 }
 
 void
-RSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
+RSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src,
+	     std::string_view algorithm) const
 {
-	SignGeneric(s, *key, DigestAlgorithm::SHA256, "rsa-sha2-256"sv, src);
+	SignGeneric(s, *key, GetDigestAlgorithmRSA(algorithm), algorithm, src);
 }

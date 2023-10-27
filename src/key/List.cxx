@@ -29,7 +29,7 @@ SecretKeyList::Add(std::unique_ptr<SecretKey> _key) noexcept
 	}
 }
 
-const SecretKey *
+std::pair<const SecretKey *, std::string_view>
 SecretKeyList::Choose(std::string_view peer_algorithms) const noexcept
 {
 	for (const std::string_view a : IterableSplitString(peer_algorithms, ',')) {
@@ -38,8 +38,8 @@ SecretKeyList::Choose(std::string_view peer_algorithms) const noexcept
 
 		if (const auto i = algorithm_to_key.find(a);
 		    i != algorithm_to_key.end())
-			return i->second;
+			return {i->second, a};
 	}
 
-	return nullptr;
+	return {nullptr, {}};
 }

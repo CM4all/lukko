@@ -77,9 +77,12 @@ Ed25519Key::Verify(std::span<const std::byte> message,
 }
 
 void
-Ed25519Key::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
+Ed25519Key::Sign(SSH::Serializer &s, std::span<const std::byte> src,
+		 std::string_view algorithm) const
 {
-	s.WriteString(GetAlgorithms());
+	assert(algorithm == GetAlgorithms());
+
+	s.WriteString(algorithm);
 
 	s.WriteU32(crypto_sign_ed25519_BYTES);
 

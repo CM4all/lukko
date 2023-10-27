@@ -26,5 +26,6 @@ public:
 	void SerializePublic(SSH::Serializer &s) const override;
 	bool Verify(std::span<const std::byte> message,
 		    std::span<const std::byte> signature) const override;
-	void Sign(SSH::Serializer &s, std::span<const std::byte> src) const override;
+	void Sign(SSH::Serializer &s, std::span<const std::byte> src,
+		  std::string_view algorithm) const override;
 };

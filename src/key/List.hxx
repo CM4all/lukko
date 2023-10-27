@@ -48,5 +48,5 @@ public:
 	 * algorithms
 	 */
 	[[gnu::pure]]
-	const SecretKey *Choose(std::string_view peer_algorithms) const noexcept;
+	std::pair<const SecretKey *, std::string_view> Choose(std::string_view peer_algorithms) const noexcept;
 };

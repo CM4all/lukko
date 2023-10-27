@@ -42,6 +42,15 @@ ECDSAKey::SerializePublic(SSH::Serializer &s) const
 	s.CommitLength(key_length);
 }
 
+static DigestAlgorithm
+GetDigestAlgorithmECDSA(std::string_view algorithm)
+{
+	if (algorithm == "ecdsa-sha2-nistp256"sv)
+		return DigestAlgorithm::SHA256;
+	else
+		throw std::invalid_argument{"Unsupported algorithm"};
+}
+
 bool
 ECDSAKey::Verify(std::span<const std::byte> message,
 		 std::span<const std::byte> signature) const
@@ -49,20 +58,14 @@ ECDSAKey::Verify(std::span<const std::byte> message,
 	SSH::Deserializer d{signature};
 	const auto algorithm = d.ReadString();
 
-	DigestAlgorithm hash_alg;
-	if (algorithm == "ecdsa-sha2-nistp256"sv)
-		hash_alg = DigestAlgorithm::SHA256;
-	else
-		throw std::invalid_argument{"Wrong algorithm"};
-
 	signature = d.ReadLengthEncoded();
-	return VerifyECDSA(*key, hash_alg, message, signature);
+	return VerifyECDSA(*key, GetDigestAlgorithmECDSA(algorithm),
+			   message, signature);
 }
 
 void
-ECDSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
+ECDSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src,
+	       std::string_view algorithm) const
 {
-	constexpr DigestAlgorithm hash_alg = DigestAlgorithm::SHA256; // TODO
-
-	SignECDSA(s, *key, hash_alg, src);
+	SignECDSA(s, *key, GetDigestAlgorithmECDSA(algorithm), src);
 }

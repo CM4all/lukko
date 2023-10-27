@@ -26,6 +26,7 @@ class Connection : BufferedSocketHandler
 	const SecretKeyList &host_keys;
 
 	const SecretKey *host_key;
+	std::string host_key_algorithm;
 
 	BufferedSocket socket;
 

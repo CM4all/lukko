@@ -7,6 +7,7 @@
 #include "key/Set.hxx"
 #include "ssh/Serializer.hxx"
 #include "util/AllocatedArray.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "../config.h"
 
@@ -20,10 +21,11 @@
 using std::string_view_literals::operator""sv;
 
 static AllocatedArray<std::byte>
-Sign(const SecretKey &key, std::span<const std::byte> message)
+Sign(const SecretKey &key, std::span<const std::byte> message,
+     std::string_view algorithm)
 {
 	SSH::Serializer s;
-	key.Sign(s, message);
+	key.Sign(s, message, algorithm);
 	return AllocatedArray{s.Finish()};
 }
 
@@ -36,17 +38,24 @@ SerializeDeserialize(const PublicKey &key)
 }
 
 static void
-TestKey(const SecretKey &key)
+TestKey(const SecretKey &key, std::string_view algorithm)
 {
 	const std::span<const std::byte> message{AsBytes("Hello world"sv)};
 
-	const auto signature = Sign(key, message);
+	const auto signature = Sign(key, message, algorithm);
 	EXPECT_TRUE(key.Verify(message, signature));
 
 	const auto public_key = SerializeDeserialize(key);
 	EXPECT_EQ(key.GetType(), public_key->GetType());
 	EXPECT_EQ(key.GetAlgorithms(), public_key->GetAlgorithms());
 	EXPECT_TRUE(public_key->Verify(message, signature));
+}
+
+static void
+TestKey(const SecretKey &key)
+{
+	for (const std::string_view a : IterableSplitString(key.GetAlgorithms(), ','))
+		TestKey(key, a);
 }
 
 TEST(Ed25519Key, TestKey)
