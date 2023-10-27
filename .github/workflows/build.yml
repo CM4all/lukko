@@ -49,6 +49,7 @@ jobs:
         run: |
           meson setup \
             -Ddocumentation=disabled \
+            -Dtest=true \
             -Dsystemd=enabled \
             -Dzeroconf=enabled \
              --force-fallback-for=fmt \
