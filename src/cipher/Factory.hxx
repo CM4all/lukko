@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+#include <string_view>
 
 namespace SSH {
 
@@ -21,9 +22,11 @@ class Cipher;
  *
  * Throws on error.
  *
- * @return the new #Cipher instance
+ * @return the new #Cipher instance or nullptr if there is no matching
+ * cipher
  */
 std::unique_ptr<Cipher>
-MakeCipher(std::span<const std::byte> key, std::span<const std::byte> iv);
+MakeCipher(std::string_view algorithms,
+	   std::span<const std::byte> key, std::span<const std::byte> iv);
 
 } // namespace SSH

@@ -174,7 +174,13 @@ Connection::SendNewKeys()
 {
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
 
-	send_cipher = kex_state.MakeCipher(MODE_OUT);
+	send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
+					   MODE_OUT);
+	if (send_cipher == nullptr)
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"No client-to-server encryption algorithm"sv,
+		};
 }
 
 inline void
@@ -192,8 +198,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	d.ReadN(16); // cookie
 	d.ReadString(); // kex_algorithms
 	const auto server_host_key_algorithms = d.ReadString(); // server_host_key_algorithms
-	d.ReadString(); // encryption_algorithms_client_to_server
-	d.ReadString(); // encryption_algorithms_server_to_client
+	encryption_algorithms_client_to_server.assign(d.ReadString());
+	encryption_algorithms_server_to_client.assign(d.ReadString());
 	d.ReadString(); // mac_algorithms_client_to_server
 	d.ReadString(); // mac_algorithms_server_to_client
 	d.ReadString(); // compression_algorithms_client_to_server
@@ -219,7 +225,13 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 {
 	(void)payload;
 
-	receive_cipher = kex_state.MakeCipher(MODE_IN);
+	receive_cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
+					      MODE_IN);
+	if (receive_cipher == nullptr)
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"No client-to-server encryption algorithm"sv,
+		};
 }
 
 inline void

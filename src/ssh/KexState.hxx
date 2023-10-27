@@ -9,6 +9,7 @@
 
 #include <array>
 #include <memory>
+#include <string_view>
 
 namespace SSH {
 
@@ -39,7 +40,8 @@ struct KexState {
 			std::span<const std::byte> shared_secret,
 			bool kex_initial);
 
-	std::unique_ptr<Cipher> MakeCipher(kex_modes mode);
+	std::unique_ptr<Cipher> MakeCipher(std::string_view algorithms,
+					   kex_modes mode);
 };
 
 } // namespace SSH
