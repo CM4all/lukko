@@ -23,9 +23,9 @@ You need:
 
 Optional dependencies:
 
-- `Avahi <https://www.avahi.org/>`__
+- `Avahi <https://www.avahi.org/>`__ for Zeroconf support
 - `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`__
-- `OpenSSL <https://www.openssl.org/>`__
+- `OpenSSL <https://www.openssl.org/>`__ for ECDSA, RSA support
 - `libmd <https://www.hadrons.org/software/libmd/>`__ for SHA2-384
   digest support
 
