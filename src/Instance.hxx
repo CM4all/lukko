@@ -40,7 +40,7 @@ class Instance final
 
 	const RootLogger logger;
 
-	SecretKeyList host_keys;
+	const SecretKeyList host_keys;
 
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
