@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "config.h"
+
 #include <cstddef>
 #include <memory>
 #include <span>
@@ -13,6 +15,10 @@ namespace SSH {
 
 constexpr std::string_view all_encryption_algorithms{
 	"chacha20-poly1305@openssh.com"
+#ifdef HAVE_OPENSSL
+	",aes128-ctr,aes192-ctr,aes256-ctr"
+	",aes128-gcm@openssh.com,aes256-gcm@openssh.com"
+#endif
 };
 
 class Cipher;
@@ -27,6 +33,7 @@ class Cipher;
  */
 std::unique_ptr<Cipher>
 MakeCipher(std::string_view algorithms,
-	   std::span<const std::byte> key, std::span<const std::byte> iv);
+	   std::span<const std::byte> key, std::span<const std::byte> iv,
+	   bool do_encrypt);
 
 } // namespace SSH

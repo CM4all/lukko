@@ -207,6 +207,10 @@ cipher_sources = [
   'src/cipher/ChaCha20Poly1305Cipher.cxx',
 ]
 
+if crypto_dep.found()
+  cipher_sources += 'src/cipher/OsslCipher.cxx'
+endif
+
 libcipher = static_library(
   'cipher',
   cipher_sources,

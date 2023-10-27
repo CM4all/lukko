@@ -71,7 +71,8 @@ KexState::MakeCipher(std::string_view algorithms,
 {
 	const auto &k = new_keys[mode];
 
-	return SSH::MakeCipher(algorithms, k.enc_key, k.enc_iv);
+	return SSH::MakeCipher(algorithms, k.enc_key, k.enc_iv,
+			       mode == MODE_OUT);
 }
 
 } // namespace SSH
