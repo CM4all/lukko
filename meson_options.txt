@@ -5,5 +5,7 @@ option('libmd', type: 'feature', description: 'Use libmd for additional digest a
 
 option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
 
+option('test', type: 'boolean', value: false, description: 'Build the unit tests and debug programs')
+
 option('documentation', type: 'feature',
   description: 'Build documentation')

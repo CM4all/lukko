@@ -239,3 +239,7 @@ executable(
 )
 
 subdir('doc')
+
+if get_option('test')
+  subdir('test')
+endif

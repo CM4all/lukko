@@ -36,6 +36,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             meson \
+            libgtest-dev \
             libcap-dev \
             libseccomp-dev \
             libsystemd-dev \
@@ -56,3 +57,11 @@ jobs:
 
       - name: Build
         run: ninja -C output -v
+
+      - name: Unit Tests
+        run: meson test -C output
+
+      - name: Dump Unit Test Log
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: cat output/meson-logs/testlog.txt
