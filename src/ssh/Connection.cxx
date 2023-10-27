@@ -3,7 +3,6 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Connection.hxx"
-#include "Cipher.hxx"
 #include "KexCurve25519.hxx"
 #include "KexHash.hxx"
 #include "KexProposal.hxx"
@@ -13,6 +12,7 @@
 #include "ssh/Deserializer.hxx"
 #include "key/Key.hxx"
 #include "key/List.hxx"
+#include "cipher/Cipher.hxx"
 #include "system/Error.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

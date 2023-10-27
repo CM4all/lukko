@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "Cipher.hxx"
+#include "ChaCha20Poly1305Cipher.hxx"
 #include "lib/sodium/OnetimeauthPoly1305.hxx"
 #include "lib/sodium/StreamChaCha20.hxx"
 #include "util/ByteOrder.hxx"
@@ -36,8 +36,8 @@ public:
 
 namespace SSH {
 
-Cipher::Cipher(std::span<const std::byte> key,
-	       [[maybe_unused]] std::span<const std::byte> iv)
+ChaCha20Poly1305Cipher::ChaCha20Poly1305Cipher(std::span<const std::byte> key,
+					       [[maybe_unused]] std::span<const std::byte> iv)
 {
 	static_assert(sizeof(payload_key) == crypto_stream_chacha20_KEYBYTES);
 	static_assert(sizeof(header_key) == crypto_stream_chacha20_KEYBYTES);
@@ -52,15 +52,15 @@ Cipher::Cipher(std::span<const std::byte> key,
 	std::copy(_header_key.begin(), _header_key.end(), header_key.begin());
 }
 
-Cipher::~Cipher() noexcept
+ChaCha20Poly1305Cipher::~ChaCha20Poly1305Cipher() noexcept
 {
 	sodium_memzero(&header_key, sizeof(header_key));
 }
 
 void
-Cipher::DecryptHeader(uint_least64_t seqnr,
-		      std::span<const std::byte> src,
-		      std::byte *dest)
+ChaCha20Poly1305Cipher::DecryptHeader(uint_least64_t seqnr,
+				      std::span<const std::byte> src,
+				      std::byte *dest)
 {
 	const PackedBE64 seqbuf{seqnr};
 
@@ -68,10 +68,10 @@ Cipher::DecryptHeader(uint_least64_t seqnr,
 }
 
 std::size_t
-Cipher::Decrypt(uint_least64_t seqnr,
-		std::span<const std::byte> src,
-		std::size_t skip_src,
-		std::span<std::byte> dest)
+ChaCha20Poly1305Cipher::Decrypt(uint_least64_t seqnr,
+				std::span<const std::byte> src,
+				std::size_t skip_src,
+				std::span<std::byte> dest)
 {
 	assert(src.size() > skip_src + GetAuthSize());
 
@@ -92,10 +92,10 @@ Cipher::Decrypt(uint_least64_t seqnr,
 }
 
 std::size_t
-Cipher::Encrypt(uint_least64_t seqnr,
-		std::span<const std::byte> src,
-		std::size_t header_size,
-		std::byte *dest) noexcept
+ChaCha20Poly1305Cipher::Encrypt(uint_least64_t seqnr,
+				std::span<const std::byte> src,
+				std::size_t header_size,
+				std::byte *dest) noexcept
 {
 	assert(src.size() > header_size);
 

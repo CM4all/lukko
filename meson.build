@@ -202,6 +202,25 @@ key_dep = declare_dependency(
   ],
 )
 
+cipher_sources = [
+  'src/cipher/ChaCha20Poly1305Cipher.cxx',
+]
+
+libcipher = static_library(
+  'cipher',
+  cipher_sources,
+  include_directories: inc,
+  dependencies: [
+    sodium_dep,
+  ],
+)
+
+cipher_dep = declare_dependency(
+  link_with: libcipher,
+  dependencies: [
+  ],
+)
+
 executable(
   'cm4all-lukko',
   sources,
@@ -212,7 +231,6 @@ executable(
   'src/Connection.cxx',
   'src/SessionChannel.cxx',
   'src/AllocatorPtr.cxx',
-  'src/ssh/Cipher.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
   'src/ssh/Channel.cxx',
@@ -235,6 +253,7 @@ executable(
     spawn_dep,
     translation_dep,
     key_dep,
+    cipher_dep,
   ],
   install: true,
   install_dir: 'sbin',
