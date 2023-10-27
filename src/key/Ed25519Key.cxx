@@ -36,7 +36,13 @@ Ed25519Key::~Ed25519Key() noexcept
 }
 
 std::string_view
-Ed25519Key::GetAlgorithm() const noexcept
+Ed25519Key::GetType() const noexcept
+{
+	return "ssh-ed25519"sv;
+}
+
+std::string_view
+Ed25519Key::GetAlgorithms() const noexcept
 {
 	return "ssh-ed25519"sv;
 }
@@ -44,7 +50,7 @@ Ed25519Key::GetAlgorithm() const noexcept
 void
 Ed25519Key::SerializePublic(SSH::Serializer &s) const
 {
-	s.WriteString(GetAlgorithm());
+	s.WriteString(GetType());
 
 	const auto key_length = s.PrepareLength();
 	s.WriteN(public_key);
@@ -57,7 +63,7 @@ Ed25519Key::Verify(std::span<const std::byte> message,
 {
 	SSH::Deserializer d{signature};
 	const auto algorithm = d.ReadString();
-	if (algorithm != GetAlgorithm())
+	if (algorithm != GetAlgorithms())
 		throw std::invalid_argument{"Wrong algorithm"};
 
 	signature = d.ReadLengthEncoded();
@@ -73,7 +79,7 @@ Ed25519Key::Verify(std::span<const std::byte> message,
 void
 Ed25519Key::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
 {
-	s.WriteString(GetAlgorithm());
+	s.WriteString(GetAlgorithms());
 
 	s.WriteU32(crypto_sign_ed25519_BYTES);
 

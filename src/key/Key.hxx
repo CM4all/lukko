@@ -18,7 +18,8 @@ public:
 	PublicKey(const PublicKey &) = delete;
 	PublicKey &operator=(const PublicKey &) = delete;
 
-	virtual std::string_view GetAlgorithm() const noexcept = 0;
+	virtual std::string_view GetType() const noexcept = 0;
+	virtual std::string_view GetAlgorithms() const noexcept = 0;
 	virtual void SerializePublic(SSH::Serializer &s) const = 0;
 	virtual bool Verify(std::span<const std::byte> message,
 			    std::span<const std::byte> signature) const = 0;

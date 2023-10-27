@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <forward_list>
 #include <map>
 #include <memory>
 #include <string>
@@ -11,7 +12,8 @@
 class SecretKey;
 
 class SecretKeyList {
-	std::map<std::string_view, std::unique_ptr<SecretKey>> keys;
+	std::forward_list<std::unique_ptr<SecretKey>> keys;
+	std::map<std::string_view, const SecretKey *> algorithm_to_key;
 
 	std::string algorithms;
 

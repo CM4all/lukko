@@ -18,7 +18,13 @@ ECDSAKey::ECDSAKey(Generate)
 }
 
 std::string_view
-ECDSAKey::GetAlgorithm() const noexcept
+ECDSAKey::GetType() const noexcept
+{
+	return "ecdsa-sha2-nistp256"sv;
+}
+
+std::string_view
+ECDSAKey::GetAlgorithms() const noexcept
 {
 	return "ecdsa-sha2-nistp256"sv;
 }
@@ -28,7 +34,7 @@ ECDSAKey::SerializePublic(SSH::Serializer &s) const
 {
 	constexpr auto ecdsa_curve_id = "nistp256"sv;
 
-	s.WriteString(GetAlgorithm());
+	s.WriteString(GetType());
 	s.WriteString(ecdsa_curve_id);
 
 	const auto key_length = s.PrepareLength();

@@ -17,7 +17,8 @@ public:
 	explicit RSAKey(UniqueEVP_PKEY &&_key) noexcept
 		:key(std::move(_key)) {}
 
-	std::string_view GetAlgorithm() const noexcept override;
+	std::string_view GetType() const noexcept override;
+	std::string_view GetAlgorithms() const noexcept override;
 	void SerializePublic(SSH::Serializer &s) const override;
 	bool Verify(std::span<const std::byte> message,
 		    std::span<const std::byte> signature) const override;

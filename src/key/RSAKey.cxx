@@ -22,15 +22,21 @@ RSAKey::RSAKey(Generate)
 }
 
 std::string_view
-RSAKey::GetAlgorithm() const noexcept
+RSAKey::GetType() const noexcept
 {
-	return "rsa-sha2-256"sv;
+	return "ssh-rsa"sv;
+}
+
+std::string_view
+RSAKey::GetAlgorithms() const noexcept
+{
+	return "rsa-sha2-256,rsa-sha2-512,ssh-rsa"sv;
 }
 
 void
 RSAKey::SerializePublic(SSH::Serializer &s) const
 {
-	s.WriteString(GetAlgorithm());
+	s.WriteString(GetType());
 
 	const auto e_length = s.PrepareLength();
 	Serialize(s, *GetBNParam<false>(*key, OSSL_PKEY_PARAM_RSA_E));
@@ -67,5 +73,5 @@ RSAKey::Verify(std::span<const std::byte> message,
 void
 RSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
 {
-	SignGeneric(s, *key, DigestAlgorithm::SHA256, GetAlgorithm(), src);
+	SignGeneric(s, *key, DigestAlgorithm::SHA256, "rsa-sha2-256"sv, src);
 }

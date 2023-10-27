@@ -44,7 +44,8 @@ TestKey(const SecretKey &key)
 	EXPECT_TRUE(key.Verify(message, signature));
 
 	const auto public_key = SerializeDeserialize(key);
-	EXPECT_EQ(key.GetAlgorithm(), public_key->GetAlgorithm());
+	EXPECT_EQ(key.GetType(), public_key->GetType());
+	EXPECT_EQ(key.GetAlgorithms(), public_key->GetAlgorithms());
 	EXPECT_TRUE(public_key->Verify(message, signature));
 }
 
