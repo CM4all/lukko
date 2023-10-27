@@ -10,5 +10,8 @@
 #include <span>
 
 UniqueEVP_PKEY
+DeserializeECPublic(std::string_view curve_name, std::span<const std::byte> q);
+
+UniqueEVP_PKEY
 DeserializeEC(std::string_view curve_name, std::span<const std::byte> q,
 	      std::span<const std::byte> d);

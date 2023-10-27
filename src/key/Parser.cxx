@@ -162,6 +162,16 @@ try {
 		const auto n = d.ReadLengthEncoded();
 
 		return std::make_unique<RSAKey>(DeserializeRSAPublic(e, n));
+	} else if (algorithm == "ecdsa-sha2-nistp256"sv) {
+		const auto ecdsa_curve_name = d.ReadString();
+		if (ecdsa_curve_name != "nistp256"sv)
+			throw std::invalid_argument{"Unsupported ECDSA curve"};
+
+		constexpr std::string_view curve_name = "P-256";
+
+		const auto q = d.ReadLengthEncoded();
+
+		return std::make_unique<ECDSAKey>(DeserializeECPublic(curve_name, q));
 #endif // HAVE_OPENSSL
 	} else
 		throw std::invalid_argument{"Unsupported key algorithm"};

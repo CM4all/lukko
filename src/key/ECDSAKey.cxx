@@ -4,6 +4,7 @@
 
 #include "ECDSAKey.hxx"
 #include "ssh/Serializer.hxx"
+#include "ssh/Deserializer.hxx"
 #include "openssl/SerializeEVP.hxx"
 #include "openssl/Sign.hxx"
 #include "openssl/Verify.hxx"
@@ -37,10 +38,19 @@ ECDSAKey::SerializePublic(SSH::Serializer &s) const
 
 bool
 ECDSAKey::Verify(std::span<const std::byte> message,
-	       std::span<const std::byte> signature) const
+		 std::span<const std::byte> signature) const
 {
-	// TODO do we a special ECDSA verifier?
-	return VerifyGeneric(*key, DigestAlgorithm::SHA256, message, signature);
+	SSH::Deserializer d{signature};
+	const auto algorithm = d.ReadString();
+
+	DigestAlgorithm hash_alg;
+	if (algorithm == "ecdsa-sha2-nistp256"sv)
+		hash_alg = DigestAlgorithm::SHA256;
+	else
+		throw std::invalid_argument{"Wrong algorithm"};
+
+	signature = d.ReadLengthEncoded();
+	return VerifyECDSA(*key, hash_alg, message, signature);
 }
 
 void
@@ -49,5 +59,4 @@ ECDSAKey::Sign(SSH::Serializer &s, std::span<const std::byte> src) const
 	constexpr DigestAlgorithm hash_alg = DigestAlgorithm::SHA256; // TODO
 
 	SignECDSA(s, *key, hash_alg, src);
-
 }

@@ -15,3 +15,8 @@ bool
 VerifyGeneric(EVP_PKEY &key, DigestAlgorithm hash_alg,
 	      std::span<const std::byte> message,
 	      std::span<const std::byte> signature);
+
+bool
+VerifyECDSA(EVP_PKEY &key, DigestAlgorithm hash_alg,
+	    std::span<const std::byte> message,
+	    std::span<const std::byte> signature);
