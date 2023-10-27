@@ -5,6 +5,7 @@
 #pragma once
 
 #include "key/List.hxx"
+#include "key/Set.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/SignalEvent.hxx"
@@ -42,6 +43,8 @@ class Instance final
 
 	const SecretKeyList host_keys;
 
+	const PublicKeySet global_authorized_keys;
+
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
 #endif
@@ -68,11 +71,16 @@ class Instance final
 public:
 	Instance(const Config &config,
 		 SecretKeyList &&_host_key,
+		 PublicKeySet &&_global_authorized_keys,
 		 UniqueSocketDescriptor spawner_socket);
 	~Instance() noexcept;
 
 	const RootLogger &GetLogger() const noexcept {
 		return logger;
+	}
+
+	const auto &GetGlobalAuthorizedKeys() const noexcept {
+		return global_authorized_keys;
 	}
 
 	auto &GetEventLoop() noexcept {

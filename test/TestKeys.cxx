@@ -4,6 +4,7 @@
 
 #include "key/Ed25519Key.hxx"
 #include "key/Parser.hxx"
+#include "key/Set.hxx"
 #include "ssh/Serializer.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/SpanCast.hxx"
@@ -68,3 +69,20 @@ TEST(ECDSAKey, TestKey)
 }
 
 #endif // HAVE_OPENSSL
+
+TEST(PublicKeySet, Basic)
+{
+	const Ed25519Key key1{Ed25519Key::Generate{}}, key2{Ed25519Key::Generate{}};
+
+	PublicKeySet s;
+	EXPECT_FALSE(s.Contains(key1));
+	EXPECT_FALSE(s.Contains(key2));
+
+	s.Add(key1);
+	EXPECT_TRUE(s.Contains(key1));
+	EXPECT_FALSE(s.Contains(key2));
+
+	s.Add(key2);
+	EXPECT_TRUE(s.Contains(key1));
+	EXPECT_TRUE(s.Contains(key2));
+}

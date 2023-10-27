@@ -8,11 +8,15 @@
 #include "SessionChannel.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
+#include "key/TextFile.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/Beneath.hxx"
+#include "io/FileAt.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringVerify.hxx"
 
@@ -23,6 +27,8 @@
 #endif // ENABLE_TRANSLATION
 
 #include <fmt/core.h>
+
+#include <fcntl.h> // for O_*
 
 using std::string_view_literals::operator""sv;
 
@@ -63,6 +69,52 @@ Connection::GetTranslationResponse() const noexcept
 }
 
 #endif
+
+inline const char *
+Connection::GetHome() const noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation)
+		return translation->response.child_options.ns.mount.home;
+#endif // ENABLE_TRANSLATION
+
+	// TODO
+	return getenv("HOME");
+}
+
+UniqueFileDescriptor
+Connection::OpenHome() const noexcept
+{
+	UniqueFileDescriptor fd;
+
+	if (const char *home = GetHome())
+		fd.Open(home, O_PATH|O_DIRECTORY);
+
+	return fd;
+}
+
+inline bool
+Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation && translation->response.authorized_keys != nullptr &&
+	    PublicKeysTextFileContains(translation->response.authorized_keys,
+				       public_key_blob))
+		return true;
+#endif // ENABLE_TRANSLATION
+
+	if (instance.GetGlobalAuthorizedKeys().Contains(public_key_blob))
+		return true;
+
+	if (auto home = OpenHome(); home.IsDefined()) {
+		if (auto fd = TryOpenReadOnlyBeneath({home, ".ssh/authorized_keys"});
+		    fd.IsDefined())
+			if (PublicKeysTextFileContains(fd, public_key_blob))
+				return true;
+	}
+
+	return false;
+}
 
 std::unique_ptr<SSH::Channel>
 Connection::OpenChannel(std::string_view channel_type,
@@ -154,6 +206,11 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		const auto public_key_blob = d.ReadLengthEncoded();
 		fmt::print(stderr, "  public_key_algorithm='{}'\n",
 			   public_key_algorithm);
+
+		if (!IsAcceptedPublicKey(public_key_blob)) {
+			SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+			return;
+		}
 
 		std::unique_ptr<PublicKey> public_key;
 

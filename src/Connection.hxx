@@ -14,6 +14,7 @@ struct TranslateResponse;
 class Instance;
 class Listener;
 class RootLogger;
+class UniqueFileDescriptor;
 
 namespace SSH {
 class PacketSerializer;
@@ -59,6 +60,13 @@ protected:
 	}
 
 private:
+	[[gnu::pure]]
+	const char *GetHome() const noexcept;
+	UniqueFileDescriptor OpenHome() const noexcept;
+
+	[[gnu::pure]]
+	bool IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
+
 	void HandleServiceRequest(std::span<const std::byte> payload);
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 	void HandleChannelOpen(std::span<const std::byte> payload);

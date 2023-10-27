@@ -7,6 +7,7 @@
 #include "DebugMode.hxx"
 #include "key/Ed25519Key.hxx"
 #include "key/LoadFile.hxx"
+#include "key/TextFile.hxx"
 #include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
 #include "lib/cap/Glue.hxx"
@@ -71,6 +72,18 @@ LoadHostKeys()
 	return keys;
 }
 
+static PublicKeySet
+LoadGlobalAuthorizedKeys()
+{
+	PublicKeySet keys;
+
+	UniqueFileDescriptor fd;
+	if (fd.OpenReadOnly("/etc/cm4all/lukko/authorized_keys"))
+		LoadPublicKeysTextFile(keys, fd);
+
+	return keys;
+}
+
 int
 main(int argc, char **argv) noexcept
 try {
@@ -94,6 +107,7 @@ try {
 	Instance instance{
 		config,
 		LoadHostKeys(),
+		LoadGlobalAuthorizedKeys(),
 		std::move(spawner_socket),
 	};
 

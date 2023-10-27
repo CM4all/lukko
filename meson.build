@@ -184,6 +184,8 @@ libkey = static_library(
   'src/key/Ed25519Key.cxx',
   'src/key/Parser.cxx',
   'src/key/LoadFile.cxx',
+  'src/key/Set.cxx',
+  'src/key/TextFile.cxx',
   include_directories: inc,
   dependencies: [
     sodium_dep,
