@@ -155,7 +155,9 @@ try {
 		return std::make_unique<Ed25519Key>(public_key.first<32>(),
 						    fake_secret_key);
 #ifdef HAVE_OPENSSL
-	} else if (algorithm == "ssh-rsa"sv) {
+	} else if (algorithm == "ssh-rsa"sv ||
+		   // TODO: is that one correct?
+		   algorithm == "rsa-sha2-256"sv) {
 		const auto e = d.ReadLengthEncoded();
 		const auto n = d.ReadLengthEncoded();
 
