@@ -140,21 +140,6 @@ subdir('libcommon/src/spawn')
 
 sources = []
 
-if crypto_dep.found()
-  sources += [
-    'src/openssl/DeserializeBN.cxx',
-    'src/openssl/DeserializeEC.cxx',
-    'src/openssl/DeserializeRSA.cxx',
-    'src/openssl/SerializeBN.cxx',
-    'src/openssl/SerializeEC.cxx',
-    'src/openssl/SerializeEVP.cxx',
-    'src/openssl/Sign.cxx',
-    'src/openssl/Verify.cxx',
-    'src/key/ECDSAKey.cxx',
-    'src/key/RSAKey.cxx',
-  ]
-endif
-
 if get_option('translation')
   subdir('libcommon/src/translation')
   sources += [
@@ -174,6 +159,47 @@ conf.set('HAVE_LIBMD', libmd.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
 configure_file(output: 'config.h', configuration: conf)
 
+key_sources = []
+
+if crypto_dep.found()
+  key_sources += [
+    'src/openssl/DeserializeBN.cxx',
+    'src/openssl/DeserializeEC.cxx',
+    'src/openssl/DeserializeRSA.cxx',
+    'src/openssl/SerializeBN.cxx',
+    'src/openssl/SerializeEC.cxx',
+    'src/openssl/SerializeEVP.cxx',
+    'src/openssl/Sign.cxx',
+    'src/openssl/Verify.cxx',
+    'src/key/ECDSAKey.cxx',
+    'src/key/RSAKey.cxx',
+  ]
+endif
+
+libkey = static_library(
+  'key',
+  key_sources,
+  'src/Digest.cxx',
+  'src/key/List.cxx',
+  'src/key/Ed25519Key.cxx',
+  'src/key/Parser.cxx',
+  'src/key/LoadFile.cxx',
+  include_directories: inc,
+  dependencies: [
+    sodium_dep,
+    crypto_dep,
+    libmd,
+    system_dep,
+    io_dep,
+  ],
+)
+
+key_dep = declare_dependency(
+  link_with: libkey,
+  dependencies: [
+  ],
+)
+
 executable(
   'cm4all-lukko',
   sources,
@@ -183,7 +209,6 @@ executable(
   'src/Listener.cxx',
   'src/Connection.cxx',
   'src/SessionChannel.cxx',
-  'src/Digest.cxx',
   'src/AllocatorPtr.cxx',
   'src/ssh/Cipher.cxx',
   'src/ssh/Connection.cxx',
@@ -194,10 +219,6 @@ executable(
   'src/ssh/KexProposal.cxx',
   'src/ssh/KexState.cxx',
   'src/ssh/TerminalMode.cxx',
-  'src/key/List.cxx',
-  'src/key/Ed25519Key.cxx',
-  'src/key/Parser.cxx',
-  'src/key/LoadFile.cxx',
   'src/system/SetupProcess.cxx',
   include_directories: inc,
   dependencies: [
@@ -208,11 +229,10 @@ executable(
     io_dep,
     io_config_dep,
     avahi_dep,
-    crypto_dep,
     sodium_dep,
     spawn_dep,
     translation_dep,
-    libmd,
+    key_dep,
   ],
   install: true,
   install_dir: 'sbin',
