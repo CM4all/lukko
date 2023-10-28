@@ -25,13 +25,15 @@ namespace SSH {
  * usual padding.
  */
 class Cipher {
+	const std::size_t block_size;
 	const std::size_t auth_size;
 
 	const bool pad_without_header;
 
 protected:
-	Cipher(std::size_t _auth_size, bool _pad_without_header) noexcept
-		:auth_size(_auth_size),
+	Cipher(std::size_t _block_size,
+	       std::size_t _auth_size, bool _pad_without_header) noexcept
+		:block_size(_block_size), auth_size(_auth_size),
 		 pad_without_header(_pad_without_header) {}
 
 public:
@@ -39,6 +41,14 @@ public:
 
 	Cipher(const Cipher &) = delete;
 	Cipher &operator=(const Cipher &) = delete;
+
+	/**
+	 * Packets must be padded to a multiple of this number of
+	 * bytes.
+	 */
+	std::size_t GetBlockSize() const noexcept {
+		return block_size;
+	}
 
 	/**
 	 * Is this an authenticated cipher?
