@@ -74,7 +74,8 @@ Connection::SendPacket(std::span<const std::byte> src)
 void
 Connection::SendPacket(PacketSerializer &&s)
 {
-	SendPacket(s.Finish(send_cipher != nullptr));
+	SendPacket(s.Finish(send_cipher != nullptr &&
+			    send_cipher->IsHeaderExcludedFromPadding()));
 }
 
 void

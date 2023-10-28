@@ -25,9 +25,12 @@ namespace SSH {
 class Cipher {
 	const std::size_t auth_size;
 
+	const bool pad_without_header;
+
 protected:
-	Cipher(std::size_t _auth_size) noexcept
-		:auth_size(_auth_size) {}
+	Cipher(std::size_t _auth_size, bool _pad_without_header) noexcept
+		:auth_size(_auth_size),
+		 pad_without_header(_pad_without_header) {}
 
 public:
 	virtual ~Cipher() noexcept = default;
@@ -46,9 +49,16 @@ public:
 	 * How many bytes does the cipher add for authentication after
 	 * each packet?
 	 */
-
 	std::size_t GetAuthSize() const noexcept {
 		return auth_size;
+	}
+
+	/**
+	 * When generating the padding of a packet, shall the header
+	 * size be excluded from the formula?
+	 */
+	bool IsHeaderExcludedFromPadding() const noexcept {
+		return pad_without_header;
 	}
 
 	/**
