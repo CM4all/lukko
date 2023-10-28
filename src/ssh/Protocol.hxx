@@ -15,16 +15,19 @@ struct PacketHeader {
 	PackedBE32 length;
 };
 
+static constexpr std::size_t MIN_PACKET_SIZE = 16;
+static constexpr std::size_t MIN_PADDING = 4;
+
 constexpr std::size_t
 Padding(std::size_t size) noexcept
 {
 	/* minimum packet size is 16 bytes (see RFC 4253 section 6),
 	   and since the padding is at least 4 bytes, we need to check
 	   only for sizes up to 12 here */
-	if (size <= 12)
-		return 16 - size;
+	if (size <= MIN_PACKET_SIZE - MIN_PADDING)
+		return MIN_PACKET_SIZE - size;
 
-	return 11 - ((size - 5) & 0x7);
+	return MIN_PADDING + 7 - ((size + MIN_PADDING - 1) & 0x7);
 }
 
 static_assert(Padding(0) == 16);
