@@ -23,19 +23,33 @@ namespace SSH {
  * usual padding.
  */
 class Cipher {
+	const std::size_t auth_size;
+
+protected:
+	Cipher(std::size_t _auth_size) noexcept
+		:auth_size(_auth_size) {}
+
 public:
-	Cipher() noexcept = default;
 	virtual ~Cipher() noexcept = default;
 
 	Cipher(const Cipher &) = delete;
 	Cipher &operator=(const Cipher &) = delete;
 
 	/**
+	 * Is this an authenticated cipher?
+	 */
+	bool HasAuth() const noexcept {
+		return auth_size > 0;
+	}
+
+	/**
 	 * How many bytes does the cipher add for authentication after
 	 * each packet?
 	 */
-	[[gnu::pure]]
-	virtual std::size_t GetAuthSize() const noexcept = 0;
+
+	std::size_t GetAuthSize() const noexcept {
+		return auth_size;
+	}
 
 	/**
 	 * Decrypt the header (SSH::PacketHeader) of an incoming

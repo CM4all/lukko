@@ -17,11 +17,6 @@ public:
 	explicit ChaCha20Poly1305Cipher(std::span<const std::byte> key);
 	~ChaCha20Poly1305Cipher() noexcept override;
 
-	[[gnu::pure]]
-	std::size_t GetAuthSize() const noexcept override {
-		return 16;
-	}
-
 	void DecryptHeader(uint_least64_t seqnr,
 			   std::span<const std::byte> src,
 			   std::byte *dest) override;
