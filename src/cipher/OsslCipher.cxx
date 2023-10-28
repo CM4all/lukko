@@ -156,7 +156,7 @@ OsslCipher::Encrypt([[maybe_unused]] uint_least64_t seqnr,
 	if (HasAuth() &&
 	    EVP_CipherUpdate(*ctx, nullptr, &outl,
 			     src.first<HEADER_SIZE>()) != 1)
-		throw SslError{"EVP_Cipher() failed"};
+		throw SslError{"EVP_CipherUpdate() failed"};
 
 	std::copy_n(src.begin(), HEADER_SIZE, dest + dest_position);
 	dest_position += HEADER_SIZE;
@@ -165,19 +165,19 @@ OsslCipher::Encrypt([[maybe_unused]] uint_least64_t seqnr,
 	assert(!IsHeaderExcludedFromPadding() || (src.size() % GetBlockSize()) == 0);
 
 	if (EVP_CipherUpdate(*ctx, dest + dest_position, &outl, src) != 1)
-		throw SslError{"EVP_Cipher() failed"};
+		throw SslError{"EVP_CipherUpdate() failed"};
 
 	dest_position += outl;
 
 	if (EVP_CipherFinal_ex(*ctx, dest + dest_position, &outl) != 1)
-		throw SslError{"EVP_Cipher() failed"};
+		throw SslError{"EVP_CipherFinal_ex() failed"};
 
 	dest_position += outl;
 
 	if (HasAuth()) {
 		if (!EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_GCM_GET_TAG,
 					 {dest + dest_position, GetAuthSize()}))
-			throw SslError{"EVP_CTRL_GCM_GET_TAG"};
+			throw SslError{"EVP_CTRL_GCM_GET_TAG failed"};
 
 		dest_position += GetAuthSize();
 	}
