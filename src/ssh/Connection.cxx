@@ -6,6 +6,7 @@
 #include "KexCurve25519.hxx"
 #include "KexHash.hxx"
 #include "KexProposal.hxx"
+#include "Sizes.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/Serializer.hxx"
 #include "ssh/MakePacket.hxx"

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Protocol.hxx"
+#include "Sizes.hxx"
 #include "util/SpanCast.hxx"
 
 #include <algorithm> // for std::copy()

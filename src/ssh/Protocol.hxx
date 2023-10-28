@@ -84,10 +84,6 @@ enum class MessageNumber : uint8_t {
 	CHANNEL_FAILURE = 100,
 };
 
-static constexpr std::size_t MAX_PACKET_SIZE = 35000;
-
-static constexpr std::size_t KEX_COOKIE_SIZE = 16;
-
 enum class DisconnectReasonCode : uint32_t {
 	HOST_NOT_ALLOWED_TO_CONNECT = 1,
 	PROTOCOL_ERROR = 2,

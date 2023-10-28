@@ -5,7 +5,7 @@
 #pragma once
 
 #include "util/ForeignFifoBuffer.hxx"
-#include "ssh/Protocol.hxx"
+#include "ssh/Sizes.hxx"
 
 /**
  * A frontend for #SliceFifoBuffer which allows to replace it with a

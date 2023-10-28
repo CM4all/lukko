@@ -20,6 +20,8 @@ namespace SSH {
 
 class PacketSerializer;
 class Cipher;
+enum class MessageNumber : uint8_t;
+enum class DisconnectReasonCode : uint32_t;
 
 class Connection : BufferedSocketHandler
 {
