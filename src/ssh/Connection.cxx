@@ -364,8 +364,8 @@ try {
 			if (receive_cipher) {
 				PacketHeader header;
 				receive_cipher->DecryptHeader(receive_seq,
-							      r.first(sizeof(header)),
-							      reinterpret_cast<std::byte *>(&header));
+							      r.first<sizeof(header)>(),
+							      ReferenceAsWritableBytes(header));
 				packet_length = header.length;
 			} else {
 				const auto &header = *reinterpret_cast<const PacketHeader *>(r.data());

@@ -59,12 +59,13 @@ ChaCha20Poly1305Cipher::~ChaCha20Poly1305Cipher() noexcept
 
 void
 ChaCha20Poly1305Cipher::DecryptHeader(uint_least64_t seqnr,
-				      std::span<const std::byte> src,
-				      std::byte *dest)
+				      std::span<const std::byte, HEADER_SIZE> src,
+				      std::span<std::byte, HEADER_SIZE> dest)
 {
 	const PackedBE64 seqbuf{seqnr};
 
-	crypto_stream_chacha20_xor(dest, src, ReferenceAsBytes(seqbuf), header_key);
+	crypto_stream_chacha20_xor(dest.data(), src, ReferenceAsBytes(seqbuf),
+				   header_key);
 }
 
 std::size_t

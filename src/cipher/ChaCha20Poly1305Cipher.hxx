@@ -18,8 +18,8 @@ public:
 	~ChaCha20Poly1305Cipher() noexcept override;
 
 	void DecryptHeader(uint_least64_t seqnr,
-			   std::span<const std::byte> src,
-			   std::byte *dest) override;
+			   std::span<const std::byte, HEADER_SIZE> src,
+			   std::span<std::byte, HEADER_SIZE> dest) override;
 
 	std::size_t Decrypt(uint_least64_t seqnr,
 			    std::span<const std::byte> src,

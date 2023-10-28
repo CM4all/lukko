@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "ssh/Sizes.hxx"
+
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -77,8 +79,8 @@ public:
 	 * @param dest the destination for the decrypted packet header
 	 */
 	virtual void DecryptHeader(uint_least64_t seqnr,
-				   std::span<const std::byte> src,
-				   std::byte *dest) = 0;
+				   std::span<const std::byte, HEADER_SIZE> src,
+				   std::span<std::byte, HEADER_SIZE> dest) = 0;
 
 	/**
 	 * Decrypt the payload.
