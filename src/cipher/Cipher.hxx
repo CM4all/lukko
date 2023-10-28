@@ -106,15 +106,11 @@ public:
 	 *
 	 * @param src the whole packet (header, payload, padding)
 	 *
-	 * @param header_size the portion of #src that is the header
-	 * (which may be encrypted differently from the rest)
-	 *
 	 * @param dest a buffer large enough to hold the encrypted
 	 * packet (header, payload, padding and authentication)
 	 */
 	virtual std::size_t Encrypt(uint_least64_t seqnr,
 				    std::span<const std::byte> src,
-				    std::size_t header_size,
 				    std::byte *dest) = 0;
 };
 

@@ -94,34 +94,31 @@ ChaCha20Poly1305Cipher::DecryptPayload(uint_least64_t seqnr,
 std::size_t
 ChaCha20Poly1305Cipher::Encrypt(uint_least64_t seqnr,
 				std::span<const std::byte> src,
-				std::size_t header_size,
 				std::byte *dest)
 {
-	assert(src.size() > header_size);
+	assert(src.size() > HEADER_SIZE);
 
 	const PackedBE64 seqbuf{seqnr};
 
 	// encrypt the header
-	if (header_size > 0) {
-		crypto_stream_chacha20_xor(dest, src, ReferenceAsBytes(seqbuf), header_key);
-		src = src.subspan(header_size);
-	}
+	crypto_stream_chacha20_xor(dest, src, ReferenceAsBytes(seqbuf), header_key);
+	src = src.subspan(HEADER_SIZE);
 
 	// encrypt the payload
-	crypto_stream_chacha20_xor_ic(dest + header_size, src,
+	crypto_stream_chacha20_xor_ic(dest + HEADER_SIZE, src,
 				      ReferenceAsBytes(seqbuf), 1, payload_key);
 
 	// append Poly1305 auth
 	const ChaCha20Poly1305Key poly_key{ReferenceAsBytes(seqbuf), payload_key};
 
 	const std::span<std::byte, crypto_onetimeauth_poly1305_BYTES> auth{
-		dest + header_size + src.size(),
+		dest + HEADER_SIZE + src.size(),
 		crypto_onetimeauth_poly1305_BYTES,
 	};
 
-	crypto_onetimeauth_poly1305(auth, {dest, header_size + src.size()}, poly_key);
+	crypto_onetimeauth_poly1305(auth, {dest, HEADER_SIZE + src.size()}, poly_key);
 
-	return header_size + src.size() + GetAuthSize();
+	return HEADER_SIZE + src.size() + GetAuthSize();
 }
 
 } // namespace SSH

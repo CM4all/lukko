@@ -61,9 +61,7 @@ Connection::SendPacket(std::span<const std::byte> src)
 
 	if (send_cipher) {
 		const std::size_t encrypted_size =
-			send_cipher->Encrypt(send_seq, src,
-					     sizeof(PacketHeader),
-					     encrypted_output);
+			send_cipher->Encrypt(send_seq, src, encrypted_output);
 		src = std::span{encrypted_output}.first(encrypted_size);
 	}
 
