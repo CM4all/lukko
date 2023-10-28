@@ -101,7 +101,8 @@ ChaCha20Poly1305Cipher::Encrypt(uint_least64_t seqnr,
 	const PackedBE64 seqbuf{seqnr};
 
 	// encrypt the header
-	crypto_stream_chacha20_xor(dest, src, ReferenceAsBytes(seqbuf), header_key);
+	crypto_stream_chacha20_xor(dest, src.first<HEADER_SIZE>(),
+				   ReferenceAsBytes(seqbuf), header_key);
 	src = src.subspan(HEADER_SIZE);
 
 	// encrypt the payload
