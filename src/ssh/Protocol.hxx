@@ -19,7 +19,7 @@ static constexpr std::size_t MIN_PACKET_SIZE = 16;
 static constexpr std::size_t MIN_PADDING = 4;
 
 constexpr std::size_t
-Padding(std::size_t size) noexcept
+Padding(std::size_t size, std::size_t block_size=8) noexcept
 {
 	/* minimum packet size is 16 bytes (see RFC 4253 section 6),
 	   and since the padding is at least 4 bytes, we need to check
@@ -27,7 +27,7 @@ Padding(std::size_t size) noexcept
 	if (size <= MIN_PACKET_SIZE - MIN_PADDING)
 		return MIN_PACKET_SIZE - size;
 
-	return MIN_PADDING + 7 - ((size + MIN_PADDING - 1) & 0x7);
+	return MIN_PADDING + (block_size - 1) - ((size + MIN_PADDING - 1) & (block_size - 1));
 }
 
 static_assert(Padding(0) == 16);
@@ -42,6 +42,21 @@ static_assert(Padding(17) == 7);
 static_assert(Padding(26) == 6);
 static_assert(Padding(28) == 4);
 static_assert(Padding(29) == 11);
+
+static_assert(Padding(0, 16) == 16);
+static_assert(Padding(7, 16) == 9);
+static_assert(Padding(8, 16) == 8);
+static_assert(Padding(11, 16) == 5);
+static_assert(Padding(12, 16) == 4);
+static_assert(Padding(13, 16) == 19);
+static_assert(Padding(15, 16) == 17);
+static_assert(Padding(16, 16) == 16);
+static_assert(Padding(17, 16) == 15);
+static_assert(Padding(26, 16) == 6);
+static_assert(Padding(28, 16) == 4);
+static_assert(Padding(29, 16) == 19);
+static_assert(Padding(32, 16) == 16);
+static_assert(Padding(33, 16) == 15);
 
 /**
  * @see RFC 4253 section 12
