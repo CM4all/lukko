@@ -21,10 +21,9 @@ public:
 			   std::span<const std::byte, HEADER_SIZE> src,
 			   std::span<std::byte, HEADER_SIZE> dest) override;
 
-	std::size_t Decrypt(uint_least64_t seqnr,
-			    std::span<const std::byte> src,
-			    std::size_t skip_src,
-			    std::span<std::byte> dest) override;
+	std::size_t DecryptPayload(uint_least64_t seqnr,
+				   std::span<const std::byte> src,
+				   std::span<std::byte> dest) override;
 
 	std::size_t Encrypt(uint_least64_t seqnr,
 			    std::span<const std::byte> src,

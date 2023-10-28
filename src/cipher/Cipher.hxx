@@ -83,24 +83,20 @@ public:
 				   std::span<std::byte, HEADER_SIZE> dest) = 0;
 
 	/**
-	 * Decrypt the payload.
+	 * Decrypt the payload
 	 *
 	 * Throws on error.
 	 *
 	 * @param src the whole packet (header, payload, padding and
-	 * authentication, if any)
-	 *
-	 * @param skip_src skip this number of bytes at the beginning
-	 * of the packet (the packet header which has already been
-	 * decrypted)
+	 * authentication, if any); the header has already been
+	 * decrypted by DecryptHeader()
 	 *
 	 * @param dest a buffer large enough to hold the decrypted
 	 * payload (including padding)
 	 */
-	virtual std::size_t Decrypt(uint_least64_t seqnr,
-				    std::span<const std::byte> src,
-				    std::size_t skip_src,
-				    std::span<std::byte> dest) = 0;
+	virtual std::size_t DecryptPayload(uint_least64_t seqnr,
+					   std::span<const std::byte> src,
+					   std::span<std::byte> dest) = 0;
 
 	/**
 	 * Encrypt a packet (header, payload and padding) and add

@@ -69,12 +69,11 @@ ChaCha20Poly1305Cipher::DecryptHeader(uint_least64_t seqnr,
 }
 
 std::size_t
-ChaCha20Poly1305Cipher::Decrypt(uint_least64_t seqnr,
-				std::span<const std::byte> src,
-				std::size_t skip_src,
-				std::span<std::byte> dest)
+ChaCha20Poly1305Cipher::DecryptPayload(uint_least64_t seqnr,
+				       std::span<const std::byte> src,
+				       std::span<std::byte> dest)
 {
-	assert(src.size() > skip_src + GetAuthSize());
+	assert(src.size() > HEADER_SIZE + GetAuthSize());
 
 	const PackedBE64 seqbuf{seqnr};
 
@@ -87,7 +86,7 @@ ChaCha20Poly1305Cipher::Decrypt(uint_least64_t seqnr,
 		throw std::invalid_argument{"Invalid Poly1305 MAC"};
 
 	// decrypt the payload
-	src = src.subspan(skip_src);
+	src = src.subspan(HEADER_SIZE);
 	crypto_stream_chacha20_xor_ic(dest.data(), src, ReferenceAsBytes(seqbuf), 1, payload_key);
 	return src.size();
 }

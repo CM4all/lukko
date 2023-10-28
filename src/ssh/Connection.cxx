@@ -312,9 +312,7 @@ Connection::DecryptPacket()
 
 	[[maybe_unused]]
 	const std::size_t nbytes =
-		receive_cipher->Decrypt(receive_seq, r,
-					sizeof(PacketHeader),
-					result);
+		receive_cipher->DecryptPayload(receive_seq, r, result);
 	assert(nbytes == packet_length);
 	socket.DisposeConsumed(need_src);
 
