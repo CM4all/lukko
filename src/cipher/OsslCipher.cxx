@@ -153,14 +153,15 @@ OsslCipher::Encrypt([[maybe_unused]] uint_least64_t seqnr,
 		IncrementIV();
 
 	int outl;
-	if (HasAuth() &&
-	    EVP_CipherUpdate(*ctx, nullptr, &outl,
-			     src.first<HEADER_SIZE>()) != 1)
-		throw SslError{"EVP_CipherUpdate() failed"};
+	if (HasAuth()) {
+		if (EVP_CipherUpdate(*ctx, nullptr, &outl,
+				     src.first<HEADER_SIZE>()) != 1)
+			throw SslError{"EVP_CipherUpdate() failed"};
 
-	std::copy_n(src.begin(), HEADER_SIZE, dest + dest_position);
-	dest_position += HEADER_SIZE;
-	src = src.subspan(HEADER_SIZE);
+		std::copy_n(src.begin(), HEADER_SIZE, dest + dest_position);
+		dest_position += HEADER_SIZE;
+		src = src.subspan(HEADER_SIZE);
+	}
 
 	assert(!IsHeaderExcludedFromPadding() || (src.size() % GetBlockSize()) == 0);
 
