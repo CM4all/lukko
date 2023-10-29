@@ -40,7 +40,8 @@ struct KexState {
 			std::span<const std::byte> shared_secret,
 			bool kex_initial);
 
-	std::unique_ptr<Cipher> MakeCipher(std::string_view algorithms,
+	std::unique_ptr<Cipher> MakeCipher(std::string_view encryption_algorithms,
+					   std::string_view mac_algorithms,
 					   kex_modes mode);
 };
 

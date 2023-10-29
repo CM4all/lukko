@@ -205,6 +205,7 @@ key_dep = declare_dependency(
 cipher_sources = [
   'src/cipher/Factory.cxx',
   'src/cipher/ChaCha20Poly1305Cipher.cxx',
+  'src/cipher/HmacSHA256Cipher.cxx',
 ]
 
 if crypto_dep.found()

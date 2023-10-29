@@ -66,12 +66,14 @@ KexState::DeriveKeys(std::span<const std::byte> hash,
 }
 
 std::unique_ptr<Cipher>
-KexState::MakeCipher(std::string_view algorithms,
+KexState::MakeCipher(std::string_view encryption_algorithms,
+		     std::string_view mac_algorithms,
 		     kex_modes mode)
 {
 	const auto &k = new_keys[mode];
 
-	return SSH::MakeCipher(algorithms, k.enc_key, k.enc_iv,
+	return SSH::MakeCipher(encryption_algorithms, mac_algorithms,
+			       k.enc_key, k.enc_iv, k.mac_key,
 			       mode == MODE_OUT);
 }
 

@@ -21,6 +21,10 @@ constexpr std::string_view all_encryption_algorithms{
 #endif
 };
 
+constexpr std::string_view all_mac_algorithms{
+	"hmac-sha2-256,hmac-sha2-512"
+};
+
 class Cipher;
 
 /**
@@ -32,8 +36,10 @@ class Cipher;
  * cipher
  */
 std::unique_ptr<Cipher>
-MakeCipher(std::string_view algorithms,
+MakeCipher(std::string_view cipher_algorithms,
+	   std::string_view mac_algorithms,
 	   std::span<const std::byte> key, std::span<const std::byte> iv,
+	   std::span<const std::byte> mac_key,
 	   bool do_encrypt);
 
 } // namespace SSH

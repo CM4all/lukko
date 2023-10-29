@@ -102,8 +102,8 @@ Connection::SendKexInit()
 		.server_host_key_algorithms = host_keys.GetAlgorithms(),
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
-		.mac_algorithms_client_to_server = "hmac-sha2-256,hmac-sha2-512"sv,
-		.mac_algorithms_server_to_client = "hmac-sha2-256,hmac-sha2-512"sv,
+		.mac_algorithms_client_to_server = all_mac_algorithms,
+		.mac_algorithms_server_to_client = all_mac_algorithms,
 		.compression_algorithms_client_to_server = "none"sv,
 		.compression_algorithms_server_to_client = "none"sv,
 		.languages_client_to_server = ""sv,
@@ -176,6 +176,7 @@ Connection::SendNewKeys()
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
 
 	send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
+					   mac_algorithms_server_to_client,
 					   MODE_OUT);
 	if (send_cipher == nullptr)
 		throw Disconnect{
@@ -201,8 +202,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	const auto server_host_key_algorithms = d.ReadString(); // server_host_key_algorithms
 	encryption_algorithms_client_to_server.assign(d.ReadString());
 	encryption_algorithms_server_to_client.assign(d.ReadString());
-	d.ReadString(); // mac_algorithms_client_to_server
-	d.ReadString(); // mac_algorithms_server_to_client
+	mac_algorithms_client_to_server.assign(d.ReadString());
+	mac_algorithms_server_to_client.assign(d.ReadString());
 	d.ReadString(); // compression_algorithms_client_to_server
 	d.ReadString(); // compression_algorithms_server_to_client
 	d.ReadString(); // languages_client_to_server
@@ -227,6 +228,7 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 	(void)payload;
 
 	receive_cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
+					      mac_algorithms_client_to_server,
 					      MODE_IN);
 	if (receive_cipher == nullptr)
 		throw Disconnect{

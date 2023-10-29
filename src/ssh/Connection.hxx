@@ -43,7 +43,9 @@ class Connection : BufferedSocketHandler
 	AllocatedArray<std::byte> client_kexinit, server_kexinit;
 
 	std::string encryption_algorithms_client_to_server,
-		encryption_algorithms_server_to_client;
+		encryption_algorithms_server_to_client,
+		mac_algorithms_client_to_server,
+		mac_algorithms_server_to_client;
 
 	KexState kex_state;
 
