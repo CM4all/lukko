@@ -6,6 +6,7 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "SessionChannel.hxx"
+#include "SocketChannel.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -13,6 +14,7 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
+#include "net/RConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
@@ -128,6 +130,34 @@ Connection::OpenChannel(std::string_view channel_type,
 		CConnection &connection = *this;
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
 							connection, init);
+	} else if (channel_type == "direct-tcpip"sv) {
+		CConnection &connection = *this;
+
+		SSH::Deserializer d{payload};
+		const auto connect_host = d.ReadString();
+		const auto connect_port = d.ReadU32();
+		const auto originator_ip = d.ReadString();
+		const auto originator_port = d.ReadU32();
+
+		fmt::print(stderr, "  connect=[{}]:{} originator=[{}]:{}\n",
+			   connect_host, connect_port,
+			   originator_ip, originator_port);
+
+		try {
+			// TODO make asynchronous
+			// TODO network namespace support
+			auto s = ResolveConnectStreamSocket(std::string{connect_host}.c_str(), connect_port,
+							    std::chrono::seconds{5});
+			return std::make_unique<SocketChannel>(connection, init, std::move(s));
+		} catch (const std::system_error &e) {
+			logger(1, "Failed to connect to [",
+			       connect_host, "]:", connect_port, ": ",
+			       std::current_exception());
+			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
+							       SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+							       e.what()));
+			return {};
+		}
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, init, payload);
 }

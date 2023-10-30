@@ -236,6 +236,7 @@ executable(
   'src/Listener.cxx',
   'src/Connection.cxx',
   'src/SessionChannel.cxx',
+  'src/SocketChannel.cxx',
   'src/AllocatorPtr.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
