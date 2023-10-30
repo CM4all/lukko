@@ -149,15 +149,15 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	std::byte hash_buffer[DIGEST_MAX_SIZE];
 	const auto hashlen = CalcKexHash(hash_alg,
-					  client_version,
-					  server_version,
-					  client_kexinit,
-					  server_kexinit,
-					  server_host_key_blob,
-					  client_ephemeral_public_key,
-					  server_ephemeral_public_key,
-					  shared_secret_,
-					  hash_buffer);
+					 client_version,
+					 server_version,
+					 client_kexinit,
+					 server_kexinit,
+					 server_host_key_blob,
+					 client_ephemeral_public_key,
+					 server_ephemeral_public_key,
+					 shared_secret_,
+					 hash_buffer);
 
 	const auto hash = std::span{hash_buffer}.first(hashlen);
 
