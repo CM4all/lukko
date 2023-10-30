@@ -118,7 +118,8 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 
 std::unique_ptr<SSH::Channel>
 Connection::OpenChannel(std::string_view channel_type,
-			SSH::ChannelInit init)
+			SSH::ChannelInit init,
+			std::span<const std::byte> payload)
 {
 	fmt::print(stderr, "ChannelOpen type={} local_channel={} peer_channel={}\n",
 		   channel_type, init.local_channel, init.peer_channel);
@@ -128,7 +129,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
 							connection, init);
 	} else
-		return SSH::CConnection::OpenChannel(channel_type, init);
+		return SSH::CConnection::OpenChannel(channel_type, init, payload);
 }
 
 inline void

@@ -73,7 +73,8 @@ private:
 
 	/* virtual methods from class SSH::CConnection */
 	std::unique_ptr<SSH::Channel> OpenChannel(std::string_view channel_type,
-						  SSH::ChannelInit init) override;
+						  SSH::ChannelInit init,
+						  std::span<const std::byte> payload) override;
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,

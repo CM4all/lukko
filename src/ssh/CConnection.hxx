@@ -44,7 +44,8 @@ private:
 
 protected:
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
-						     ChannelInit _init);
+						     ChannelInit _init,
+						     std::span<const std::byte> payload);
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,

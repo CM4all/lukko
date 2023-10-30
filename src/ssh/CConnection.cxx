@@ -87,7 +87,8 @@ CConnection::GetChannel(uint_least32_t local_channel)
 
 std::unique_ptr<Channel>
 CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
-			 [[maybe_unused]] ChannelInit init)
+			 [[maybe_unused]] ChannelInit init,
+			 [[maybe_unused]] std::span<const std::byte> payload)
 {
 	SendPacket(MakeChannelOpenFailure(init.peer_channel,
 					  ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
@@ -104,6 +105,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 	const auto channel_type = d.ReadString();
 	const uint_least32_t peer_channel = d.ReadU32();
 	const uint_least32_t initial_window_size = d.ReadU32();
+	d.ReadU32(); // TODO maximum packet size
 
 	const uint_least32_t local_channel = AllocateChannelIndex();
 	if (local_channel >= channels.size()) {
@@ -119,7 +121,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 		.send_window = initial_window_size,
 	};
 
-	auto channel = OpenChannel(channel_type, init);
+	auto channel = OpenChannel(channel_type, init, d.GetRest());
 	if (!channel)
 		// method must have sent CHANNEL_OPEN_FAILURE
 		return;
