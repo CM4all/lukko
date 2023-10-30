@@ -15,6 +15,7 @@ class Instance;
 class Listener;
 class RootLogger;
 class UniqueFileDescriptor;
+class SpawnService;
 
 namespace SSH {
 class PacketSerializer;
@@ -40,6 +41,9 @@ public:
 		   UniqueSocketDescriptor fd,
 		   const SecretKeyList &_host_keys);
 	~Connection() noexcept;
+
+	[[gnu::const]]
+	SpawnService &GetSpawnService() const noexcept;
 
 	Listener &GetListener() const noexcept {
 		return listener;

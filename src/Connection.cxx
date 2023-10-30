@@ -61,6 +61,12 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 
 Connection::~Connection() noexcept = default;
 
+SpawnService &
+Connection::GetSpawnService() const noexcept
+{
+	return instance.GetSpawnService();
+}
+
 #ifdef ENABLE_TRANSLATION
 
 const TranslateResponse *
@@ -143,8 +149,7 @@ Connection::OpenChannel(std::string_view channel_type,
 
 	if (channel_type == "session"sv) {
 		CConnection &connection = *this;
-		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
-							connection, init);
+		return std::make_unique<SessionChannel>(connection, init);
 	} else if (channel_type == "direct-tcpip"sv) {
 		if (!IsForwardingAllowed()) {
 			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,

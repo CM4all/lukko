@@ -28,11 +28,9 @@
 
 using std::string_view_literals::operator""sv;
 
-SessionChannel::SessionChannel(SpawnService &_spawn_service,
-			       SSH::CConnection &_connection,
+SessionChannel::SessionChannel(SSH::CConnection &_connection,
 			       SSH::ChannelInit init) noexcept
 	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
-	 spawn_service(_spawn_service),
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -159,6 +157,9 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 void
 SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 {
+	auto &c = static_cast<Connection &>(GetConnection());
+	auto &spawn_service = c.GetSpawnService();
+
 	if (GetSendWindow() > 0)
 		ScheduleRead();
 

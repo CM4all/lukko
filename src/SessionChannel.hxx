@@ -13,14 +13,11 @@
 #include <memory>
 
 struct PreparedChildProcess;
-class SpawnService;
 class ChildProcessHandle;
 
 class SessionChannel final : public SSH::Channel, ExitListener
 {
 	static constexpr std::size_t RECEIVE_WINDOW = 16384;
-
-	SpawnService &spawn_service;
 
 	std::unique_ptr<ChildProcessHandle> child;
 
@@ -35,8 +32,7 @@ class SessionChannel final : public SSH::Channel, ExitListener
 	std::forward_list<std::string> env;
 
 public:
-	SessionChannel(SpawnService &_spawn_service,
-		       SSH::CConnection &_connection,
+	SessionChannel(SSH::CConnection &_connection,
 		       SSH::ChannelInit init) noexcept;
 
 	~SessionChannel() noexcept override;
