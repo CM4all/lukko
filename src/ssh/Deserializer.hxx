@@ -58,6 +58,24 @@ public:
 	std::span<const std::byte> GetRest() const noexcept {
 		return src;
 	}
+
+	using Marker = std::span<const std::byte>::iterator;
+
+	/**
+	 * Generate an opaque marker for the current position.
+	 */
+	constexpr Marker Mark() const noexcept {
+		return src.begin();
+	}
+
+	/**
+	 * Returns a view on the data added since Mark() was called.
+	 */
+	constexpr std::span<const std::byte> Since(Marker old_position) const noexcept {
+		assert(Mark() >= old_position);
+
+		return {old_position, Mark()};
+	}
 };
 
 } // namespace Mysql
