@@ -67,9 +67,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	bool IsForwardingAllowed() const noexcept {
-		return !IsSftpOnly();
-	}
+	bool IsForwardingAllowed() const noexcept;
 
 protected:
 	void Destroy() noexcept override {

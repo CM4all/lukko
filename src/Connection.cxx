@@ -93,6 +93,24 @@ Connection::IsSftpOnly() const noexcept
 	return false;
 }
 
+bool
+Connection::IsForwardingAllowed() const noexcept
+{
+	if (IsSftpOnly())
+		return false;
+
+#ifdef ENABLE_TRANSLATION
+	if (translation &&
+	    translation->response.child_options.ns.enable_network)
+		/* if the user is supposed to run in an isolated
+		   network namespace, refuse to open TCP connections
+		   anywhere */
+		return false;
+#endif
+
+	return true;
+}
+
 inline const char *
 Connection::GetHome() const noexcept
 {
