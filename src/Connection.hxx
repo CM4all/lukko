@@ -54,6 +54,19 @@ public:
 	const TranslateResponse *GetTranslationResponse() const noexcept;
 #endif
 
+	[[gnu::pure]]
+	bool IsSftpOnly() const noexcept;
+
+	[[gnu::pure]]
+	bool IsExecAllowed() const noexcept {
+		return !IsSftpOnly();
+	}
+
+	[[gnu::pure]]
+	bool IsForwardingAllowed() const noexcept {
+		return !IsSftpOnly();
+	}
+
 protected:
 	void Destroy() noexcept override {
 		delete this;

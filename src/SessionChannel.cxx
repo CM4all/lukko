@@ -12,7 +12,6 @@
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
-#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -188,10 +187,7 @@ SessionChannel::Exec(const char *cmd)
 		if (tr->shell != nullptr)
 			shell = tr->shell;
 
-		if (tr->token != nullptr &&
-		    StringIsEqual(tr->token, "sftp-only"))
-			/* the translation server asks us not to
-			   provide this user with a shell */
+		if (!c.IsExecAllowed())
 			return false;
 	}
 #endif // ENABLE_TRANSLATION

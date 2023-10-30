@@ -20,6 +20,7 @@
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringVerify.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -71,6 +72,20 @@ Connection::GetTranslationResponse() const noexcept
 }
 
 #endif
+
+bool
+Connection::IsSftpOnly() const noexcept
+{
+	assert(IsAuthenticated());
+
+#ifdef ENABLE_TRANSLATION
+	if (translation && translation->response.token != nullptr &&
+	    StringIsEqual(translation->response.token, "sftp-only"))
+		return true;
+#endif
+
+	return false;
+}
 
 inline const char *
 Connection::GetHome() const noexcept
@@ -131,6 +146,13 @@ Connection::OpenChannel(std::string_view channel_type,
 		return std::make_unique<SessionChannel>(instance.GetSpawnService(),
 							connection, init);
 	} else if (channel_type == "direct-tcpip"sv) {
+		if (!IsForwardingAllowed()) {
+			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
+							       SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
+							       "TCP forwarding not allowed"));
+			return {};
+		}
+
 		CConnection &connection = *this;
 
 		SSH::Deserializer d{payload};
