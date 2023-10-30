@@ -247,8 +247,6 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			return;
 		}
 
-		// TODO check if this key is acceptable
-
 		if (!with_signature) {
 			SendPacket(SSH::MakeUserauthPkOk(public_key_algorithm,
 							 public_key_blob));
