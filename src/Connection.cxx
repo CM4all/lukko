@@ -186,11 +186,31 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	std::string_view auth_methods = "publickey"sv;
 
 #ifdef ENABLE_TRANSLATION
+	bool password_accepted = false;
+
 	if (const char *translation_server = instance.GetTranslationServer()) {
+		auth_methods = "publickey,password"sv;
+
+		std::string_view password{};
+		if (method_name == "password"sv) {
+			const bool change_password = d.ReadBool();
+			if (change_password) {
+				/* password change not implemented */
+				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+				return;
+			}
+
+			password = d.ReadString();
+			if (password.empty()) {
+				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+				return;
+			}
+		}
+
 		Allocator alloc;
 		auto response = TranslateLogin(alloc, translation_server,
 					       "ssh"sv, listener.GetTag(),
-					       new_username, {});
+					       new_username, password);
 
 		if (response.status != HttpStatus{}) {
 			SendPacket(SSH::MakeUserauthFailure({}, false));
@@ -199,6 +219,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response));
+		password_accepted = !password.empty();
 	}
 #endif // ENABLE_TRANSLATION
 
@@ -256,6 +277,11 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 				return;
 			}
 		}
+#ifdef ENABLE_TRANSLATION
+	} else if (password_accepted) {
+		/* the password was successfully verified by the
+		   translation server */
+#endif // ENABLE_TRANSLATION
 	} else {
 		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 		return;
