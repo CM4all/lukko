@@ -7,6 +7,7 @@
 #include "Listener.hxx"
 #include "SessionChannel.hxx"
 #include "SocketChannel.hxx"
+#include "RConnect.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -14,7 +15,6 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
-#include "net/RConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
@@ -191,8 +191,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		try {
 			// TODO make asynchronous
 			// TODO network namespace support
-			auto s = ResolveConnectStreamSocket(std::string{connect_host}.c_str(), connect_port,
-							    std::chrono::seconds{5});
+			auto s = ResolveConnectTCP(connect_host, connect_port);
 			return std::make_unique<SocketChannel>(connection, init, std::move(s));
 		} catch (const std::system_error &e) {
 			logger(1, "Failed to connect to [",
