@@ -137,7 +137,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 		SendPacket(std::move(s));
 	}
 
-	channels[peer_channel] = channel.release();
+	channels[local_channel] = channel.release();
 }
 
 inline void
