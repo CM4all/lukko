@@ -132,7 +132,7 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 	if (tty.IsDefined()) {
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
 		p.tty = true;
-		p.ns.mount.mount_pts = true;
+		p.ns.mount.mount_pts = !debug_mode;
 	} else {
 		UniqueFileDescriptor stdin_r, stdout_r, stdout_w, stderr_r, stderr_w;
 		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe) ||
