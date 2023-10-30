@@ -54,8 +54,7 @@ private:
 	}
 
 	bool IsActive() const noexcept {
-		return stdin_pipe.IsDefined() ||
-			stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||
+		return stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||
 			tty.IsDefined() ||
 			child;
 	}

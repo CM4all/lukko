@@ -91,7 +91,6 @@ void
 SessionChannel::OnEof()
 {
 	stdin_pipe.Close();
-	CloseIfInactive();
 }
 
 static const char *
@@ -397,6 +396,7 @@ SessionChannel::OnChildProcessExit(int status) noexcept
 	(void)status;
 
 	child = {};
+	stdin_pipe.Close();
 
 	CloseIfInactive();
 }
