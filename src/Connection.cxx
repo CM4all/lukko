@@ -183,6 +183,8 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			"Illegal user name"sv,
 		};
 
+	std::string_view auth_methods = "publickey"sv;
+
 #ifdef ENABLE_TRANSLATION
 	if (const char *translation_server = instance.GetTranslationServer()) {
 		Allocator alloc;
@@ -208,7 +210,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			   public_key_algorithm);
 
 		if (!IsAcceptedPublicKey(public_key_blob)) {
-			SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			return;
 		}
 
@@ -219,7 +221,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		} catch (...) {
 			logger(1, "Failed to parse the client's public key: ",
 			       std::current_exception());
-			SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			return;
 		}
 
@@ -244,18 +246,18 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 				s.WriteLengthEncoded(public_key_blob);
 
 				if (!public_key->Verify(s.Finish(), signature)) {
-					SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+					SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 					return;
 				}
 			} catch (...) {
 				logger(1, "Failed to verify the client's public key: ",
 				       std::current_exception());
-				SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				return;
 			}
 		}
 	} else {
-		SendPacket(SSH::MakeUserauthFailure("publickey"sv, false));
+		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 		return;
 	}
 
