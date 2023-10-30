@@ -63,7 +63,7 @@ SocketChannel::OnSocketReady(unsigned events) noexcept
 	}
 
 	/* is the kernel's receive buffer empty? */
-	bool empty = true;
+	bool empty = false;
 
 	if (events & SocketEvent::READ) {
 		std::byte buffer[4096];
