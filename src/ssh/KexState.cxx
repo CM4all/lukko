@@ -41,10 +41,12 @@ KexState::DeriveKeys(std::span<const std::byte> hash,
 		     bool kex_initial)
 {
 	if (kex_initial) {
-		if (!session_id.empty())
-			throw std::runtime_error{"Duplicate session ID"};
-
-		session_id = hash;
+		/* RFC 4253 section 9: "Re-exchange is processed
+		   identically to the initial key exchange, except for
+		   the session identifier that will remain
+		   unchanged" */
+		if (session_id.empty())
+			session_id = hash;
 	} else {
 		if (session_id.empty())
 			throw std::runtime_error{"No session ID"};
