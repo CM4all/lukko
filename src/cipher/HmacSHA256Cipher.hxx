@@ -42,6 +42,9 @@ public:
 	std::size_t Encrypt(uint_least64_t seqnr,
 			    std::span<const std::byte> src,
 			    std::byte *dest) override;
+
+private:
+	void InitState(uint_least64_t seqnr) noexcept;
 };
 
 } // namespace SSH

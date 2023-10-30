@@ -34,13 +34,9 @@ HmacSHA256Cipher::~HmacSHA256Cipher() noexcept
 	sodium_memzero(&key, sizeof(key));
 }
 
-void
-HmacSHA256Cipher::DecryptHeader(uint_least64_t seqnr,
-				std::span<const std::byte, HEADER_SIZE> src,
-				std::span<std::byte, HEADER_SIZE> dest)
+inline void
+HmacSHA256Cipher::InitState(uint_least64_t seqnr) noexcept
 {
-	next->DecryptHeader(seqnr, src, dest);
-
 	crypto_auth_hmacsha256_init(&state,
 				    reinterpret_cast<const unsigned char *>(key.data()),
 				    key.size());
@@ -49,6 +45,16 @@ HmacSHA256Cipher::DecryptHeader(uint_least64_t seqnr,
 	crypto_auth_hmacsha256_update(&state,
 				      reinterpret_cast<const unsigned char *>(&seqbuf),
 				      sizeof(seqbuf));
+}
+
+void
+HmacSHA256Cipher::DecryptHeader(uint_least64_t seqnr,
+				std::span<const std::byte, HEADER_SIZE> src,
+				std::span<std::byte, HEADER_SIZE> dest)
+{
+	next->DecryptHeader(seqnr, src, dest);
+
+	InitState(seqnr);
 
 	crypto_auth_hmacsha256_update(&state,
 				      reinterpret_cast<const unsigned char *>(dest.data()),
@@ -91,14 +97,8 @@ HmacSHA256Cipher::Encrypt(uint_least64_t seqnr,
 {
 	assert(src.size() >= HEADER_SIZE);
 
-	crypto_auth_hmacsha256_init(&state,
-				    reinterpret_cast<const unsigned char *>(key.data()),
-				    key.size());
+	InitState(seqnr);
 
-	const uint32_t seqbuf = ToBE32(seqnr);
-	crypto_auth_hmacsha256_update(&state,
-				      reinterpret_cast<const unsigned char *>(&seqbuf),
-				      sizeof(seqbuf));
 	crypto_auth_hmacsha256_update(&state,
 				      reinterpret_cast<const unsigned char *>(src.data()),
 				      src.size());
