@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Serializer.hxx"
+#include "PacketSerializer.hxx"
 
 namespace SSH {
 
