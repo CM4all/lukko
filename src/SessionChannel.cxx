@@ -82,6 +82,10 @@ SessionChannel::OnData(std::span<const std::byte> payload)
 		stdin_pipe.Write(payload);
 	else if (tty.IsDefined())
 		tty.GetFileDescriptor().Write(payload);
+	else
+		/* do not update receive window if there's no
+		   destination */
+		return;
 
 	if (ConsumeReceiveWindow(payload.size()) < RECEIVE_WINDOW/ 2)
 		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
