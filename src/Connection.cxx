@@ -165,6 +165,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		return;
 
 	SSH::Deserializer d{payload};
+	const auto to_be_signed_marker = d.Mark();
 	const auto new_username = d.ReadString();
 	const auto service_name = d.ReadString();
 	const auto method_name = d.ReadString();
@@ -253,18 +254,14 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 							 public_key_blob));
 			return;
 		} else {
+			const auto to_be_signed = d.Since(to_be_signed_marker);
 			const auto signature = d.ReadLengthEncoded();
 
 			try {
 				SSH::Serializer s;
 				s.WriteLengthEncoded(GetSessionId());
 				s.WriteU8(static_cast<uint_least8_t>(SSH::MessageNumber::USERAUTH_REQUEST));
-				s.WriteString(new_username);
-				s.WriteString(service_name);
-				s.WriteString(method_name);
-				s.WriteBool(true);
-				s.WriteString(public_key_algorithm);
-				s.WriteLengthEncoded(public_key_blob);
+				s.WriteN(to_be_signed);
 
 				if (!public_key->Verify(s.Finish(), signature)) {
 					SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
