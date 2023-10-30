@@ -37,8 +37,6 @@ SocketChannel::OnWindowAdjust(std::size_t nbytes)
 void
 SocketChannel::OnData(std::span<const std::byte> payload)
 {
-	assert(!eof);
-
 	const auto nbytes = socket.GetSocket().WriteNoWait(payload);
 	if (nbytes < 0)
 		throw MakeErrno("Failed to send");
@@ -52,10 +50,7 @@ SocketChannel::OnData(std::span<const std::byte> payload)
 void
 SocketChannel::OnEof()
 {
-	eof = true;
-
-	// TODO flush pending data?
-	Close();
+	socket.GetSocket().ShutdownWrite();
 }
 
 void
@@ -87,9 +82,7 @@ SocketChannel::OnSocketReady(unsigned events) noexcept
 		}
 
 		if (nbytes == 0) {
-			if (eof)
-				Close();
-			socket.CancelRead();
+			Close();
 			return;
 		}
 

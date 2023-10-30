@@ -18,8 +18,6 @@ class SocketChannel final : public SSH::Channel
 
 	SocketEvent socket;
 
-	bool eof = false;
-
 public:
 	SocketChannel(SSH::CConnection &_connection,
 		      SSH::ChannelInit init,
