@@ -7,6 +7,8 @@
 #include <string_view>
 
 class UniqueSocketDescriptor;
+class Connection;
 
 UniqueSocketDescriptor
-ResolveConnectTCP(std::string_view host, unsigned port);
+ResolveConnectTCP(const Connection &ssh_connection,
+		  std::string_view host, unsigned port);

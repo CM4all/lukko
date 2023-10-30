@@ -191,7 +191,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		try {
 			// TODO make asynchronous
 			// TODO network namespace support
-			auto s = ResolveConnectTCP(connect_host, connect_port);
+			auto s = ResolveConnectTCP(*this, connect_host, connect_port);
 			return std::make_unique<SocketChannel>(connection, init, std::move(s));
 		} catch (const std::system_error &e) {
 			logger(1, "Failed to connect to [",
