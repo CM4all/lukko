@@ -53,6 +53,8 @@ class Connection : BufferedSocketHandler
 
 	uint_least64_t receive_seq = 0, send_seq = 0;
 
+	const Role role;
+
 	bool version_exchanged = false;
 
 	bool authenticated = false;
@@ -69,6 +71,7 @@ protected:
 
 public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor fd,
+		   Role _role,
 		   const SecretKeyList &_host_keys);
 	~Connection() noexcept;
 

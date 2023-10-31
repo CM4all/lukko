@@ -38,10 +38,9 @@ struct KexState {
 
 	static constexpr DigestAlgorithm hash_alg = DigestAlgorithm::SHA256; // TODO
 
-	static constexpr Role role = Role::SERVER;
-
 	void DeriveKeys(std::span<const std::byte> hash,
 			std::span<const std::byte> shared_secret,
+			Role role,
 			bool kex_initial);
 
 	std::unique_ptr<Cipher> MakeCipher(std::string_view encryption_algorithms,

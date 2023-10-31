@@ -39,9 +39,11 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 }
 
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
+		       Role _role,
 		       const SecretKeyList &_host_keys)
 	:host_keys(_host_keys),
-	 socket(event_loop)
+	 socket(event_loop),
+	 role(_role)
 {
 	socket.Init(_fd.Release(), FD_TCP,
 		    std::chrono::seconds(30),
@@ -167,7 +169,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	SendPacket(std::move(s));
 
-	kex_state.DeriveKeys(hash, shared_secret_, true);
+	kex_state.DeriveKeys(hash, shared_secret_, role, true);
 }
 
 inline void

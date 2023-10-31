@@ -56,6 +56,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 		       UniqueSocketDescriptor _fd,
 		       const SecretKeyList &_host_keys)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
+			  SSH::Role::SERVER,
 			  _host_keys),
 	 instance(_instance), listener(_listener),
 	 logger(instance.GetLogger())

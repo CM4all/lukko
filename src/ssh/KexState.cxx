@@ -38,6 +38,7 @@ DeriveKey(const char id, std::size_t need,
 void
 KexState::DeriveKeys(std::span<const std::byte> hash,
 		     std::span<const std::byte> shared_secret,
+		     Role role,
 		     bool kex_initial)
 {
 	if (kex_initial) {
