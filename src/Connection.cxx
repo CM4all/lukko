@@ -234,6 +234,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		const auto connect_port = d.ReadU32();
 		const auto originator_ip = d.ReadString();
 		const auto originator_port = d.ReadU32();
+		d.ExpectEnd();
 
 		fmt::print(stderr, "  connect=[{}]:{} originator=[{}]:{}\n",
 			   connect_host, connect_port,
@@ -251,8 +252,9 @@ inline void
 Connection::HandleServiceRequest(std::span<const std::byte> payload)
 {
 	SSH::Deserializer d{payload};
-
 	const auto service = d.ReadString();
+	d.ExpectEnd();
+
 	fmt::print(stderr, "ServiceRequest '{}'\n", service);
 
 	if (service == "ssh-userauth"sv) {
@@ -311,13 +313,15 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		std::string_view password{};
 		if (method_name == "password"sv) {
 			const bool change_password = d.ReadBool();
+			password = d.ReadString();
+			d.ExpectEnd();
+
 			if (change_password) {
 				/* password change not implemented */
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				return;
 			}
 
-			password = d.ReadString();
 			if (password.empty()) {
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				return;
@@ -344,6 +348,8 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		const bool with_signature = d.ReadBool();
 		const auto public_key_algorithm = d.ReadString();
 		const auto public_key_blob = d.ReadLengthEncoded();
+		d.ExpectEnd();
+
 		fmt::print(stderr, "  public_key_algorithm='{}'\n",
 			   public_key_algorithm);
 
@@ -397,6 +403,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		const auto client_user_name = d.ReadString();
 		const auto to_be_signed = d.Since(to_be_signed_marker);
 		const auto signature = d.ReadLengthEncoded();
+		d.ExpectEnd();
 
 		fmt::print(stderr, "  hostbased public_key_algorithm='{}' client_host_name='{}' client_user_name='{}'\n",
 			   public_key_algorithm, client_host_name, client_user_name);

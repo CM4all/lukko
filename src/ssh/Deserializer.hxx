@@ -59,6 +59,11 @@ public:
 		return src;
 	}
 
+	void ExpectEnd() const {
+		if (!src.empty())
+			throw MalformedPacket{};
+	}
+
 	using Marker = std::span<const std::byte>::iterator;
 
 	/**

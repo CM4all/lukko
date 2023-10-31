@@ -237,7 +237,6 @@ inline void
 CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 {
 	Deserializer d{payload};
-
 	const auto channel_type = d.ReadString();
 	const uint_least32_t peer_channel = d.ReadU32();
 	const uint_least32_t initial_window_size = d.ReadU32();
@@ -253,6 +252,7 @@ CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 	Deserializer d{payload};
 	const uint_least32_t local_channel = d.ReadU32();
 	const uint_least32_t nbytes = d.ReadU32();
+	d.ExpectEnd();
 
 	if (nbytes == 0)
 		throw std::invalid_argument{"Bad window adjustment"};
@@ -267,6 +267,7 @@ CConnection::HandleChannelData(std::span<const std::byte> payload)
 	Deserializer d{payload};
 	const uint_least32_t local_channel = d.ReadU32();
 	std::span<const std::byte> data = d.ReadLengthEncoded();
+	d.ExpectEnd();
 
 	auto &channel = GetChannel(local_channel);
 	if (data.size() > channel.GetReceiveWindow())
@@ -282,6 +283,7 @@ CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
 	const uint_least32_t local_channel = d.ReadU32();
 	const auto data_type = static_cast<ChannelExtendedDataType>(d.ReadU32());
 	std::span<const std::byte> data = d.ReadLengthEncoded();
+	d.ExpectEnd();
 
 	auto &channel = GetChannel(local_channel);
 	if (data.size() > channel.GetReceiveWindow())
@@ -295,6 +297,7 @@ CConnection::HandleChannelEof(std::span<const std::byte> payload)
 {
 	Deserializer d{payload};
 	const uint_least32_t local_channel = d.ReadU32();
+	d.ExpectEnd();
 
 	auto &channel = GetChannel(local_channel);
 	channel.OnEof();
@@ -305,6 +308,7 @@ CConnection::HandleChannelClose(std::span<const std::byte> payload)
 {
 	Deserializer d{payload};
 	const uint_least32_t local_channel = d.ReadU32();
+	d.ExpectEnd();
 
 	const auto &channel = GetChannel(local_channel);
 	if (!IsTombstoneChannel(channel))

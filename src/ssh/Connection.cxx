@@ -206,6 +206,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	d.ReadString(); // languages_server_to_client
 	d.ReadBool(); // first_kex_packet_follows
 	d.ReadU32(); // reserved
+	d.ExpectEnd();
 
 	std::tie(host_key, host_key_algorithm) =
 		host_keys.Choose(server_host_key_algorithms);
@@ -243,8 +244,8 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 		};
 
 	Deserializer d{payload};
-
 	const auto client_ephemeral_public_key = d.ReadLengthEncoded();
+	d.ExpectEnd();
 
 	SendECDHKexInitReply(client_ephemeral_public_key);
 	SendNewKeys();

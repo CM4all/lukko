@@ -232,6 +232,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 	if (request_type == "exec"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string command{d.ReadString()};
+		d.ExpectEnd();
+
 		fmt::print(stderr, "  exec '{}'\n", command);
 
 		return Exec(command.c_str());
@@ -240,6 +242,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string_view subsystem_name{d.ReadString()};
+		d.ExpectEnd();
 
 		fmt::print(stderr, "  subsystem '{}'\n", subsystem_name);
 
@@ -271,6 +274,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		ws.ws_xpixel = d.ReadU32();
 		ws.ws_ypixel = d.ReadU32();
 		const auto encoded_terminal_modes = d.ReadLengthEncoded();
+		d.ExpectEnd();
 
 		int master, slave;
 
@@ -294,6 +298,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		SSH::Deserializer d{type_specific};
 		const auto name = d.ReadString();
 		const auto value = d.ReadString();
+		d.ExpectEnd();
 
 		SetEnv(name, value);
 		return true;
