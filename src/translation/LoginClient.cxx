@@ -7,8 +7,8 @@
 #include "translation/Protocol.hxx"
 #include "translation/Response.hxx"
 #include "AllocatorPtr.hxx"
+#include "net/SocketError.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "system/Error.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/SpanCast.hxx"
 
@@ -67,7 +67,7 @@ SendFull(SocketDescriptor fd, std::span<const std::byte> buffer)
 	ssize_t nbytes = send(fd.Get(), buffer.data(), buffer.size(),
 			      MSG_NOSIGNAL);
 	if (nbytes < 0)
-		throw MakeErrno("send() to translation server failed");
+		throw MakeSocketError("send() to translation server failed");
 
 	if (size_t(nbytes) != buffer.size())
 		throw std::runtime_error("Short send() to translation server");
@@ -121,7 +121,7 @@ ReceiveResponse(AllocatorPtr alloc, SocketDescriptor fd)
 
 		ssize_t nbytes = recv(fd.Get(), w.data(), w.size(), MSG_NOSIGNAL);
 		if (nbytes < 0)
-			throw MakeErrno("recv() from translation server failed");
+			throw MakeSocketError("recv() from translation server failed");
 
 		if (nbytes == 0)
 			throw std::runtime_error("Translation server hung up");

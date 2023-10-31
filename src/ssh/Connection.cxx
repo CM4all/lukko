@@ -15,9 +15,9 @@
 #include "key/List.hxx"
 #include "cipher/Cipher.hxx"
 #include "cipher/Factory.hxx"
-#include "system/Error.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
@@ -49,7 +49,7 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
 	socket.ScheduleRead();
 
 	if (socket.DirectWrite(AsBytes(g_server_version)) < 0)
-		throw MakeErrno("Failed to send VersionExchange");
+		throw MakeSocketError("Failed to send VersionExchange");
 }
 
 Connection::~Connection() noexcept = default;

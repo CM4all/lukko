@@ -6,9 +6,9 @@
 #include "LoginClient.hxx"
 #include "translation/Response.hxx"
 #include "AllocatorPtr.hxx"
+#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "system/Error.hxx"
 
 #include <sys/socket.h>
 
@@ -19,14 +19,14 @@ TranslateLogin(AllocatorPtr alloc, const char *socket_path,
 {
 	UniqueSocketDescriptor fd;
 	if (!fd.Create(AF_LOCAL, SOCK_STREAM, 0))
-		throw MakeErrno("Failed to create translation socket");
+		throw MakeSocketError("Failed to create translation socket");
 
 	{
 		AllocatedSocketAddress address;
 		address.SetLocal(socket_path);
 
 		if (!fd.Connect(address))
-			throw MakeErrno("Failed to connect to translation server");
+			throw MakeSocketError("Failed to connect to translation server");
 	}
 
 	return TranslateLogin(alloc, fd,

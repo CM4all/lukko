@@ -5,7 +5,7 @@
 #include "SocketChannel.hxx"
 #include "Connection.hxx"
 #include "ssh/CConnection.hxx"
-#include "system/Error.hxx"
+#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 SocketChannel::SocketChannel(SSH::CConnection &_connection,
@@ -39,7 +39,7 @@ SocketChannel::OnData(std::span<const std::byte> payload)
 {
 	const auto nbytes = socket.GetSocket().WriteNoWait(payload);
 	if (nbytes < 0)
-		throw MakeErrno("Failed to send");
+		throw MakeSocketError("Failed to send");
 	// TODO handle EAGAIN
 	// TODO handle short send
 
