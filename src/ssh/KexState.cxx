@@ -59,8 +59,8 @@ KexState::DeriveKeys(std::span<const std::byte> hash,
 		i = DeriveKey(id++, we_need, hash, shared_secret, session_id, hash_alg);
 
 	for (unsigned mode = 0; mode < new_keys.size(); ++mode) {
-		const bool ctos = (!is_server && mode == MODE_OUT) ||
-		    (is_server && mode == MODE_IN);
+		const bool ctos = (role != Role::SERVER && mode == MODE_OUT) ||
+			(role == Role::SERVER && mode == MODE_IN);
 		new_keys[mode].enc_iv = std::move(keys[ctos ? 0 : 1]);
 		new_keys[mode].enc_key = std::move(keys[ctos ? 2 : 3]);
 		new_keys[mode].mac_key = std::move(keys[ctos ? 4 : 5]);

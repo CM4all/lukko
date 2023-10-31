@@ -15,6 +15,11 @@ namespace SSH {
 
 class Cipher;
 
+enum class Role : uint_least8_t {
+	SERVER,
+	CLIENT,
+};
+
 enum kex_modes {
 	MODE_IN,
 	MODE_OUT,
@@ -34,7 +39,7 @@ struct KexState {
 
 	static constexpr DigestAlgorithm hash_alg = DigestAlgorithm::SHA256; // TODO
 
-	static constexpr bool is_server = true;
+	static constexpr Role role = Role::SERVER;
 
 	void DeriveKeys(std::span<const std::byte> hash,
 			std::span<const std::byte> shared_secret,
