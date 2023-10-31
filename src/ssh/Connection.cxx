@@ -177,7 +177,7 @@ Connection::SendNewKeys()
 
 	send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
 					   mac_algorithms_server_to_client,
-					   MODE_OUT);
+					   Direction::OUTGOING);
 	if (send_cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
@@ -223,7 +223,7 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 
 	receive_cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
 					      mac_algorithms_client_to_server,
-					      MODE_IN);
+					      Direction::INCOMING);
 	if (receive_cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,

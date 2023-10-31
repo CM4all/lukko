@@ -58,25 +58,26 @@ KexState::DeriveKeys(std::span<const std::byte> hash,
 	for (auto &i : keys)
 		i = DeriveKey(id++, we_need, hash, shared_secret, session_id, hash_alg);
 
-	for (unsigned mode = 0; mode < new_keys.size(); ++mode) {
-		const bool ctos = (role != Role::SERVER && mode == MODE_OUT) ||
-			(role == Role::SERVER && mode == MODE_IN);
-		new_keys[mode].enc_iv = std::move(keys[ctos ? 0 : 1]);
-		new_keys[mode].enc_key = std::move(keys[ctos ? 2 : 3]);
-		new_keys[mode].mac_key = std::move(keys[ctos ? 4 : 5]);
+	for (std::size_t i = 0; i < new_keys.size(); ++i) {
+		const Direction direction = static_cast<Direction>(i);
+		const bool ctos = (role != Role::SERVER && direction == Direction::OUTGOING) ||
+			(role == Role::SERVER && direction == Direction::INCOMING);
+		new_keys[i].enc_iv = std::move(keys[ctos ? 0 : 1]);
+		new_keys[i].enc_key = std::move(keys[ctos ? 2 : 3]);
+		new_keys[i].mac_key = std::move(keys[ctos ? 4 : 5]);
 	}
 }
 
 std::unique_ptr<Cipher>
 KexState::MakeCipher(std::string_view encryption_algorithms,
 		     std::string_view mac_algorithms,
-		     kex_modes mode)
+		     Direction direction)
 {
-	const auto &k = new_keys[mode];
+	const auto &k = new_keys[static_cast<std::size_t>(direction)];
 
 	return SSH::MakeCipher(encryption_algorithms, mac_algorithms,
 			       k.enc_key, k.enc_iv, k.mac_key,
-			       mode == MODE_OUT);
+			       direction == Direction::OUTGOING);
 }
 
 } // namespace SSH

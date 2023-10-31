@@ -20,10 +20,9 @@ enum class Role : uint_least8_t {
 	CLIENT,
 };
 
-enum kex_modes {
-	MODE_IN,
-	MODE_OUT,
-	MODE_MAX
+enum class Direction : uint_least8_t {
+	INCOMING,
+	OUTGOING,
 };
 
 struct KexState {
@@ -31,7 +30,7 @@ struct KexState {
 		AllocatedArray<std::byte> enc_iv, enc_key, mac_key;
 	};
 
-	std::array<NewKey, MODE_MAX> new_keys;
+	std::array<NewKey, 2> new_keys;
 
 	AllocatedArray<std::byte> session_id;
 
@@ -47,7 +46,7 @@ struct KexState {
 
 	std::unique_ptr<Cipher> MakeCipher(std::string_view encryption_algorithms,
 					   std::string_view mac_algorithms,
-					   kex_modes mode);
+					   Direction direction);
 };
 
 } // namespace SSH
