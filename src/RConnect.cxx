@@ -11,7 +11,7 @@
 
 #include <string>
 
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 #include "event/systemd/ResolvedClient.hxx"
 #else
 #include "net/AddressInfo.hxx"
@@ -179,12 +179,12 @@ NsResolveConnectTCP(EventLoop &event_loop,
 
 class ResolveConnectOperation final
 	: ConnectSocketHandler,
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 	  Systemd::ResolveHostnameHandler,
 #endif
 	  Cancellable
 {
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 	CancellablePointer resolve;
 #endif
 
@@ -206,7 +206,7 @@ public:
 		   CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
 
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 		Systemd::ResolveHostname(GetEventLoop(), host, port,
 					 *this, resolve);
 #else
@@ -224,7 +224,7 @@ public:
 	}
 
 private:
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 	// virtual methods from class Systemd::ResolveHostnameHandler
 	void OnResolveHostname(SocketAddress address) noexcept override {
 		resolve = {};
@@ -236,7 +236,7 @@ private:
 		delete this;
 		_handler.OnSocketConnectError(std::move(error));
 	}
-#endif // HAVE_LIBSYSTEMD
+#endif // HAVE_NLOHMANN_JSON
 
 	// virtual methods from class ConnectSocketHandler
 	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override {
@@ -253,10 +253,10 @@ private:
 
 	// virtual methods from class Cancellable
 	virtual void Cancel() noexcept override {
-#ifdef HAVE_LIBSYSTEMD
+#ifdef HAVE_NLOHMANN_JSON
 		if (resolve)
 			resolve.Cancel();
-#endif // HAVE_LIBSYSTEMD
+#endif // HAVE_NLOHMANN_JSON
 
 		delete this;
 	}

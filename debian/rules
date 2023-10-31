@@ -4,6 +4,7 @@
 MESON_OPTIONS = \
 	-Ddocumentation=enabled \
 	-Dsystemd=enabled \
+	-Djson=enabled \
 	-Dzeroconf=enabled \
 	-Dopenssl=enabled \
 	-Dmd=enabled \

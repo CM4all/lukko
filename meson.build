@@ -111,6 +111,7 @@ libcommon_require_avahi = get_option('zeroconf')
 libcommon_require_libcrypto = get_option('openssl')
 libcommon_enable_libssl = false
 libcommon_enable_libsystemd = libsystemd.found()
+libcommon_enable_json = get_option('json')
 libcommon_enable_spawn_local = false
 
 openssl_min_version = '3'
@@ -136,9 +137,10 @@ if libsystemd.found()
 
   # systemd support also enables the systemd-resolved client which
   # uses a protocol with JSON payloads
-  subdir('libcommon/src/json')
   subdir('libcommon/src/event/systemd')
   libsystemd = event_systemd_dep
+else
+  nlohmann_json = dependency('', required: false)
 endif
 
 subdir('libcommon/src/adata')
@@ -162,6 +164,7 @@ endif
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
 conf.set('HAVE_LIBMD', libmd.found())
+conf.set('HAVE_NLOHMANN_JSON', nlohmann_json.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
 configure_file(output: 'config.h', configuration: conf)
 
