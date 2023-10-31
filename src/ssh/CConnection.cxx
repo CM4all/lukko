@@ -62,13 +62,16 @@ CConnection::CloseChannel(Channel &channel) noexcept
 }
 
 inline uint_least32_t
-CConnection::AllocateChannelIndex() noexcept
+CConnection::AllocateChannelIndex()
 {
 	for (uint_least32_t i = 0; i < channels.size(); ++i)
 		if (channels[i] == nullptr)
 			return i;
 
-	return channels.size();
+	throw ChannelOpenFailure{
+		ChannelOpenFailureReasonCode::RESOURCE_SHORTAGE,
+		"Too many channels"sv,
+	};
 }
 
 Channel &
@@ -85,35 +88,33 @@ CConnection::GetChannel(uint_least32_t local_channel)
 	return *channels[local_channel];
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
 std::unique_ptr<Channel>
 CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
 			 [[maybe_unused]] ChannelInit init,
 			 [[maybe_unused]] std::span<const std::byte> payload)
 {
-	SendPacket(MakeChannelOpenFailure(init.peer_channel,
-					  ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
-					  "Unknown channel type"sv));
-
-	return {};
+	throw ChannelOpenFailure{
+		ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
+		"Unknown channel type"sv,
+	};
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 inline void
-CConnection::HandleChannelOpen(std::span<const std::byte> payload)
-{
-	Deserializer d{payload};
-
-	const auto channel_type = d.ReadString();
-	const uint_least32_t peer_channel = d.ReadU32();
-	const uint_least32_t initial_window_size = d.ReadU32();
-	d.ReadU32(); // TODO maximum packet size
-
+CConnection::HandleChannelOpen(std::string_view channel_type,
+			       uint_least32_t peer_channel,
+			       uint_least32_t initial_window_size,
+			       std::span<const std::byte> payload)
+try {
 	const uint_least32_t local_channel = AllocateChannelIndex();
-	if (local_channel >= channels.size()) {
-		SendPacket(MakeChannelOpenFailure(peer_channel,
-						  ChannelOpenFailureReasonCode::RESOURCE_SHORTAGE,
-						  "Too many channels"sv));
-		return;
-	}
 
 	const ChannelInit init{
 		.local_channel = local_channel,
@@ -121,10 +122,8 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 		.send_window = initial_window_size,
 	};
 
-	auto channel = OpenChannel(channel_type, init, d.GetRest());
-	if (!channel)
-		// method must have sent CHANNEL_OPEN_FAILURE
-		return;
+	auto channel = OpenChannel(channel_type, init, payload);
+	assert(channel);
 
 	assert(channel->GetLocalChannel() == local_channel);
 	assert(channel->GetPeerChannel() == peer_channel);
@@ -140,6 +139,24 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 	}
 
 	channels[local_channel] = channel.release();
+} catch (const ChannelOpenFailure &failure) {
+	SendPacket(MakeChannelOpenFailure(peer_channel,
+					  failure.reason_code,
+					  failure.description));
+	}
+
+inline void
+CConnection::HandleChannelOpen(std::span<const std::byte> payload)
+{
+	Deserializer d{payload};
+
+	const auto channel_type = d.ReadString();
+	const uint_least32_t peer_channel = d.ReadU32();
+	const uint_least32_t initial_window_size = d.ReadU32();
+	d.ReadU32(); // TODO maximum packet size
+
+	HandleChannelOpen(channel_type, peer_channel, initial_window_size,
+			  d.GetRest());
 }
 
 inline void

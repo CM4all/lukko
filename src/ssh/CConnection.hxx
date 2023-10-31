@@ -12,6 +12,7 @@
 
 namespace SSH {
 
+enum class ChannelOpenFailureReasonCode : uint32_t;
 struct ChannelInit;
 class Channel;
 
@@ -30,12 +31,21 @@ public:
 
 	void CloseChannel(Channel &channel) noexcept;
 
+	/**
+	 * Exception class to be thrown from inside OpenChannel(),
+	 * caught by HandleChannelOpen().
+	 */
+	struct ChannelOpenFailure {
+		ChannelOpenFailureReasonCode reason_code;
+		std::string_view description;
+	};
+
 private:
 	/**
-	 * Find a free channel number.  Returns an out-of-range index
-	 * on error
+	 * Find a free channel number.  Throws #ChannelOpenFailure on
+	 * error.
 	 */
-	uint_least32_t AllocateChannelIndex() noexcept;
+	uint_least32_t AllocateChannelIndex();
 
 	/**
 	 * Look up a #Channel instance by its local channel number.
@@ -44,6 +54,10 @@ private:
 	 */
 	Channel &GetChannel(uint_least32_t local_channel);
 
+	void HandleChannelOpen(std::string_view channel_type,
+			       uint_least32_t peer_channel,
+			       uint_least32_t initial_window_size,
+			       std::span<const std::byte> payload);
 	void HandleChannelOpen(std::span<const std::byte> payload);
 	void HandleChannelWindowAdjust(std::span<const std::byte> payload);
 	void HandleChannelData(std::span<const std::byte> payload);
@@ -56,11 +70,12 @@ protected:
 	/**
 	 * The peer has requested opening a channel.
 	 *
+	 * Throws #ChannelOpenFailure on error
+	 *
 	 * @param channel_type the type of the channel
 	 * @param init opaque initialization data for the #Channel constructor
 	 * @param payload the remaining payload specific to this channel type
-	 * @return the new channel (or nullptr if a
-	 * #CHANNEL_OPEN_FAILURE error has been sent)
+	 * @return the new channel
 	 */
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
 						     ChannelInit init,

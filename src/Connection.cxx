@@ -170,10 +170,10 @@ Connection::OpenChannel(std::string_view channel_type,
 		return std::make_unique<SessionChannel>(connection, init);
 	} else if (channel_type == "direct-tcpip"sv) {
 		if (!IsForwardingAllowed()) {
-			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
-							       SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
-							       "TCP forwarding not allowed"));
-			return {};
+			throw ChannelOpenFailure{
+				SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
+				"TCP forwarding not allowed",
+			};
 		}
 
 		CConnection &connection = *this;
@@ -197,10 +197,10 @@ Connection::OpenChannel(std::string_view channel_type,
 			logger(1, "Failed to connect to [",
 			       connect_host, "]:", connect_port, ": ",
 			       std::current_exception());
-			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
-							       SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							       e.what()));
-			return {};
+			throw ChannelOpenFailure{
+				SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+				e.what(),
+			};
 		}
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, init, payload);
