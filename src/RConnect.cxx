@@ -3,20 +3,29 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "RConnect.hxx"
-#include "net/RConnectSocket.hxx"
+#include "Connection.hxx"
+#include "event/net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "config.h"
 
 #include <string>
 
+#ifdef HAVE_LIBSYSTEMD
+#include "event/systemd/ResolvedClient.hxx"
+#else
+#include "net/AddressInfo.hxx"
+#include "net/Resolver.hxx"
+#endif
+
 #ifdef ENABLE_TRANSLATION
 
-#include "Connection.hxx"
 #include "translation/Response.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/Interface.hxx"
+#include "net/RConnectSocket.hxx"
 #include "net/ReceiveMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
 #include "net/SendMessage.hxx"
@@ -93,40 +102,185 @@ SpawnNsResolveConnectTCPFunction(SpawnService &spawn_service,
 	};
 }
 
-static UniqueSocketDescriptor
-NsResolveConnectTCP(SpawnService &spawn_service, const ChildOptions &options,
-		    std::string_view host, const unsigned port)
+class SpawnResolveConnectOperation final : Cancellable
+{
+	const std::unique_ptr<ChildProcessHandle> process;
+
+	SocketEvent socket;
+
+	ConnectSocketHandler &handler;
+
+public:
+	SpawnResolveConnectOperation(EventLoop &event_loop,
+				     UniqueSocketDescriptor _socket,
+				     std::unique_ptr<ChildProcessHandle> &&_process,
+				     ConnectSocketHandler &_handler) noexcept
+		:process(std::move(_process)),
+		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady),
+			_socket.Release()),
+		 handler(_handler) {}
+
+	~SpawnResolveConnectOperation() noexcept {
+		socket.Close();
+	}
+
+	auto &GetEventLoop() const noexcept {
+		return socket.GetEventLoop();
+	}
+
+	void Start(std::string_view host, unsigned port,
+		   CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
+
+		auto s = socket.GetSocket();
+		// TODO handle send errors
+		s.Send(ReferenceAsBytes(port));
+		s.Send(AsBytes(host));
+		socket.ScheduleRead();
+	}
+
+private:
+	void OnSocketReady([[maybe_unused]] unsigned events) noexcept try {
+		ReceiveMessageBuffer<1, CMSG_SPACE(sizeof(int) * 1)> rbuf;
+		auto r = ReceiveMessage(socket.GetSocket(), rbuf, 0);
+		if (r.fds.size() != 1)
+			throw std::runtime_error{"Bad number of fds"};
+
+		handler.OnSocketConnectSuccess(UniqueSocketDescriptor{r.fds.front().Release()});
+		delete this;
+	} catch (...) {
+		handler.OnSocketConnectError(std::current_exception());
+		delete this;
+	}
+
+	// virtual methods from class Cancellable
+	virtual void Cancel() noexcept override {
+		delete this;
+	}
+};
+
+static void
+NsResolveConnectTCP(EventLoop &event_loop,
+		    SpawnService &spawn_service, const ChildOptions &options,
+		    std::string_view host, const unsigned port,
+		    ConnectSocketHandler &handler,
+		    CancellablePointer &cancel_ptr)
 {
 	auto [control_socket, child_handle] =
 		SpawnNsResolveConnectTCPFunction(spawn_service, options);
-	control_socket.Send(ReferenceAsBytes(port));
-	control_socket.Send(AsBytes(host));
 
-	ReceiveMessageBuffer<1, CMSG_SPACE(sizeof(int) * 1)> rbuf;
-	auto r = ReceiveMessage(control_socket, rbuf, 0);
-        if (r.fds.size() != 1)
-		throw std::runtime_error{"Bad number of fds"};
-
-	return UniqueSocketDescriptor{r.fds.front().Release()};
+	auto *operation = new SpawnResolveConnectOperation(event_loop, std::move(control_socket),
+							   std::move(child_handle),
+							   handler);
+	operation->Start(host, port, cancel_ptr);
 }
 
 #endif // ENABLE_TRANSLATION
 
-UniqueSocketDescriptor
-ResolveConnectTCP([[maybe_unused]] const Connection &ssh_connection,
-		  std::string_view host, unsigned port)
+class ResolveConnectOperation final
+	: ConnectSocketHandler,
+#ifdef HAVE_LIBSYSTEMD
+	  Systemd::ResolveHostnameHandler,
+#endif
+	  Cancellable
+{
+#ifdef HAVE_LIBSYSTEMD
+	CancellablePointer resolve;
+#endif
+
+	ConnectSocket connect;
+
+	ConnectSocketHandler &handler;
+
+public:
+	ResolveConnectOperation(EventLoop &event_loop,
+				ConnectSocketHandler &_handler) noexcept
+		:connect(event_loop, *this),
+		 handler(_handler) {}
+
+	auto &GetEventLoop() const noexcept {
+		return connect.GetEventLoop();
+	}
+
+	void Start(std::string_view host, unsigned port,
+		   CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
+
+#ifdef HAVE_LIBSYSTEMD
+		Systemd::ResolveHostname(GetEventLoop(), host, port,
+					 *this, resolve);
+#else
+		/* no systemd support - using the (blocking) standard
+		   resolver */
+		static constexpr struct addrinfo hints = {
+			.ai_flags = AI_ADDRCONFIG,
+			.ai_family = AF_UNSPEC,
+			.ai_socktype = SOCK_STREAM,
+		};
+
+		const auto r = Resolve(std::string{host}.c_str(), port, &hints);
+		connect.Connect(r.GetBest(), std::chrono::seconds{60});
+#endif
+	}
+
+private:
+#ifdef HAVE_LIBSYSTEMD
+	// virtual methods from class Systemd::ResolveHostnameHandler
+	void OnResolveHostname(SocketAddress address) noexcept override {
+		resolve = {};
+		connect.Connect(address, std::chrono::seconds{60});
+	}
+
+	void OnResolveHostnameError(std::exception_ptr error) noexcept override {
+		auto &_handler = handler;
+		delete this;
+		_handler.OnSocketConnectError(std::move(error));
+	}
+#endif // HAVE_LIBSYSTEMD
+
+	// virtual methods from class ConnectSocketHandler
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override {
+		auto &_handler = handler;
+		delete this;
+		_handler.OnSocketConnectSuccess(std::move(fd));
+	}
+
+	void OnSocketConnectError(std::exception_ptr error) noexcept override {
+		auto &_handler = handler;
+		delete this;
+		_handler.OnSocketConnectError(std::move(error));
+	}
+
+	// virtual methods from class Cancellable
+	virtual void Cancel() noexcept override {
+#ifdef HAVE_LIBSYSTEMD
+		if (resolve)
+			resolve.Cancel();
+#endif // HAVE_LIBSYSTEMD
+
+		delete this;
+	}
+};
+
+void
+ResolveConnectTCP(const Connection &ssh_connection,
+		  std::string_view host, unsigned port,
+		  ConnectSocketHandler &handler,
+		  CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (const auto *tr = ssh_connection.GetTranslationResponse()) {
 		// TODO switch uid/gid?
 
 		if (tr->child_options.ns.network_namespace != nullptr)
-			return NsResolveConnectTCP(ssh_connection.GetSpawnService(),
+			return NsResolveConnectTCP(ssh_connection.GetEventLoop(),
+						   ssh_connection.GetSpawnService(),
 						   tr->child_options,
-						   host, port);
+						   host, port,
+						   handler, cancel_ptr);
 	}
 #endif // ENABLE_TRANSLATION
 
-	return ResolveConnectStreamSocket(std::string{host}.c_str(), port,
-					  std::chrono::seconds{5});
+	auto *operation = new ResolveConnectOperation(ssh_connection.GetEventLoop(), handler);
+	operation->Start(host, port, cancel_ptr);
 }

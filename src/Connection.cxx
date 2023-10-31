@@ -15,11 +15,14 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
+#include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
+#include "util/Exception.hxx" // for GetFullMessage()
 #include "util/StringAPI.hxx"
 #include "util/StringVerify.hxx"
 
@@ -157,6 +160,46 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 	return false;
 }
 
+class ResolveSocketChannelOperation final : ConnectSocketHandler, Cancellable {
+	Connection &connection;
+	const SSH::ChannelInit init;
+	CancellablePointer cancel_ptr;
+
+public:
+	ResolveSocketChannelOperation(Connection &_connection,
+				      SSH::ChannelInit _init) noexcept
+		:connection(_connection), init(_init) {}
+
+	void Start(std::string_view host, unsigned port,
+		   CancellablePointer &caller_cancel_ptr) noexcept {
+		caller_cancel_ptr = *this;
+		ResolveConnectTCP(connection, host, port, *this, cancel_ptr);
+	}
+
+private:
+	// virtual methods from class ConnectSocketHandler
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override {
+		auto &_connection = connection;
+		auto *channel = new SocketChannel(_connection, init, std::move(fd));
+		delete this;
+		_connection.AsyncChannelOpenSuccess(*channel);
+	}
+
+	void OnSocketConnectError(std::exception_ptr error) noexcept override {
+		// TODO log error?
+		connection.AsyncChannelOpenFailure(init,
+						   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+						   GetFullMessage(error));
+		delete this;
+	}
+
+	// virtual methods from class Cancellable
+	virtual void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		delete this;
+	}
+};
+
 std::unique_ptr<SSH::Channel>
 Connection::OpenChannel(std::string_view channel_type,
 			SSH::ChannelInit init,
@@ -177,8 +220,6 @@ Connection::OpenChannel(std::string_view channel_type,
 			};
 		}
 
-		CConnection &connection = *this;
-
 		SSH::Deserializer d{payload};
 		const auto connect_host = d.ReadString();
 		const auto connect_port = d.ReadU32();
@@ -189,20 +230,9 @@ Connection::OpenChannel(std::string_view channel_type,
 			   connect_host, connect_port,
 			   originator_ip, originator_port);
 
-		try {
-			// TODO make asynchronous
-			// TODO network namespace support
-			auto s = ResolveConnectTCP(*this, connect_host, connect_port);
-			return std::make_unique<SocketChannel>(connection, init, std::move(s));
-		} catch (const std::system_error &e) {
-			logger(1, "Failed to connect to [",
-			       connect_host, "]:", connect_port, ": ",
-			       std::current_exception());
-			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
-							       SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							       e.what()));
-			return {};
-		}
+		auto *operation = new ResolveSocketChannelOperation(*this, init);
+		operation->Start(connect_host, connect_port, cancel_ptr);
+		return {};
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, init, payload,
 						     cancel_ptr);

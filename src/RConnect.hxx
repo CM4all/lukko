@@ -6,9 +6,12 @@
 
 #include <string_view>
 
-class UniqueSocketDescriptor;
+class ConnectSocketHandler;
+class CancellablePointer;
 class Connection;
 
-UniqueSocketDescriptor
+void
 ResolveConnectTCP(const Connection &ssh_connection,
-		  std::string_view host, unsigned port);
+		  std::string_view host, unsigned port,
+		  ConnectSocketHandler &handler,
+		  CancellablePointer &cancel_ptr) noexcept;

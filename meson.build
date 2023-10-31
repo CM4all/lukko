@@ -132,7 +132,13 @@ subdir('libcommon/src/event/net')
 subdir('libcommon/src/lib/avahi')
 
 if libsystemd.found()
-subdir('libcommon/src/lib/dbus')
+  subdir('libcommon/src/lib/dbus')
+
+  # systemd support also enables the systemd-resolved client which
+  # uses a protocol with JSON payloads
+  subdir('libcommon/src/json')
+  subdir('libcommon/src/event/systemd')
+  libsystemd = event_systemd_dep
 endif
 
 subdir('libcommon/src/adata')
