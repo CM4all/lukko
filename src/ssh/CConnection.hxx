@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <memory>
 
+class CancellablePointer;
+
 namespace SSH {
 
 enum class ChannelOpenFailureReasonCode : uint32_t;
@@ -39,6 +41,11 @@ public:
 		ChannelOpenFailureReasonCode reason_code;
 		std::string_view description;
 	};
+
+	void AsyncChannelOpenSuccess(Channel &channel) noexcept;
+	void AsyncChannelOpenFailure(ChannelInit init,
+				     ChannelOpenFailureReasonCode reason_code,
+				     std::string_view description) noexcept;
 
 private:
 	/**
@@ -75,12 +82,16 @@ protected:
 	 * @param channel_type the type of the channel
 	 * @param init opaque initialization data for the #Channel constructor
 	 * @param payload the remaining payload specific to this channel type
-	 * @return the new channel (or nullptr if a
-	 * #CHANNEL_OPEN_FAILURE error has been sent)
+	 * @param cancel_ptr a cancellation hook (for channels that
+	 * are created asynchronously)
+	 * @return the new channel (nullptr if creating the channel
+	 * is asynchronous; upon completion, call
+	 * AsyncChannelOpenSuccess() or AsyncChannelOpenFailure())
 	 */
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
 						     ChannelInit init,
-						     std::span<const std::byte> payload);
+						     std::span<const std::byte> payload,
+						     CancellablePointer &cancel_ptr);
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,

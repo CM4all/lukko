@@ -8,6 +8,7 @@
 #include "Deserializer.hxx"
 #include "MakePacket.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "util/Cancellable.hxx"
 
 using std::string_view_literals::operator""sv;
 
@@ -37,10 +38,34 @@ IsTombstoneChannel(const Channel &channel) noexcept
 	return dynamic_cast<const TombstoneChannel *>(&channel) != nullptr;
 }
 
+/**
+ * A placeholder for the real #Channel instance that is being created
+ * asynchronously.
+ */
+class OpeningChannel final : public Channel {
+public:
+	CancellablePointer cancel_ptr;
+
+	using Channel::Channel;
+
+	~OpeningChannel() noexcept {
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
+	}
+};
+
+[[gnu::pure]]
+static bool
+IsOpeningChannel(const Channel &channel) noexcept
+{
+	return dynamic_cast<const OpeningChannel *>(&channel) != nullptr;
+}
+
 void
 CConnection::CloseChannel(Channel &channel) noexcept
 {
 	assert(!IsTombstoneChannel(channel));
+	assert(!IsOpeningChannel(channel));
 
 	const uint_least32_t local_channel = channel.GetLocalChannel();
 	const uint_least32_t peer_channel = channel.GetPeerChannel();
@@ -78,7 +103,8 @@ Channel &
 CConnection::GetChannel(uint_least32_t local_channel)
 {
 	if (local_channel >= channels.size() ||
-	    channels[local_channel] == nullptr) {
+	    channels[local_channel] == nullptr ||
+	    IsOpeningChannel(*channels[local_channel])) {
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"Bad channel"sv,
@@ -96,7 +122,8 @@ CConnection::GetChannel(uint_least32_t local_channel)
 std::unique_ptr<Channel>
 CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
 			 [[maybe_unused]] ChannelInit init,
-			 [[maybe_unused]] std::span<const std::byte> payload)
+			 [[maybe_unused]] std::span<const std::byte> payload,
+			 [[maybe_unused]] CancellablePointer &cancel_ptr)
 {
 	throw ChannelOpenFailure{
 		ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
@@ -125,6 +152,46 @@ MakeChannelOpenConfirmation(uint_least32_t peer_channel,
 	return s;
 }
 
+void
+CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
+{
+	assert(!IsTombstoneChannel(channel));
+	assert(!IsOpeningChannel(channel));
+	assert(channels[channel.GetLocalChannel()] != nullptr);
+	assert(IsOpeningChannel(*channels[channel.GetLocalChannel()]));
+
+	const uint_least32_t local_channel = channel.GetLocalChannel();
+
+	auto &opening = *static_cast<OpeningChannel *>(channels[local_channel]);
+	channels[local_channel] = nullptr;
+	opening.cancel_ptr = {};
+	delete &opening;
+
+	// TODO what if SendPacket() throws?
+	SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
+					       local_channel,
+					       channel));
+
+	channels[local_channel] = &channel;
+}
+
+void
+CConnection::AsyncChannelOpenFailure(ChannelInit init,
+				     ChannelOpenFailureReasonCode reason_code,
+				     std::string_view description) noexcept
+{
+	assert(channels[init.local_channel] != nullptr);
+	assert(IsOpeningChannel(*channels[init.local_channel]));
+
+	auto &opening = *static_cast<OpeningChannel *>(channels[init.local_channel]);
+	channels[init.local_channel] = nullptr;
+
+	opening.cancel_ptr = {};
+	delete &opening;
+
+	SendPacket(MakeChannelOpenFailure(init.peer_channel, reason_code, description));
+}
+
 inline void
 CConnection::HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t peer_channel,
@@ -139,21 +206,32 @@ try {
 		.send_window = initial_window_size,
 	};
 
-	auto channel = OpenChannel(channel_type, init, payload);
-	if (!channel)
-		// method must have sent CHANNEL_OPEN_FAILURE
+	auto *opening = new OpeningChannel(*this, init, 0);
+	channels[local_channel] = opening;
+
+	auto channel = OpenChannel(channel_type, init, payload,
+				   opening->cancel_ptr);
+	if (!channel) {
+		// asynchronous open (or already failed)
+		assert(channels[local_channel] == nullptr ||
+		       IsOpeningChannel(*channels[local_channel]));
 		return;
+	}
 
 	assert(channel->GetLocalChannel() == local_channel);
 	assert(channel->GetPeerChannel() == peer_channel);
+	assert(channels[local_channel] != nullptr);
+	assert(IsOpeningChannel(*channels[local_channel]));
 
 	SendPacket(MakeChannelOpenConfirmation(peer_channel, local_channel, *channel));
+
+	delete static_cast<OpeningChannel *>(channels[local_channel]);
 	channels[local_channel] = channel.release();
 } catch (const ChannelOpenFailure &failure) {
 	SendPacket(MakeChannelOpenFailure(peer_channel,
 					  failure.reason_code,
 					  failure.description));
-	}
+}
 
 inline void
 CConnection::HandleChannelOpen(std::span<const std::byte> payload)
