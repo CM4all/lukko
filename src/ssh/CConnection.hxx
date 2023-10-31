@@ -75,7 +75,8 @@ protected:
 	 * @param channel_type the type of the channel
 	 * @param init opaque initialization data for the #Channel constructor
 	 * @param payload the remaining payload specific to this channel type
-	 * @return the new channel
+	 * @return the new channel (or nullptr if a
+	 * #CHANNEL_OPEN_FAILURE error has been sent)
 	 */
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
 						     ChannelInit init,

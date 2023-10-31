@@ -123,7 +123,9 @@ try {
 	};
 
 	auto channel = OpenChannel(channel_type, init, payload);
-	assert(channel);
+	if (!channel)
+		// method must have sent CHANNEL_OPEN_FAILURE
+		return;
 
 	assert(channel->GetLocalChannel() == local_channel);
 	assert(channel->GetPeerChannel() == peer_channel);

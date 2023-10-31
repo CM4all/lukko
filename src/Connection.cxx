@@ -197,10 +197,10 @@ Connection::OpenChannel(std::string_view channel_type,
 			logger(1, "Failed to connect to [",
 			       connect_host, "]:", connect_port, ": ",
 			       std::current_exception());
-			throw ChannelOpenFailure{
-				SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-				e.what(),
-			};
+			SendPacket(SSH::MakeChannelOpenFailure(init.peer_channel,
+							       SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+							       e.what()));
+			return {};
 		}
 	} else
 		return SSH::CConnection::OpenChannel(channel_type, init, payload);
