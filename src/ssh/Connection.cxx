@@ -281,7 +281,7 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 
 inline void
 Connection::HandleRawPacket(std::span<const std::byte> payload)
-{
+try {
 	if (payload.empty())
 		throw SocketProtocolError{"Empty packet"};
 
@@ -289,6 +289,12 @@ Connection::HandleRawPacket(std::span<const std::byte> payload)
 	payload = payload.subspan(1);
 
 	HandlePacket(msg, payload);
+} catch (MalformedPacket) {
+	// thrown by class Deserializer
+	throw Disconnect{
+		DisconnectReasonCode::PROTOCOL_ERROR,
+		"Malformed packet"sv,
+	};
 }
 
 inline AllocatedArray<std::byte>
