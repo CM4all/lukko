@@ -108,6 +108,23 @@ CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
 #pragma GCC diagnostic pop
 #endif
 
+static PacketSerializer
+MakeChannelOpenConfirmation(uint_least32_t peer_channel,
+			    uint_least32_t local_channel,
+			    const Channel &channel)
+{
+	assert(channel.GetPeerChannel() == peer_channel);
+	assert(channel.GetLocalChannel() == local_channel);
+
+	PacketSerializer s{MessageNumber::CHANNEL_OPEN_CONFIRMATION};
+	s.WriteU32(peer_channel);
+	s.WriteU32(local_channel);
+	s.WriteU32(channel.GetReceiveWindow()); // TODO
+	s.WriteU32(32768);
+	channel.SerializeOpenConfirmation(s);
+	return s;
+}
+
 inline void
 CConnection::HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t peer_channel,
@@ -130,16 +147,7 @@ try {
 	assert(channel->GetLocalChannel() == local_channel);
 	assert(channel->GetPeerChannel() == peer_channel);
 
-	{
-		PacketSerializer s{MessageNumber::CHANNEL_OPEN_CONFIRMATION};
-		s.WriteU32(peer_channel);
-		s.WriteU32(local_channel);
-		s.WriteU32(channel->GetReceiveWindow()); // TODO
-		s.WriteU32(32768);
-		channel->SerializeOpenConfirmation(s);
-		SendPacket(std::move(s));
-	}
-
+	SendPacket(MakeChannelOpenConfirmation(peer_channel, local_channel, *channel));
 	channels[local_channel] = channel.release();
 } catch (const ChannelOpenFailure &failure) {
 	SendPacket(MakeChannelOpenFailure(peer_channel,
