@@ -16,7 +16,8 @@ struct ChannelInit;
 class Channel;
 
 /**
- * Add SSH channel support to class #Connection.
+ * Add SSH channel support to class #Connection.  Override method
+ * OpenChannel().
  */
 class CConnection : public Connection
 {
@@ -30,8 +31,17 @@ public:
 	void CloseChannel(Channel &channel) noexcept;
 
 private:
+	/**
+	 * Find a free channel number.  Returns an out-of-range index
+	 * on error
+	 */
 	uint_least32_t AllocateChannelIndex() noexcept;
 
+	/**
+	 * Look up a #Channel instance by its local channel number.
+	 *
+	 * Throws #Disconnect if the channel does not exist.
+	 */
 	Channel &GetChannel(uint_least32_t local_channel);
 
 	void HandleChannelOpen(std::span<const std::byte> payload);
@@ -43,8 +53,17 @@ private:
 	void HandleChannelRequest(std::span<const std::byte> payload);
 
 protected:
+	/**
+	 * The peer has requested opening a channel.
+	 *
+	 * @param channel_type the type of the channel
+	 * @param init opaque initialization data for the #Channel constructor
+	 * @param payload the remaining payload specific to this channel type
+	 * @return the new channel (or nullptr if a
+	 * #CHANNEL_OPEN_FAILURE error has been sent)
+	 */
 	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
-						     ChannelInit _init,
+						     ChannelInit init,
 						     std::span<const std::byte> payload);
 
 	/* virtual methods from class SSH::Connection */
