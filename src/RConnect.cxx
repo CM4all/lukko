@@ -226,9 +226,10 @@ public:
 private:
 #ifdef HAVE_NLOHMANN_JSON
 	// virtual methods from class Systemd::ResolveHostnameHandler
-	void OnResolveHostname(SocketAddress address) noexcept override {
+	void OnResolveHostname(std::span<const SocketAddress> address) noexcept override {
 		resolve = {};
-		connect.Connect(address, std::chrono::seconds{60});
+		// TODO use the other addresses as fallback?
+		connect.Connect(address.front(), std::chrono::seconds{60});
 	}
 
 	void OnResolveHostnameError(std::exception_ptr error) noexcept override {
