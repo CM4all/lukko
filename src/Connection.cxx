@@ -160,6 +160,14 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 	return false;
 }
 
+inline bool
+Connection::IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept
+{
+	// TODO
+	(void)public_key_blob;
+	return true;
+}
+
 class ResolveSocketChannelOperation final : ConnectSocketHandler, Cancellable {
 	Connection &connection;
 	const SSH::ChannelInit init;
@@ -291,13 +299,13 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			"Illegal user name"sv,
 		};
 
-	std::string_view auth_methods = "publickey"sv;
+	std::string_view auth_methods = "publickey,hostbased"sv;
 
 #ifdef ENABLE_TRANSLATION
 	bool password_accepted = false;
 
 	if (const char *translation_server = instance.GetTranslationServer()) {
-		auth_methods = "publickey,password"sv;
+		auth_methods = "publickey,hostbased,password"sv;
 
 		std::string_view password{};
 		if (method_name == "password"sv) {
@@ -378,6 +386,51 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				return;
 			}
+		}
+	} else if (method_name == "hostbased"sv) {
+		// TODO only allow if explicitly enabled
+
+		const auto public_key_algorithm = d.ReadString();
+		const auto public_key_blob = d.ReadLengthEncoded();
+		const auto client_host_name = d.ReadString();
+		const auto client_user_name = d.ReadString();
+		const auto to_be_signed = d.Since(to_be_signed_marker);
+		const auto signature = d.ReadLengthEncoded();
+
+		fmt::print(stderr, "  hostbased public_key_algorithm='{}' client_host_name='{}' client_user_name='{}'\n",
+			   public_key_algorithm, client_host_name, client_user_name);
+
+		if (!IsAcceptedHostPublicKey(public_key_blob)) {
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+			return;
+		}
+
+		std::unique_ptr<PublicKey> public_key;
+
+		try {
+			public_key = ParsePublicKeyBlob(public_key_blob);
+		} catch (...) {
+			logger(1, "Failed to parse the client's host public key: ",
+			       std::current_exception());
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+			return;
+		}
+
+		try {
+			SSH::Serializer s;
+			s.WriteLengthEncoded(GetSessionId());
+			s.WriteU8(static_cast<uint_least8_t>(SSH::MessageNumber::USERAUTH_REQUEST));
+			s.WriteN(to_be_signed);
+
+			if (!public_key->Verify(s.Finish(), signature)) {
+				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+				return;
+			}
+		} catch (...) {
+			logger(1, "Failed to verify the client's public key: ",
+			       std::current_exception());
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+			return;
 		}
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {

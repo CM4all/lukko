@@ -82,6 +82,9 @@ private:
 	[[gnu::pure]]
 	bool IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
+	[[gnu::pure]]
+	bool IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept;
+
 	void HandleServiceRequest(std::span<const std::byte> payload);
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 	void HandleChannelOpen(std::span<const std::byte> payload);
