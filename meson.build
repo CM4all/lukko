@@ -112,6 +112,7 @@ libcommon_require_libcrypto = get_option('openssl')
 libcommon_enable_libssl = false
 libcommon_enable_libsystemd = libsystemd.found()
 libcommon_enable_json = get_option('json')
+libcommon_enable_seccomp = get_option('seccomp')
 libcommon_enable_spawn_local = false
 
 openssl_min_version = '3'

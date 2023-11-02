@@ -50,6 +50,7 @@ jobs:
           meson setup \
             -Ddocumentation=disabled \
             -Dtest=true \
+            -Dseccomp=enabled \
             -Dsystemd=enabled \
             -Dzeroconf=enabled \
              --force-fallback-for=fmt,nlohmann_json \

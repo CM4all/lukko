@@ -19,7 +19,6 @@ You need:
 - `libfmt <https://fmt.dev/>`__
 - `libsodium <https://www.libsodium.org/>`__
 - `libcap2 <https://sites.google.com/site/fullycapable/>`__
-- `libseccomp <https://github.com/seccomp/libseccomp>`__
 
 Optional dependencies:
 
@@ -28,6 +27,8 @@ Optional dependencies:
 - `OpenSSL <https://www.openssl.org/>`__ for ECDSA, RSA support
 - `libmd <https://www.hadrons.org/software/libmd/>`__ for SHA2-384
   digest support
+- `libseccomp <https://github.com/seccomp/libseccomp>`__ for system
+  call filter support
 
 Get the source code::
 
