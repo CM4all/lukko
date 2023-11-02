@@ -158,9 +158,7 @@ else
   translation_dep = dependency('', required: false)
 endif
 
-# already set by spawn_dep (TODO clean this up)
-#conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
-
+conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
 conf.set('HAVE_LIBMD', libmd.found())
