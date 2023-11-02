@@ -30,6 +30,8 @@ jobs:
 
       - id: cache-ccache
         uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Install dependencies
         run: |
@@ -75,7 +77,9 @@ jobs:
           submodules: recursive
 
       - id: cache-ccache
-        uses: hendrikmuhs/ccache-action@v1
+        uses: hendrikmuhs/ccache-actionv1
+        with:
+          key: ${{github.job}}
 
       - name: Install dependencies
         run: |
