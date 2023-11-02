@@ -138,9 +138,9 @@ if libsystemd.found()
   # systemd support also enables the systemd-resolved client which
   # uses a protocol with JSON payloads
   subdir('libcommon/src/event/systemd')
-  libsystemd = event_systemd_dep
 else
   nlohmann_json = dependency('', required: false)
+  event_systemd_dep = dependency('', required: false)
 endif
 
 subdir('libcommon/src/adata')
@@ -262,6 +262,7 @@ executable(
     libsystemd,
     fmt_dep,
     event_net_dep,
+    event_systemd_dep,
     system_dep,
     io_dep,
     io_config_dep,
