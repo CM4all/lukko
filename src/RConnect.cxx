@@ -207,7 +207,7 @@ public:
 		cancel_ptr = *this;
 
 #ifdef HAVE_NLOHMANN_JSON
-		Systemd::ResolveHostname(GetEventLoop(), host, port,
+		Systemd::ResolveHostname(GetEventLoop(), host, port, AF_UNSPEC,
 					 *this, resolve);
 #else
 		/* no systemd support - using the (blocking) standard
