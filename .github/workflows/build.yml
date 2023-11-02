@@ -68,3 +68,41 @@ jobs:
         if: ${{ failure() }}
         continue-on-error: true
         run: cat output/meson-logs/testlog.txt
+
+  mini:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            libgtest-dev \
+            libsodium-dev
+
+      - name: Configure
+        run: |
+          meson setup \
+            -Dtest=true \
+             --force-fallback-for=fmt \
+            -Dwrap_mode=nofallback \
+            output
+
+      - name: Build
+        run: ninja -C output -v
+
+      - name: Unit Tests
+        run: meson test -C output
+
+      - name: Dump Unit Test Log
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: cat output/meson-logs/testlog.txt
