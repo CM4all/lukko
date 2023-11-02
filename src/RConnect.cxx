@@ -92,8 +92,10 @@ SpawnNsResolveConnectTCPFunction(SpawnService &spawn_service,
 	p.ns.enable_ipc = false;
 	p.ns.pid_namespace = nullptr;
 	p.uid_gid = options.uid_gid;
+#ifdef HAVE_LIBSECCOMP
 	p.forbid_multicast = options.forbid_multicast;
 	p.forbid_bind = options.forbid_bind;
+#endif // HAVE_LIBSECCOMP
 	p.SetControl(std::move(control_socket_for_child));
 
 	return {
