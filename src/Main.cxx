@@ -9,7 +9,6 @@
 #include "key/LoadFile.hxx"
 #include "key/TextFile.hxx"
 #include "spawn/Launch.hxx"
-#include "lib/avahi/Service.hxx"
 #include "system/Error.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
@@ -19,6 +18,10 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
 #include "config.h"
+
+#ifdef HAVE_AVAHI
+#include "lib/avahi/Service.hxx"
+#endif
 
 #ifdef HAVE_LIBCAP
 #include "lib/cap/Glue.hxx"
