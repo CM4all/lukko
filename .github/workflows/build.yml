@@ -48,12 +48,9 @@ jobs:
       - name: Configure
         run: |
           meson setup \
+            -Dauto_features=enabled \
             -Ddocumentation=disabled \
             -Dtest=true \
-            -Dseccomp=enabled \
-            -Dcap=enabled \
-            -Dsystemd=enabled \
-            -Dzeroconf=enabled \
              --force-fallback-for=fmt,nlohmann_json \
             -Dwrap_mode=nofallback \
             output
@@ -91,6 +88,7 @@ jobs:
       - name: Configure
         run: |
           meson setup \
+            -Dauto_features=disabled \
             -Dtest=true \
              --force-fallback-for=fmt \
             -Dwrap_mode=nofallback \
