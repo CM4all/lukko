@@ -4,6 +4,7 @@ option('openssl', type: 'feature', description: 'Use OpenSSL (libcrypto)')
 option('libmd', type: 'feature', description: 'Use libmd for additional digest algorithms')
 option('json', type: 'feature', description: 'JSON support (using systemd-resolved)')
 option('seccomp', type: 'feature', description: 'seccomp support (using libseccomp)')
+option('cap', type: 'feature', description: 'Linux capability support (using libcap)')
 
 option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
 

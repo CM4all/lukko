@@ -108,6 +108,7 @@ inc = include_directories('src', 'libcommon/src')
 
 libcommon_enable_boost = false
 libcommon_require_avahi = get_option('zeroconf')
+libcommon_require_cap = get_option('cap')
 libcommon_require_libcrypto = get_option('openssl')
 libcommon_enable_libssl = false
 libcommon_enable_libsystemd = libsystemd.found()
@@ -160,6 +161,7 @@ else
 endif
 
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+conf.set('HAVE_LIBCAP', cap_dep.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
 conf.set('HAVE_LIBMD', libmd.found())
@@ -271,6 +273,7 @@ executable(
     translation_dep,
     key_dep,
     cipher_dep,
+    cap_dep,
   ],
   install: true,
   install_dir: 'sbin',

@@ -8,6 +8,8 @@ MESON_OPTIONS = \
 	-Dzeroconf=enabled \
 	-Dopenssl=enabled \
 	-Dmd=enabled \
+	-Dseccomp=enabled \
+	-Dcap=enabled \
 	--werror
 
 %:

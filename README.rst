@@ -18,7 +18,6 @@ You need:
 - `Meson 0.56 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 - `libfmt <https://fmt.dev/>`__
 - `libsodium <https://www.libsodium.org/>`__
-- `libcap2 <https://sites.google.com/site/fullycapable/>`__
 
 Optional dependencies:
 
@@ -27,6 +26,8 @@ Optional dependencies:
 - `OpenSSL <https://www.openssl.org/>`__ for ECDSA, RSA support
 - `libmd <https://www.hadrons.org/software/libmd/>`__ for SHA2-384
   digest support
+- `libcap2 <https://sites.google.com/site/fullycapable/>`__ for
+  dropping unnecessary Linux capabilities
 - `libseccomp <https://github.com/seccomp/libseccomp>`__ for system
   call filter support
 

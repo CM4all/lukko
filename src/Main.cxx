@@ -10,8 +10,6 @@
 #include "key/TextFile.hxx"
 #include "spawn/Launch.hxx"
 #include "lib/avahi/Service.hxx"
-#include "lib/cap/Glue.hxx"
-#include "lib/cap/State.hxx"
 #include "system/Error.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
@@ -21,6 +19,11 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
 #include "config.h"
+
+#ifdef HAVE_LIBCAP
+#include "lib/cap/Glue.hxx"
+#include "lib/cap/State.hxx"
+#endif // HAVE_LIBCAP
 
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -93,7 +96,11 @@ try {
 	/* also checking $SYSTEMD_EXEC_PID to see if we were launched
 	   by systemd, because if we are running in a container, it
 	   may not have CAP_SYS_ADMIN */
-	debug_mode = !IsSysAdmin() && getenv("SYSTEMD_EXEC_PID") == nullptr;
+	debug_mode =
+#ifdef HAVE_LIBCAP
+		!IsSysAdmin() &&
+#endif
+		getenv("SYSTEMD_EXEC_PID") == nullptr;
 #endif
 
 	Config config;
@@ -114,8 +121,10 @@ try {
 	for (const auto &i : config.listeners)
 		instance.AddListener(i);
 
+#ifdef HAVE_LIBCAP
 	/* drop all capabilities, we don't need them anymore */
 	CapabilityState::Empty().Install();
+#endif // HAVE_LIBCAP
 
 #ifdef HAVE_AVAHI
 	instance.EnableZeroconf();

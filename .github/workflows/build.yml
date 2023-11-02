@@ -51,6 +51,7 @@ jobs:
             -Ddocumentation=disabled \
             -Dtest=true \
             -Dseccomp=enabled \
+            -Dcap=enabled \
             -Dsystemd=enabled \
             -Dzeroconf=enabled \
              --force-fallback-for=fmt,nlohmann_json \
