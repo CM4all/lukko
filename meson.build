@@ -122,6 +122,7 @@ openssl_api_compat = '0x30000000L'
 subdir('libcommon/src/util')
 subdir('libcommon/src/time')
 subdir('libcommon/src/lib/fmt')
+subdir('libcommon/src/lib/nlohmann_json')
 subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/lib/openssl')
 subdir('libcommon/src/lib/cap')
@@ -141,7 +142,7 @@ if libsystemd.found()
   # uses a protocol with JSON payloads
   subdir('libcommon/src/event/systemd')
 else
-  nlohmann_json = dependency('', required: false)
+  nlohmann_json_dep = dependency('', required: false)
   event_systemd_dep = dependency('', required: false)
 endif
 
@@ -165,7 +166,7 @@ conf.set('HAVE_LIBCAP', cap_dep.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
 conf.set('HAVE_OPENSSL', crypto_dep.found())
 conf.set('HAVE_LIBMD', libmd.found())
-conf.set('HAVE_NLOHMANN_JSON', nlohmann_json.found())
+conf.set('HAVE_NLOHMANN_JSON', nlohmann_json_dep.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
 configure_file(output: 'config.h', configuration: conf)
 
