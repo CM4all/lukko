@@ -5,11 +5,11 @@
 #include "RSAKey.hxx"
 #include "ssh/Serializer.hxx"
 #include "ssh/Deserializer.hxx"
-#include "openssl/EVP.hxx"
 #include "openssl/SerializeBN.hxx"
 #include "openssl/Sign.hxx"
 #include "openssl/Verify.hxx"
 #include "lib/openssl/Key.hxx"
+#include "lib/openssl/EvpParam.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h> // for OSSL_PKEY_PARAM_RSA_*

@@ -2,13 +2,13 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "EVP.hxx"
 #include "SerializeEVP.hxx"
 #include "SerializeEC.hxx"
 #include "BN.hxx"
 #include "EC.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
+#include "lib/openssl/EvpParam.hxx"
 #include "lib/openssl/UniqueEC.hxx"
 
 #include <openssl/core_names.h>
