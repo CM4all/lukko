@@ -348,7 +348,6 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		const bool with_signature = d.ReadBool();
 		const auto public_key_algorithm = d.ReadString();
 		const auto public_key_blob = d.ReadLengthEncoded();
-		d.ExpectEnd();
 
 		fmt::print(stderr, "  public_key_algorithm='{}'\n",
 			   public_key_algorithm);
@@ -370,12 +369,15 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		}
 
 		if (!with_signature) {
+			d.ExpectEnd();
+
 			SendPacket(SSH::MakeUserauthPkOk(public_key_algorithm,
 							 public_key_blob));
 			return;
 		} else {
 			const auto to_be_signed = d.Since(to_be_signed_marker);
 			const auto signature = d.ReadLengthEncoded();
+			d.ExpectEnd();
 
 			try {
 				SSH::Serializer s;
