@@ -12,6 +12,7 @@
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
+#include "io/Pipe.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -19,6 +20,8 @@
 #endif // ENABLE_TRANSLATION
 
 #include <fmt/core.h>
+
+#include <tuple> // for std::tie()
 
 #include <pty.h> // for openpty()
 #include <signal.h>
@@ -134,11 +137,10 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
 	} else {
-		UniqueFileDescriptor stdin_r, stdout_r, stdout_w, stderr_r, stderr_w;
-		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe) ||
-		    !UniqueFileDescriptor::CreatePipe(stdout_r, stdout_w) ||
-		    !UniqueFileDescriptor::CreatePipe(stderr_r, stderr_w))
-			throw MakeErrno("Failed to create pipe");
+		UniqueFileDescriptor stdin_r;
+		std::tie(stdin_r, stdin_pipe) = CreatePipe();
+		auto [stdout_r, stdout_w] = CreatePipe();
+		auto [stderr_r, stderr_w] = CreatePipe();
 
 		p.SetStdin(std::move(stdin_r));
 		p.SetStdout(std::move(stdout_w));
