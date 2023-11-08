@@ -6,6 +6,7 @@
 #include "Connection.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "config.h"
 
@@ -77,11 +78,7 @@ SpawnNsResolveConnectTCPFunction(SpawnService &spawn_service,
 				 const ChildOptions &options)
 {
 	// TODO this is a horrible and inefficient kludge
-	UniqueSocketDescriptor control_socket, control_socket_for_child;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-						      control_socket,
-						      control_socket_for_child))
-		throw MakeSocketError("Failed to create control socket");
+	auto [control_socket, control_socket_for_child] = CreateSocketPair(SOCK_SEQPACKET);
 
 	PreparedChildProcess p;
 	p.exec_function = NsResolveConnectTCPFunction;
