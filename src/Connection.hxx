@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ssh/CConnection.hxx"
+#include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
 #include "config.h"
 
@@ -35,6 +36,14 @@ class Connection final
 	struct Translation;
 	std::unique_ptr<Translation> translation;
 #endif // ENABLE_TRANSLATION
+
+	/**
+	 * If this is set, then the connection is currently occupied
+	 * with an asynchronous operation (e.g. lookup in the user
+	 * database).  Until it finishes, most incoming packets will
+	 * cause the connection to be closed.
+	 */
+	Co::InvokeTask occupied_task;
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
@@ -75,6 +84,10 @@ protected:
 	}
 
 private:
+	bool IsOccupied() const noexcept {
+		return occupied_task;
+	}
+
 	[[gnu::pure]]
 	const char *GetHome() const noexcept;
 	UniqueFileDescriptor OpenHome() const noexcept;

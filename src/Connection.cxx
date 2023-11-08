@@ -463,12 +463,41 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 }
 
+/**
+ * Is this message allowed while the connection is "occupied"?
+ */
+static constexpr bool
+IsAllowedWhileOccupied(SSH::MessageNumber msg) noexcept
+{
+	switch (msg) {
+	case SSH::MessageNumber::DISCONNECT:
+	case SSH::MessageNumber::IGNORE:
+	case SSH::MessageNumber::NEWCOMPRESS:
+	case SSH::MessageNumber::KEXINIT:
+	case SSH::MessageNumber::NEWKEYS:
+	case SSH::MessageNumber::ECDH_KEX_INIT:
+	case SSH::MessageNumber::ECDH_KEX_INIT_REPLY:
+		return true;
+
+	default:
+		break;
+	}
+
+	return false;
+}
+
 inline void
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
 	if (!IsEncrypted())
 		return CConnection::HandlePacket(msg, payload);
+
+	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
+		throw Disconnect{
+			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
+			"Occupied"sv
+		};
 
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
