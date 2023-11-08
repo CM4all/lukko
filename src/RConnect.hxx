@@ -6,12 +6,10 @@
 
 #include <string_view>
 
-class ConnectSocketHandler;
-class CancellablePointer;
+namespace Co { template<typename> class Task; }
+class UniqueSocketDescriptor;
 class Connection;
 
-void
+Co::Task<UniqueSocketDescriptor>
 ResolveConnectTCP(const Connection &ssh_connection,
-		  std::string_view host, unsigned port,
-		  ConnectSocketHandler &handler,
-		  CancellablePointer &cancel_ptr) noexcept;
+		  std::string_view host, unsigned port) noexcept;

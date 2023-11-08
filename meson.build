@@ -116,6 +116,7 @@ openssl_min_version = '3'
 openssl_api_compat = '0x30000000L'
 
 subdir('libcommon/src/util')
+subdir('libcommon/src/co')
 subdir('libcommon/src/time')
 subdir('libcommon/src/lib/fmt')
 subdir('libcommon/src/lib/nlohmann_json')
@@ -271,6 +272,7 @@ executable(
     key_dep,
     cipher_dep,
     cap_dep,
+    coroutines_dep,
   ],
   install: true,
   install_dir: 'sbin',

@@ -15,11 +15,12 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
-#include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "co/InvokeTask.hxx"
+#include "co/Task.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Exception.hxx" // for GetFullMessage()
@@ -169,10 +170,11 @@ Connection::IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) 
 	return true;
 }
 
-class ResolveSocketChannelOperation final : ConnectSocketHandler, Cancellable {
+class ResolveSocketChannelOperation final : Cancellable {
 	Connection &connection;
 	const SSH::ChannelInit init;
-	CancellablePointer cancel_ptr;
+	Co::InvokeTask invoke_task;
+	UniqueSocketDescriptor socket;
 
 public:
 	ResolveSocketChannelOperation(Connection &_connection,
@@ -182,29 +184,32 @@ public:
 	void Start(std::string_view host, unsigned port,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
-		ResolveConnectTCP(connection, host, port, *this, cancel_ptr);
+		invoke_task = Start(host, port);
+		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
 	}
 
 private:
-	// virtual methods from class ConnectSocketHandler
-	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override {
-		auto &_connection = connection;
-		auto *channel = new SocketChannel(_connection, init, std::move(fd));
-		delete this;
-		_connection.AsyncChannelOpenSuccess(*channel);
+	Co::InvokeTask Start(std::string_view host, unsigned port) {
+		socket = co_await ResolveConnectTCP(connection, host, port);
 	}
 
-	void OnSocketConnectError(std::exception_ptr error) noexcept override {
-		// TODO log error?
-		connection.AsyncChannelOpenFailure(init,
-						   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-						   GetFullMessage(error));
-		delete this;
+	void OnCompletion(std::exception_ptr error) noexcept {
+		if (error) {
+			// TODO log error?
+			connection.AsyncChannelOpenFailure(init,
+							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+							   GetFullMessage(error));
+			delete this;
+		} else {
+			auto &_connection = connection;
+			auto *channel = new SocketChannel(_connection, init, std::move(socket));
+			delete this;
+			_connection.AsyncChannelOpenSuccess(*channel);
+		}
 	}
 
 	// virtual methods from class Cancellable
 	virtual void Cancel() noexcept override {
-		cancel_ptr.Cancel();
 		delete this;
 	}
 };
