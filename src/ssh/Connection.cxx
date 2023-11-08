@@ -255,6 +255,10 @@ void
 Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 {
 	switch (msg) {
+	case MessageNumber::DISCONNECT:
+		Destroy();
+		throw Destroyed{};
+
 	case MessageNumber::IGNORE:
 		break;
 
@@ -419,6 +423,8 @@ try {
 	}
 } catch (const Disconnect &d) {
 	DoDisconnect(d.reason_code, d.msg);
+	return BufferedResult::DESTROYED;
+} catch (const Destroyed &) {
 	return BufferedResult::DESTROYED;
 }
 

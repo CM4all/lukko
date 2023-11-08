@@ -69,6 +69,12 @@ protected:
 		std::string_view msg;
 	};
 
+	/**
+	 * An exception class that, when caught, assumes that this
+	 * #Connection instance was destroyed.
+	 */
+	struct Destroyed {};
+
 public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor fd,
 		   Role _role,
