@@ -10,6 +10,7 @@ MESON_OPTIONS = \
 	-Dmd=enabled \
 	-Dseccomp=enabled \
 	-Dcap=enabled \
+	-Dtest=true \
 	--werror
 
 %:
