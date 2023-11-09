@@ -330,9 +330,10 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		Allocator alloc;
-		auto response = TranslateLogin(alloc, translation_server,
-					       "ssh"sv, listener.GetTag(),
-					       new_username, password);
+		auto response = co_await
+			TranslateLogin(GetEventLoop(), alloc, translation_server,
+				       "ssh"sv, listener.GetTag(),
+				       new_username, password);
 
 		if (response.status != HttpStatus{}) {
 			SendPacket(SSH::MakeUserauthFailure({}, false));

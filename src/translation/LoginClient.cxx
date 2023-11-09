@@ -7,8 +7,11 @@
 #include "translation/Protocol.hxx"
 #include "translation/Response.hxx"
 #include "AllocatorPtr.hxx"
+#include "event/SocketEvent.hxx"
 #include "net/SocketError.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#include "co/AwaitableHelper.hxx"
+#include "co/Task.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/SpanCast.hxx"
 
@@ -106,13 +109,58 @@ SendTranslateLogin(SocketDescriptor fd,
 	SendFull(fd, {buffer, size});
 }
 
-static TranslateResponse
-ReceiveResponse(AllocatorPtr alloc, SocketDescriptor fd)
+class CoSocketEvent final {
+	SocketEvent socket;
+
+	std::coroutine_handle<> continuation;
+
+	bool ready = false;
+
+	using Awaitable = Co::AwaitableHelper<CoSocketEvent, false>;
+	friend Awaitable;
+
+public:
+	CoSocketEvent(EventLoop &event_loop, SocketDescriptor _socket) noexcept
+		:socket(event_loop, BIND_THIS_METHOD(OnSocketReady), _socket) {}
+
+	[[nodiscard]]
+	Awaitable operator co_await() noexcept {
+		ready = false;
+		socket.ScheduleRead();
+		return *this;
+	}
+
+private:
+	bool IsReady() const noexcept {
+		return ready;
+	}
+
+	void TakeValue() const noexcept {}
+
+	void OnSocketReady(unsigned) noexcept {
+		if (ready) {
+			socket.CancelRead();
+			return;
+		}
+
+		ready = true;
+
+		if (continuation)
+			continuation.resume();
+	}
+};
+
+static Co::Task<TranslateResponse>
+ReceiveResponse(EventLoop &event_loop,
+		AllocatorPtr alloc, UniqueSocketDescriptor fd)
 {
 	TranslateResponse response;
 	TranslateParser parser(alloc, response);
 
 	StaticFifoBuffer<std::byte, 8192> buffer;
+
+	CoSocketEvent event{event_loop, fd};
+	co_await event;
 
 	while (true) {
 		auto w = buffer.Write();
@@ -120,8 +168,15 @@ ReceiveResponse(AllocatorPtr alloc, SocketDescriptor fd)
 			throw std::runtime_error("Translation receive buffer is full");
 
 		ssize_t nbytes = recv(fd.Get(), w.data(), w.size(), MSG_NOSIGNAL);
-		if (nbytes < 0)
-			throw MakeSocketError("recv() from translation server failed");
+		if (nbytes < 0) {
+			const auto e = GetSocketError();
+			if (IsSocketErrorReceiveWouldBlock(e)) {
+				co_await event;
+				continue;
+			}
+
+			throw MakeSocketError(e, "recv() from translation server failed");
+		}
 
 		if (nbytes == 0)
 			throw std::runtime_error("Translation server hung up");
@@ -148,17 +203,18 @@ ReceiveResponse(AllocatorPtr alloc, SocketDescriptor fd)
 				if (!buffer.empty())
 					throw std::runtime_error("Excessive data from translation server");
 
-				return response;
+				co_return response;
 			}
 		}
 	}
 }
 
-TranslateResponse
-TranslateLogin(AllocatorPtr alloc, SocketDescriptor fd,
+Co::Task<TranslateResponse>
+TranslateLogin(EventLoop &event_loop,
+	       AllocatorPtr alloc, UniqueSocketDescriptor fd,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password)
 {
 	SendTranslateLogin(fd, service, listener_tag, user, password);
-	return ReceiveResponse(alloc, fd);
+	return ReceiveResponse(event_loop, alloc, std::move(fd));
 }

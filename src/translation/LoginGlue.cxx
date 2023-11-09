@@ -9,11 +9,13 @@
 #include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "co/Task.hxx"
 
 #include <sys/socket.h>
 
-TranslateResponse
-TranslateLogin(AllocatorPtr alloc, const char *socket_path,
+Co::Task<TranslateResponse>
+TranslateLogin(EventLoop &event_loop,
+	       AllocatorPtr alloc, const char *socket_path,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password)
 {
@@ -29,7 +31,7 @@ TranslateLogin(AllocatorPtr alloc, const char *socket_path,
 			throw MakeSocketError("Failed to connect to translation server");
 	}
 
-	return TranslateLogin(alloc, fd,
+	return TranslateLogin(event_loop, alloc, std::move(fd),
 			      service, listener_tag,
 			      user, password);
 }

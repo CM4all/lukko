@@ -6,11 +6,14 @@
 
 #include <string_view>
 
+namespace Co { template<typename> class Task; }
 struct TranslateResponse;
 class AllocatorPtr;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
+class EventLoop;
 
-TranslateResponse
-TranslateLogin(AllocatorPtr alloc, SocketDescriptor fd,
+Co::Task<TranslateResponse>
+TranslateLogin(EventLoop &event_loop,
+	       AllocatorPtr alloc, UniqueSocketDescriptor fd,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password);
