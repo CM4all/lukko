@@ -17,6 +17,7 @@ class Listener;
 class RootLogger;
 class UniqueFileDescriptor;
 class SpawnService;
+template<class T> class AllocatedArray;
 
 namespace SSH {
 class PacketSerializer;
@@ -99,7 +100,11 @@ private:
 	bool IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
 	void HandleServiceRequest(std::span<const std::byte> payload);
+
+	Co::InvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
+	void OnUserauthCompletion(std::exception_ptr error) noexcept;
 	void HandleUserauthRequest(std::span<const std::byte> payload);
+
 	void HandleChannelOpen(std::span<const std::byte> payload);
 
 	/* virtual methods from class SSH::CConnection */

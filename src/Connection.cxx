@@ -21,6 +21,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "co/Task.hxx"
+#include "util/AllocatedArray.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Exception.hxx" // for GetFullMessage()
@@ -277,15 +278,10 @@ IsValidUsername(std::string_view username) noexcept
 	});
 }
 
-inline void
-Connection::HandleUserauthRequest(std::span<const std::byte> payload)
+inline Co::InvokeTask
+Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 {
-	if (IsAuthenticated())
-		/* RFC 4252 section 5.1: "When
-		   SSH_MSG_USERAUTH_SUCCESS has been sent, any further
-		   authentication requests received after that SHOULD
-		   be silently ignored" */
-		return;
+	assert(!IsAuthenticated());
 
 	SSH::Deserializer d{payload};
 	const auto to_be_signed_marker = d.Mark();
@@ -298,7 +294,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 	if (service_name != "ssh-connection"sv) {
 		SendPacket(SSH::MakeUserauthFailure({}, false));
-		return;
+		co_return;
 	}
 
 	if (!IsValidUsername(new_username))
@@ -324,12 +320,12 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			if (change_password) {
 				/* password change not implemented */
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-				return;
+				co_return;
 			}
 
 			if (password.empty()) {
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-				return;
+				co_return;
 			}
 		}
 
@@ -340,7 +336,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 		if (response.status != HttpStatus{}) {
 			SendPacket(SSH::MakeUserauthFailure({}, false));
-			return;
+			co_return;
 		}
 
 		translation = std::make_unique<Translation>(std::move(alloc),
@@ -359,7 +355,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 		if (!IsAcceptedPublicKey(public_key_blob)) {
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-			return;
+			co_return;
 		}
 
 		std::unique_ptr<PublicKey> public_key;
@@ -370,7 +366,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			logger(1, "Failed to parse the client's public key: ",
 			       std::current_exception());
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-			return;
+			co_return;
 		}
 
 		if (!with_signature) {
@@ -378,7 +374,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 			SendPacket(SSH::MakeUserauthPkOk(public_key_algorithm,
 							 public_key_blob));
-			return;
+			co_return;
 		} else {
 			const auto to_be_signed = d.Since(to_be_signed_marker);
 			const auto signature = d.ReadLengthEncoded();
@@ -392,13 +388,13 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 				if (!public_key->Verify(s.Finish(), signature)) {
 					SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-					return;
+					co_return;
 				}
 			} catch (...) {
 				logger(1, "Failed to verify the client's public key: ",
 				       std::current_exception());
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-				return;
+				co_return;
 			}
 		}
 	} else if (method_name == "hostbased"sv) {
@@ -417,7 +413,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-			return;
+			co_return;
 		}
 
 		std::unique_ptr<PublicKey> public_key;
@@ -428,7 +424,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 			logger(1, "Failed to parse the client's host public key: ",
 			       std::current_exception());
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-			return;
+			co_return;
 		}
 
 		try {
@@ -439,13 +435,13 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 
 			if (!public_key->Verify(s.Finish(), signature)) {
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-				return;
+				co_return;
 			}
 		} catch (...) {
 			logger(1, "Failed to verify the client's public key: ",
 			       std::current_exception());
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-			return;
+			co_return;
 		}
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {
@@ -454,13 +450,47 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 #endif // ENABLE_TRANSLATION
 	} else {
 		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
-		return;
+		co_return;
 	}
 
 	username.assign(new_username);
 
 	SetAuthenticated();
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
+}
+
+inline void
+Connection::OnUserauthCompletion(std::exception_ptr error) noexcept
+{
+	if (error) {
+		try {
+			std::rethrow_exception(error);
+		} catch (const Disconnect &d) {
+			DoDisconnect(d.reason_code, d.msg);
+		} catch (...) {
+			OnBufferedError(std::move(error));
+		}
+	}
+}
+
+inline void
+Connection::HandleUserauthRequest(std::span<const std::byte> payload)
+{
+	assert(!occupied_task);
+
+	if (IsAuthenticated())
+		/* RFC 4252 section 5.1: "When
+		   SSH_MSG_USERAUTH_SUCCESS has been sent, any further
+		   authentication requests received after that SHOULD
+		   be silently ignored" */
+		return;
+
+	/* the payload is owned by the caller, therefore we need to
+	   duplicate it into an AllocatedArray onwed by the coroutine,
+	   so the coroutine can keep using it after this method
+	   returns */
+	occupied_task = CoHandleUserauthRequest(AllocatedArray{payload});
+	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
 }
 
 /**

@@ -87,7 +87,7 @@ Connection::SendDisconnect(DisconnectReasonCode reason_code,
 	SendPacket(MakeDisconnect(reason_code, msg));
 }
 
-inline void
+void
 Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 {
 	SendDisconnect(reason_code, msg);
