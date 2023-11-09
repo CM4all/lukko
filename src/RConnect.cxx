@@ -8,6 +8,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "co/AwaitableHelper.hxx"
 #include "co/Task.hxx"
 #include "config.h"
 
@@ -114,6 +115,9 @@ class SpawnResolveConnectOperation final
 
 	std::exception_ptr error;
 
+	using Awaitable = Co::AwaitableHelper<SpawnResolveConnectOperation>;
+	friend Awaitable;
+
 public:
 	SpawnResolveConnectOperation(EventLoop &event_loop,
 				     UniqueSocketDescriptor _socket,
@@ -134,31 +138,19 @@ public:
 		socket.Close();
 	}
 
-	auto operator co_await() noexcept {
-		struct Awaitable final {
-			SpawnResolveConnectOperation &task;
-
-			bool await_ready() const noexcept {
-				return task.value.IsDefined() || task.error;
-			}
-
-			std::coroutine_handle<> await_suspend(std::coroutine_handle<> _continuation) noexcept {
-				task.continuation = _continuation;
-				return std::noop_coroutine();
-			}
-
-			decltype(auto) await_resume() {
-				if (task.error)
-					std::rethrow_exception(task.error);
-
-				return std::move(task.value);
-			}
-		};
-
-		return Awaitable{*this};
+	Awaitable operator co_await() noexcept {
+		return *this;
 	}
 
 private:
+	bool IsReady() const noexcept {
+		return value.IsDefined() || error;
+	}
+
+	UniqueSocketDescriptor TakeValue() noexcept {
+		return std::move(value);
+	}
+
 	void OnSocketReady([[maybe_unused]] unsigned events) noexcept {
 		try {
 			ReceiveMessageBuffer<1, CMSG_SPACE(sizeof(int) * 1)> rbuf;
