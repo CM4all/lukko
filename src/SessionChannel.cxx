@@ -194,6 +194,10 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 bool
 SessionChannel::Exec(const char *cmd)
 {
+	const auto &c = static_cast<Connection &>(GetConnection());
+	if (!c.IsExecAllowed())
+		return false;
+
 	Allocator alloc;
 	PreparedChildProcess p;
 
@@ -202,13 +206,9 @@ SessionChannel::Exec(const char *cmd)
 	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
 
 #ifdef ENABLE_TRANSLATION
-	const auto &c = static_cast<Connection &>(GetConnection());
 	if (const auto *tr = c.GetTranslationResponse()) {
 		if (tr->shell != nullptr)
 			shell = tr->shell;
-
-		if (!c.IsExecAllowed())
-			return false;
 	}
 #endif // ENABLE_TRANSLATION
 
