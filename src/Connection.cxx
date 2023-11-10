@@ -15,6 +15,7 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
@@ -57,12 +58,14 @@ struct Connection::Translation {
 #endif // ENABLE_TRANSLATION
 
 Connection::Connection(Instance &_instance, Listener &_listener,
-		       UniqueSocketDescriptor _fd,
+		       UniqueSocketDescriptor _fd, SocketAddress _peer_address,
 		       const SecretKeyList &_host_keys)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
 			  SSH::Role::SERVER,
 			  _host_keys),
 	 instance(_instance), listener(_listener),
+	 peer_address(_peer_address),
+	 local_address(GetSocket().GetLocalAddress()),
 	 logger(instance.GetLogger())
 {
 }

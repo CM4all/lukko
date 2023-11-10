@@ -19,9 +19,9 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 
 void
 Listener::OnAccept(UniqueSocketDescriptor &&connection_fd,
-		   SocketAddress) noexcept
+		   SocketAddress peer_address) noexcept
 {
-	instance.AddConnection(*this, std::move(connection_fd));
+	instance.AddConnection(*this, std::move(connection_fd), peer_address);
 }
 
 void

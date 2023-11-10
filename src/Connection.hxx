@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ssh/CConnection.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
 #include "config.h"
@@ -31,6 +32,10 @@ class Connection final
 {
 	Instance &instance;
 	Listener &listener;
+
+	const AllocatedSocketAddress peer_address;
+	const AllocatedSocketAddress local_address;
+
 	const RootLogger &logger;
 
 	std::string username;
@@ -54,7 +59,7 @@ class Connection final
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
-		   UniqueSocketDescriptor fd,
+		   UniqueSocketDescriptor fd, SocketAddress _peer_address,
 		   const SecretKeyList &_host_keys);
 	~Connection() noexcept;
 
@@ -63,6 +68,14 @@ public:
 
 	Listener &GetListener() const noexcept {
 		return listener;
+	}
+
+	const SocketAddress GetPeerAddress() const noexcept {
+		return peer_address;
+	}
+
+	const SocketAddress GetLocalAddress() const noexcept {
+		return local_address;
 	}
 
 	std::string_view GetUsername() const noexcept {
