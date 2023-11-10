@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 13.3~),
  libsodium-dev,
  libssl-dev (>= 3),
  libavahi-client-dev,
- libcap-dev, libseccomp-dev
+ libcap-dev, libseccomp-dev,
  nlohmann-json3-dev (>= 3.11),
  libsystemd-dev
 Standards-Version: 4.0.0
