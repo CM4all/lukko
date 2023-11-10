@@ -203,14 +203,7 @@ SessionChannel::Exec(const char *cmd)
 
 	PrepareChildProcess(p);
 
-	const char *shell = cmd != nullptr ? "/bin/sh" : "/bin/bash";
-
-#ifdef ENABLE_TRANSLATION
-	if (const auto *tr = c.GetTranslationResponse()) {
-		if (tr->shell != nullptr)
-			shell = tr->shell;
-	}
-#endif // ENABLE_TRANSLATION
+	const char *const shell = c.GetShell();
 
 	if (cmd != nullptr) {
 		p.args.push_back(shell);

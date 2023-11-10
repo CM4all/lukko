@@ -48,6 +48,7 @@ class Connection final
 	uid_t uid;
 	gid_t gid;
 	std::string home_path;
+	std::string shell;
 
 	/**
 	 * If this is set, then the connection is currently occupied
@@ -81,6 +82,9 @@ public:
 	std::string_view GetUsername() const noexcept {
 		return username;
 	}
+
+	[[gnu::pure]]
+	const char *GetShell() const noexcept;
 
 #ifdef ENABLE_TRANSLATION
 	[[gnu::pure]]

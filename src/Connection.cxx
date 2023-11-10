@@ -147,6 +147,20 @@ Connection::OpenHome() const noexcept
 	return fd;
 }
 
+const char *
+Connection::GetShell() const noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation && translation->response.shell != nullptr)
+		return translation->response.shell;
+#endif // ENABLE_TRANSLATION
+
+	if (!shell.empty())
+		return shell.c_str();
+
+	return "/bin/sh";
+}
+
 inline bool
 Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
@@ -370,6 +384,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		uid = pw->pw_uid;
 		gid = pw->pw_gid;
 		home_path = pw->pw_dir;
+		shell = pw->pw_shell;
 	}
 
 	if (method_name == "publickey"sv) {
