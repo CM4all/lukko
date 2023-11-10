@@ -12,6 +12,7 @@
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
+#include "net/ToString.hxx"
 #include "io/Pipe.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -115,6 +116,23 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 	const std::string_view username = c.GetUsername();
 	p.SetEnv("USER", username);
 	p.SetEnv("LOGNAME", username);
+
+	{
+		const auto peer_address = c.GetPeerAddress();
+		const auto local_address = c.GetLocalAddress();
+		const auto peer_host = HostToString(peer_address);
+		const auto local_host = HostToString(c.GetLocalAddress());
+
+		p.SetEnv("SSH_CLIENT",
+			 fmt::format("{} {} {}",
+				     peer_host, peer_address.GetPort(),
+				     local_address.GetPort()));
+
+		p.SetEnv("SSH_CONNECTION",
+			 fmt::format("{} {} {} {}",
+				     peer_host, peer_address.GetPort(),
+				     local_host, local_address.GetPort()));
+	}
 
 #ifdef ENABLE_TRANSLATION
 	if (const auto *tr = c.GetTranslationResponse()) {
