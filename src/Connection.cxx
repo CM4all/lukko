@@ -21,6 +21,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "co/Task.hxx"
+#include "co/Sleep.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
@@ -286,6 +287,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 {
 	assert(!IsAuthenticated());
 
+	/* this object aims to prevent timing-based guesses by
+	   delaying all error responses until 100ms have elapsed since
+	   the USERAUTH_REQUEST was received */
+	Co::LazySleep fail_sleep{GetEventLoop(), std::chrono::milliseconds{100}};
+
 	SSH::Deserializer d{payload};
 	const auto to_be_signed_marker = d.Mark();
 	const auto new_username = d.ReadString();
@@ -339,6 +345,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				       new_username, password);
 
 		if (response.status != HttpStatus{}) {
+			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure({}, false));
 			co_return;
 		}
@@ -351,6 +358,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	{
 		const auto *pw = getpwnam(std::string{new_username}.c_str());
 		if (pw == nullptr) {
+			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -370,6 +378,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			   public_key_algorithm);
 
 		if (!IsAcceptedPublicKey(public_key_blob)) {
+			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -381,6 +390,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		} catch (...) {
 			logger(1, "Failed to parse the client's public key: ",
 			       std::current_exception());
+			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -403,12 +413,14 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				s.WriteN(to_be_signed);
 
 				if (!public_key->Verify(s.Finish(), signature)) {
+					co_await fail_sleep;
 					SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 					co_return;
 				}
 			} catch (...) {
 				logger(1, "Failed to verify the client's public key: ",
 				       std::current_exception());
+				// TODO co_await fail_sleep;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
@@ -428,6 +440,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			   public_key_algorithm, client_host_name, client_user_name);
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
+			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -439,6 +452,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		} catch (...) {
 			logger(1, "Failed to parse the client's host public key: ",
 			       std::current_exception());
+			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -456,6 +470,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		} catch (...) {
 			logger(1, "Failed to verify the client's public key: ",
 			       std::current_exception());
+			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
@@ -465,6 +480,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		   translation server */
 #endif // ENABLE_TRANSLATION
 	} else {
+		co_await fail_sleep;
 		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 		co_return;
 	}
