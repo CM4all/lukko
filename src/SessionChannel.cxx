@@ -172,6 +172,8 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 		p.SetEnv("HOME", home);
 		p.chdir = home;
 	}
+
+	p.SetEnv("SHELL", c.GetShell());
 }
 
 void
