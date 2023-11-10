@@ -11,6 +11,8 @@
 
 #include <memory>
 
+#include <sys/types.h> // for uid_t, gid_t
+
 struct TranslateResponse;
 class Instance;
 class Listener;
@@ -37,6 +39,10 @@ class Connection final
 	struct Translation;
 	std::unique_ptr<Translation> translation;
 #endif // ENABLE_TRANSLATION
+
+	uid_t uid;
+	gid_t gid;
+	std::string home_path;
 
 	/**
 	 * If this is set, then the connection is currently occupied

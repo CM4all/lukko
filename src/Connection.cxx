@@ -37,6 +37,7 @@
 #include <fmt/core.h>
 
 #include <fcntl.h> // for O_*
+#include <pwd.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -125,8 +126,10 @@ Connection::GetHome() const noexcept
 		return translation->response.child_options.ns.mount.home;
 #endif // ENABLE_TRANSLATION
 
-	// TODO
-	return getenv("HOME");
+	if (!home_path.empty())
+		return home_path.c_str();
+
+	return nullptr;
 }
 
 UniqueFileDescriptor
@@ -343,8 +346,20 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response));
 		password_accepted = !password.empty();
-	}
+	} else
 #endif // ENABLE_TRANSLATION
+	{
+		const auto *pw = getpwnam(std::string{new_username}.c_str());
+		if (pw == nullptr) {
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
+			co_return;
+		}
+
+		// TODO extended groups?
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+		home_path = pw->pw_dir;
+	}
 
 	if (method_name == "publickey"sv) {
 		const bool with_signature = d.ReadBool();
