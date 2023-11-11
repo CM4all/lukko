@@ -181,6 +181,7 @@ if crypto_dep.found()
     'src/openssl/Verify.cxx',
     'src/key/ECDSAKey.cxx',
     'src/key/RSAKey.cxx',
+    'src/ssh/KexECDH.cxx',
   ]
 endif
 

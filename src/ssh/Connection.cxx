@@ -23,6 +23,10 @@
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
 
+#ifdef HAVE_OPENSSL
+#include "KexECDH.hxx"
+#endif
+
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
@@ -143,6 +147,12 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	case KexAlgorithm::CURVE25519_SHA256:
 		Curve25519Kex(client_ephemeral_public_key, s, shared_secret);
 		break;
+
+#ifdef HAVE_OPENSSL
+	case KexAlgorithm::ECDH_SHA256_NISTP256:
+		KexECDH(client_ephemeral_public_key, s, shared_secret);
+		break;
+#endif
 	}
 
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
