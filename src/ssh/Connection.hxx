@@ -22,6 +22,7 @@ class PacketSerializer;
 class Cipher;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
+enum class KexAlgorithm : uint_least8_t;
 
 class Connection : BufferedSocketHandler
 {
@@ -54,6 +55,8 @@ class Connection : BufferedSocketHandler
 	uint_least64_t receive_seq = 0, send_seq = 0;
 
 	const Role role;
+
+	KexAlgorithm kex_algorithm;
 
 	bool version_exchanged = false;
 

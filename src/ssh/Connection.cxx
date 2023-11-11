@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Connection.hxx"
+#include "KexFactory.hxx"
 #include "KexCurve25519.hxx"
 #include "KexHash.hxx"
 #include "KexProposal.hxx"
@@ -100,7 +101,7 @@ Connection::SendKexInit()
 	PacketSerializer s{MessageNumber::KEXINIT};
 
 	const KexProposal proposal{
-		.kex_algorithms = "curve25519-sha256"sv,
+		.kex_algorithms = all_kex_algorithms,
 		.server_host_key_algorithms = host_keys.GetAlgorithms(),
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
@@ -137,7 +138,12 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	const auto server_ephemeral_public_key_mark = s.Mark();
 
 	Serializer shared_secret;
-	Curve25519Kex(client_ephemeral_public_key, s, shared_secret);
+
+	switch (kex_algorithm) {
+	case KexAlgorithm::CURVE25519_SHA256:
+		Curve25519Kex(client_ephemeral_public_key, s, shared_secret);
+		break;
+	}
 
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
 	s.CommitLength(server_ephemeral_public_key_length);
@@ -194,7 +200,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 
 	Deserializer d{payload};
 	d.ReadN(16); // cookie
-	d.ReadString(); // kex_algorithms
+	const auto kex_algorithms = d.ReadString();
 	const auto server_host_key_algorithms = d.ReadString(); // server_host_key_algorithms
 	encryption_algorithms_client_to_server.assign(d.ReadString());
 	encryption_algorithms_server_to_client.assign(d.ReadString());
@@ -207,6 +213,15 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	d.ReadBool(); // first_kex_packet_follows
 	d.ReadU32(); // reserved
 	d.ExpectEnd();
+
+	try {
+		kex_algorithm = ChooseKexAlgorithm(kex_algorithms);
+	} catch (NoSupportedKexAlgorithm) {
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"No supported KEX algorithm"sv,
+		};
+	}
 
 	std::tie(host_key, host_key_algorithm) =
 		host_keys.Choose(server_host_key_algorithms);

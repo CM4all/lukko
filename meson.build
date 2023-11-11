@@ -250,6 +250,7 @@ executable(
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
   'src/ssh/Channel.cxx',
+  'src/ssh/KexFactory.cxx',
   'src/ssh/KexCurve25519.cxx',
   'src/ssh/KexHash.cxx',
   'src/ssh/KexProposal.cxx',
