@@ -194,6 +194,7 @@ libkey = static_library(
   'src/key/LoadFile.cxx',
   'src/key/Set.cxx',
   'src/key/TextFile.cxx',
+  'src/key/Fingerprint.cxx',
   include_directories: inc,
   dependencies: [
     sodium_dep,

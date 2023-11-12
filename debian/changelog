@@ -1,6 +1,7 @@
 cm4all-lukko (0.2) unstable; urgency=low
 
   * implement kex algorithm "ecdh-sha2-nistp256"
+  * log successful authentication
 
  --   
 

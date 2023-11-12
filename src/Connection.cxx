@@ -11,10 +11,12 @@
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
+#include "key/Fingerprint.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
@@ -443,6 +445,10 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				co_return;
 			}
 		}
+
+		fmt::print(stderr, "Accepted publickey for {} from {}: {} {}\n",
+			   new_username, peer_address,
+			   public_key->GetType(), GetFingerprint(*public_key));
 	} else if (method_name == "hostbased"sv) {
 		// TODO only allow if explicitly enabled
 
@@ -492,10 +498,16 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
+
+		fmt::print(stderr, "Accepted hostkey for {} from {}: {} {}\n",
+			   new_username, peer_address,
+			   public_key->GetType(), GetFingerprint(*public_key));
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {
 		/* the password was successfully verified by the
 		   translation server */
+		fmt::print(stderr, "Accepted password for {} from {}\n",
+			   new_username, peer_address);
 #endif // ENABLE_TRANSLATION
 	} else {
 		co_await fail_sleep;
