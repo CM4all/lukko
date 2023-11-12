@@ -28,6 +28,11 @@ EVP_PKEY_derive(Serializer &s, EVP_PKEY_CTX &ctx)
 		throw SslError{"EVP_PKEY_derive() failed"};
 
 	s.CommitWriteN(size);
+
+	if ((dest.front() & std::byte{0x80}) != std::byte{})
+		/* prepend null byte to avoid interpretation as
+		   negative number */
+		s.InsertNullByte(dest.size());
 }
 
 void
