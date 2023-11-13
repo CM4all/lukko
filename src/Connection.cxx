@@ -167,20 +167,29 @@ inline bool
 Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
 #ifdef ENABLE_TRANSLATION
-	if (translation && translation->response.authorized_keys != nullptr &&
-	    PublicKeysTextFileContains(translation->response.authorized_keys,
-				       public_key_blob))
-		return true;
+	if (translation && translation->response.authorized_keys != nullptr) {
+		if (auto options =
+		    PublicKeysTextFileContains(translation->response.authorized_keys,
+					       public_key_blob)) {
+			authorized_key_options = std::move(*options);
+			return true;
+		}
+	}
 #endif // ENABLE_TRANSLATION
 
-	if (instance.GetGlobalAuthorizedKeys().Find(public_key_blob) != nullptr)
+	if (const auto *options = instance.GetGlobalAuthorizedKeys().Find(public_key_blob)) {
+		authorized_key_options = *options;
 		return true;
+	}
 
 	if (auto home = OpenHome(); home.IsDefined()) {
 		if (auto fd = TryOpenReadOnlyBeneath({home, ".ssh/authorized_keys"});
-		    fd.IsDefined())
-			if (PublicKeysTextFileContains(fd, public_key_blob))
+		    fd.IsDefined()) {
+			if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
+				authorized_key_options = std::move(*options);
 				return true;
+			}
+		}
 	}
 
 	return false;

@@ -207,6 +207,13 @@ SessionChannel::Exec(const char *cmd)
 
 	const char *const shell = c.GetShell();
 
+	if (!c.GetAuthorizedKeyOptions().command.empty()) {
+		if (cmd != nullptr)
+			p.SetEnv("SSH_ORIGINAL_COMMAND"sv, cmd);
+
+		cmd = c.GetAuthorizedKeyOptions().command.c_str();
+	}
+
 	if (cmd != nullptr) {
 		p.args.push_back(shell);
 		p.args.push_back("-c");
@@ -237,6 +244,8 @@ bool
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
 {
+	const auto &c = static_cast<Connection &>(GetConnection());
+
 	fmt::print(stderr, "ChannelRequest '{}'\n", request_type);
 
 	if (WasStarted())
@@ -253,6 +262,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
+		if (!c.GetAuthorizedKeyOptions().command.empty())
+			return false;
+
 		return Exec(nullptr);
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
@@ -280,6 +292,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		} else
 			return false;
 	} else if (request_type == "pty-req"sv) {
+		if (c.GetAuthorizedKeyOptions().no_pty)
+			return false;
+
 		struct winsize ws{};
 
 		SSH::Deserializer d{type_specific};

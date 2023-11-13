@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ssh/CConnection.hxx"
+#include "key/Options.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
@@ -37,6 +38,8 @@ class Connection final
 	const AllocatedSocketAddress local_address;
 
 	const RootLogger &logger;
+
+	AuthorizedKeyOptions authorized_key_options;
 
 	std::string username;
 
@@ -81,6 +84,10 @@ public:
 
 	std::string_view GetUsername() const noexcept {
 		return username;
+	}
+
+	const AuthorizedKeyOptions &GetAuthorizedKeyOptions() const noexcept {
+		return authorized_key_options;
 	}
 
 	[[gnu::pure]]
