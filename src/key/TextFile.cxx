@@ -8,6 +8,7 @@
 #include "io/BufferedReader.hxx"
 #include "io/FdReader.hxx"
 #include "util/AllocatedArray.hxx"
+#include "util/CharUtil.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringSplit.hxx"
@@ -15,6 +16,7 @@
 #include "config.h"
 
 #include <stdexcept>
+#include <tuple> // for std::tie()
 
 using std::string_view_literals::operator""sv;
 
@@ -28,6 +30,114 @@ MaybeSupportsKeyType(std::string_view key_type) noexcept
 		;
 }
 
+static constexpr bool
+IsOptionNameStartChar(char ch) noexcept
+{
+	return IsLowerAlphaASCII(ch);
+}
+
+static constexpr bool
+IsOptionNameMiddleChar(char ch) noexcept
+{
+	return IsLowerAlphaASCII(ch) || ch == '-';
+}
+
+static constexpr std::pair<std::string_view, std::string_view>
+ParseOptionName(std::string_view s) noexcept
+{
+	const char *p = s.data();
+	const char *const end = p + s.size();
+
+	if (s.empty() || !IsOptionNameStartChar(*p))
+		return {};
+
+	++p;
+	while (true) {
+		if (p == end)
+			return {};
+
+		if (!IsOptionNameMiddleChar(*p))
+			return Partition(s, p);
+
+		++p;
+	}
+}
+
+static constexpr std::pair<std::string, std::string_view>
+ParseOptionValue(std::string_view s) noexcept
+{
+	if (s.starts_with('"')) {
+		s.remove_prefix(1);
+
+		const char *p = s.data();
+		const char *const end = p + s.size();
+
+		std::string value;
+
+		while (true) {
+			if (p == end)
+				return {};
+
+			if (*p == '"')
+				return {
+					std::move(value),
+					Partition(s, p + 1).second,
+				};
+
+			if (*p == '\\') {
+				++p;
+				if (p == end)
+					return {};
+			}
+
+			value.push_back(*p);
+			++p;
+		}
+	} else {
+		const char *p = s.data();
+		const char *const end = p + s.size();
+
+		while (p != end) {
+			if (*p == ',' || *p == ' ')
+				break;
+
+			++p;
+		}
+
+		auto [value, rest] = Partition(s, p);
+		return {
+			std::string{value},
+			rest,
+		};
+	}
+}
+
+static constexpr std::string_view
+SkipOptions(std::string_view s) noexcept
+{
+	while (true) {
+		auto [name, rest] = ParseOptionName(s);
+		if (name.empty())
+			return {};
+
+		s = rest;
+
+		if (s.front() == '=')
+			s = ParseOptionValue(s.substr(1)).second;
+
+		if (s.empty())
+			return {};
+
+		if (s.front() == ' ')
+			return StripLeft(s.substr(1));
+
+		if (s.front() != ',')
+			return {};
+
+		s.remove_prefix(1);
+	}
+}
+
 static std::string_view
 ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 {
@@ -35,13 +145,16 @@ ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 	if (line.empty() || line.front() == '#')
 		return {};
 
-	const auto [key_type, rest] = Split(line, ' ');
+	auto [key_type, rest] = Split(line, ' ');
+
+	if (!MaybeSupportsKeyType(key_type)) {
+		// TODO parse & obey options
+		line = SkipOptions(line);
+		std::tie(key_type, rest) = Split(line, ' ');
+	}
+
 	const auto [blob_b64, _] = Split(rest, ' ');
-
-	if (MaybeSupportsKeyType(key_type))
-		return blob_b64;
-
-	return {};
+	return blob_b64;
 }
 
 static void

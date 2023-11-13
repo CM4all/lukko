@@ -11,7 +11,7 @@ using std::string_view_literals::operator""sv;
 
 static constexpr auto authorized_keys = R"ak(
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFL5bCuV5dry+QgfZI5I3faJ9k6qiOx2oH8ebN2MCY4i ed25519a
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUlI6EKpT1qXL4HrkJtDnJw7pnXVQ7eaLA+yBgwXapF ed25519b
+no-pty,command="echo \"hello, 'world'\"",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUlI6EKpT1qXL4HrkJtDnJw7pnXVQ7eaLA+yBgwXapF ed25519b
 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGc7kQ5VITx7BwuLnGhllruVk0yLdCn2CozIT0Ug9PuIaF21HZFaIkAn9qJ1ZRZgKRiyz3UWpCeJjZl2m+RwA7o= ecdsa
 )ak"sv;
 
