@@ -85,14 +85,14 @@ TEST(PublicKeySet, Basic)
 	const Ed25519Key key1{Ed25519Key::Generate{}}, key2{Ed25519Key::Generate{}};
 
 	PublicKeySet s;
-	EXPECT_FALSE(s.Contains(key1));
-	EXPECT_FALSE(s.Contains(key2));
+	EXPECT_FALSE(s.Find(key1));
+	EXPECT_FALSE(s.Find(key2));
 
 	s.Add(key1);
-	EXPECT_TRUE(s.Contains(key1));
-	EXPECT_FALSE(s.Contains(key2));
+	EXPECT_TRUE(s.Find(key1));
+	EXPECT_FALSE(s.Find(key2));
 
 	s.Add(key2);
-	EXPECT_TRUE(s.Contains(key1));
-	EXPECT_TRUE(s.Contains(key2));
+	EXPECT_TRUE(s.Find(key1));
+	EXPECT_TRUE(s.Find(key2));
 }

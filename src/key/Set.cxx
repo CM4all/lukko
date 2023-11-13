@@ -8,9 +8,10 @@
 #include "util/SpanCast.hxx"
 
 void
-PublicKeySet::Add(std::span<const std::byte> blob) noexcept
+PublicKeySet::Add(std::span<const std::byte> blob,
+		  AuthorizedKeyOptions &&options) noexcept
 {
-	keys.emplace(ToStringView(blob));
+	keys.emplace(ToStringView(blob), std::move(options));
 }
 
 void
@@ -18,24 +19,27 @@ PublicKeySet::Add(const PublicKey &key) noexcept
 try {
 	SSH::Serializer s;
 	key.SerializePublic(s);
-	keys.emplace(ToStringView(s.Finish()));
+	keys.emplace(ToStringView(s.Finish()), AuthorizedKeyOptions{});
 } catch (...) {
 	// silently ignore serialization errors
 }
 
-bool
-PublicKeySet::Contains(std::span<const std::byte> blob) const noexcept
+const AuthorizedKeyOptions *
+PublicKeySet::Find(std::span<const std::byte> blob) const noexcept
 {
-	return keys.contains(ToStringView(blob));
+	if (auto i = keys.find(ToStringView(blob)); i != keys.end())
+		return &i->second;
+
+	return nullptr;
 }
 
-bool
-PublicKeySet::Contains(const PublicKey &key) const noexcept
+const AuthorizedKeyOptions *
+PublicKeySet::Find(const PublicKey &key) const noexcept
 try {
 	SSH::Serializer s;
 	key.SerializePublic(s);
-	return Contains(s.Finish());
+	return Find(s.Finish());
 } catch (...) {
 	// silently ignore serialization errors
-	return false;
+	return nullptr;
 }

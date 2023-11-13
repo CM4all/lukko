@@ -113,7 +113,7 @@ ParseOptionValue(std::string_view s) noexcept
 }
 
 static constexpr std::string_view
-SkipOptions(std::string_view s) noexcept
+ParseOptions(std::string_view s, AuthorizedKeyOptions &options) noexcept
 {
 	while (true) {
 		auto [name, rest] = ParseOptionName(s);
@@ -122,8 +122,13 @@ SkipOptions(std::string_view s) noexcept
 
 		s = rest;
 
+		std::string value;
+
 		if (s.front() == '=')
-			s = ParseOptionValue(s.substr(1)).second;
+			std::tie(value, s) = ParseOptionValue(s.substr(1));
+
+		if (!options.Set(name, std::move(value)))
+		    return {};
 
 		if (s.empty())
 			return {};
@@ -138,7 +143,7 @@ SkipOptions(std::string_view s) noexcept
 	}
 }
 
-static std::string_view
+static std::pair<std::string_view, AuthorizedKeyOptions>
 ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 {
 	line = StripLeft(line);
@@ -147,24 +152,25 @@ ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 
 	auto [key_type, rest] = Split(line, ' ');
 
+	AuthorizedKeyOptions options;
 	if (!MaybeSupportsKeyType(key_type)) {
 		// TODO parse & obey options
-		line = SkipOptions(line);
+		line = ParseOptions(line, options);
 		std::tie(key_type, rest) = Split(line, ' ');
 	}
 
 	const auto [blob_b64, _] = Split(rest, ' ');
-	return blob_b64;
+	return {blob_b64, std::move(options)};
 }
 
 static void
 LoadPublicKeyLine(PublicKeySet &set, std::string_view line) noexcept
 {
-	if (const auto blob_base64 = ExtractPublicKeyBlobFromLine(line);
+	if (auto [blob_base64, options] = ExtractPublicKeyBlobFromLine(line);
 	    !blob_base64.empty()) {
 		const auto blob = DecodeBase64(blob_base64);
 		if (blob != nullptr)
-			set.Add(blob);
+			set.Add(blob, std::move(options));
 	}
 }
 
@@ -192,43 +198,46 @@ PublicKeyBlobsEqual(std::span<const std::byte> a,
 }
 
 [[gnu::pure]]
-static bool
+static std::optional<AuthorizedKeyOptions>
 PublicKeysTextLineContains(std::string_view line,
 			   std::span<const std::byte> needle) noexcept
 {
-	if (const auto blob_base64 = ExtractPublicKeyBlobFromLine(line);
+	if (const auto [blob_base64, options] = ExtractPublicKeyBlobFromLine(line);
 	    !blob_base64.empty()) {
 		const auto blob = DecodeBase64(blob_base64);
 		if (blob == nullptr)
-			return false;
+			return std::nullopt;
 
-		return PublicKeyBlobsEqual(blob, needle);
+		if (!PublicKeyBlobsEqual(blob, needle))
+			return std::nullopt;
+
+		return std::move(options);
 	} else
-		return false;
+		return std::nullopt;
 }
 
-bool
+std::optional<AuthorizedKeyOptions>
 PublicKeysTextFileContains(std::string_view contents,
 			   std::span<const std::byte> needle) noexcept
 {
 	for (std::string_view line : IterableSplitString(contents, '\n'))
-		if (PublicKeysTextLineContains(line, needle))
-			return true;
+		if (auto options = PublicKeysTextLineContains(line, needle))
+			return options;
 
-	return false;
+	return std::nullopt;
 }
 
-static bool
+static std::optional<AuthorizedKeyOptions>
 PublicKeysTextFileContains(BufferedReader &r, std::span<const std::byte> needle)
 {
 	while (const char *line = r.ReadLine())
-		if (PublicKeysTextLineContains(line, needle))
-			return true;
+		if (auto options = PublicKeysTextLineContains(line, needle))
+			return options;
 
-	return false;
+	return std::nullopt;
 }
 
-bool
+std::optional<AuthorizedKeyOptions>
 PublicKeysTextFileContains(FileDescriptor fd,
 			   std::span<const std::byte> needle) noexcept
 try {
@@ -236,5 +245,5 @@ try {
 	BufferedReader br{r};
 	return PublicKeysTextFileContains(br, needle);
 } catch (...) {
-	return false;
+	return std::nullopt;
 }

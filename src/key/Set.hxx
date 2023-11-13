@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include "Options.hxx"
+
 #include <cstddef>
-#include <set>
+#include <map>
 #include <span>
 #include <string>
 
@@ -17,15 +19,16 @@ class PublicKey;
  * Internally, it stores the serialized BLOBs of each public key.
  */
 class PublicKeySet {
-	std::set<std::string, std::less<>> keys;
+	std::map<std::string, AuthorizedKeyOptions, std::less<>> keys;
 
 public:
-	void Add(std::span<const std::byte> blob) noexcept;
+	void Add(std::span<const std::byte> blob,
+		 AuthorizedKeyOptions &&options) noexcept;
 	void Add(const PublicKey &key) noexcept;
 
 	[[gnu::pure]]
-	bool Contains(std::span<const std::byte> blob) const noexcept;
+	const AuthorizedKeyOptions *Find(std::span<const std::byte> blob) const noexcept;
 
 	[[gnu::pure]]
-	bool Contains(const PublicKey &key) const noexcept;
+	const AuthorizedKeyOptions *Find(const PublicKey &key) const noexcept;
 };

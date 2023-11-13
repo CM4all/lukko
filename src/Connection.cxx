@@ -173,7 +173,7 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 		return true;
 #endif // ENABLE_TRANSLATION
 
-	if (instance.GetGlobalAuthorizedKeys().Contains(public_key_blob))
+	if (instance.GetGlobalAuthorizedKeys().Find(public_key_blob) != nullptr)
 		return true;
 
 	if (auto home = OpenHome(); home.IsDefined()) {
