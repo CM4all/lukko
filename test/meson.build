@@ -9,6 +9,7 @@ test(
   executable(
     'TestLukko',
     'TestKeys.cxx',
+    'TestAuthorizedKeys.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
