@@ -63,7 +63,7 @@ ParseOptionName(std::string_view s) noexcept
 	}
 }
 
-static constexpr std::pair<std::string, std::string_view>
+static std::pair<std::string, std::string_view>
 ParseOptionValue(std::string_view s) noexcept
 {
 	if (s.starts_with('"')) {
@@ -112,7 +112,7 @@ ParseOptionValue(std::string_view s) noexcept
 	}
 }
 
-static constexpr std::string_view
+static std::string_view
 ParseOptions(std::string_view s, AuthorizedKeyOptions &options) noexcept
 {
 	while (true) {
