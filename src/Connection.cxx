@@ -173,13 +173,11 @@ Connection::PrepareChildProcess(PreparedChildProcess &p) const noexcept
 		translation->response.child_options.CopyTo(p);
 	} else {
 #endif // ENABLE_TRANSLATION
-		// TODO
-		if (!debug_mode) {
-			p.uid_gid.uid = 65535;
-			p.uid_gid.gid = 65535;
-		}
+		p.uid_gid.uid = uid;
+		p.uid_gid.gid = gid;
 
-		p.ns.mount.home = getenv("HOME");
+		if (!home_path.empty())
+			p.ns.mount.home = home_path.c_str();
 #ifdef ENABLE_TRANSLATION
 	}
 #endif // ENABLE_TRANSLATION
