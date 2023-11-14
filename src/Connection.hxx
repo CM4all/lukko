@@ -130,6 +130,14 @@ private:
 	const char *GetHome() const noexcept;
 	UniqueFileDescriptor OpenHome() const noexcept;
 
+	/**
+	 * Open a file in the home directory of the user (with
+	 * O_RDONLY).
+	 *
+	 * @param path a path relative to the home directory
+	 */
+	UniqueFileDescriptor OpenInHome(const char *path) const noexcept;
+
 	[[gnu::pure]]
 	bool IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 

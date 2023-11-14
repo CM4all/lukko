@@ -151,6 +151,18 @@ Connection::OpenHome() const noexcept
 	return fd;
 }
 
+UniqueFileDescriptor
+Connection::OpenInHome(const char *path) const noexcept
+{
+	if (auto home = OpenHome(); home.IsDefined()) {
+		if (auto fd = TryOpenReadOnlyBeneath({home, path});
+		    fd.IsDefined())
+			return fd;
+	}
+
+	return {};
+}
+
 const char *
 Connection::GetShell() const noexcept
 {
@@ -202,13 +214,10 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 		return true;
 	}
 
-	if (auto home = OpenHome(); home.IsDefined()) {
-		if (auto fd = TryOpenReadOnlyBeneath({home, ".ssh/authorized_keys"});
-		    fd.IsDefined()) {
-			if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
-				authorized_key_options = std::move(*options);
-				return true;
-			}
+	if (auto fd = OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
+		if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
+			authorized_key_options = std::move(*options);
+			return true;
 		}
 	}
 
