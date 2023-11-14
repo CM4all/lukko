@@ -248,6 +248,7 @@ executable(
   'src/SessionChannel.cxx',
   'src/SocketChannel.cxx',
   'src/RConnect.cxx',
+  'src/DelegateOpen.cxx',
   'src/AllocatorPtr.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',

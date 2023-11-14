@@ -8,6 +8,7 @@
 #include "SessionChannel.hxx"
 #include "SocketChannel.hxx"
 #include "RConnect.hxx"
+#include "DelegateOpen.hxx"
 #include "DebugMode.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
@@ -158,6 +159,17 @@ Connection::OpenInHome(const char *path) const noexcept
 		if (auto fd = TryOpenReadOnlyBeneath({home, path});
 		    fd.IsDefined())
 			return fd;
+		else if (errno != EACCES)
+			return {};
+	}
+
+	/* the plain open failed with EACCES; try again while
+	   impersonating the target user */
+
+	try {
+		return DelegateOpen(*this, path);
+	} catch (...) {
+		// TODO log error?
 	}
 
 	return {};
