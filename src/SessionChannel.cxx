@@ -134,21 +134,7 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 				     local_host, local_address.GetPort()));
 	}
 
-#ifdef ENABLE_TRANSLATION
-	if (const auto *tr = c.GetTranslationResponse()) {
-		tr->child_options.CopyTo(p);
-	} else {
-#endif // ENABLE_TRANSLATION
-		// TODO
-		if (!debug_mode) {
-			p.uid_gid.uid = 65535;
-			p.uid_gid.gid = 65535;
-		}
-
-		p.ns.mount.home = getenv("HOME");
-#ifdef ENABLE_TRANSLATION
-	}
-#endif // ENABLE_TRANSLATION
+	c.PrepareChildProcess(p);
 
 	if (tty.IsDefined()) {
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();

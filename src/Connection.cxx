@@ -8,6 +8,7 @@
 #include "SessionChannel.hxx"
 #include "SocketChannel.hxx"
 #include "RConnect.hxx"
+#include "DebugMode.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -17,6 +18,7 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
+#include "spawn/Prepared.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
@@ -161,6 +163,26 @@ Connection::GetShell() const noexcept
 		return shell.c_str();
 
 	return "/bin/sh";
+}
+
+void
+Connection::PrepareChildProcess(PreparedChildProcess &p) const noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation) {
+		translation->response.child_options.CopyTo(p);
+	} else {
+#endif // ENABLE_TRANSLATION
+		// TODO
+		if (!debug_mode) {
+			p.uid_gid.uid = 65535;
+			p.uid_gid.gid = 65535;
+		}
+
+		p.ns.mount.home = getenv("HOME");
+#ifdef ENABLE_TRANSLATION
+	}
+#endif // ENABLE_TRANSLATION
 }
 
 inline bool

@@ -16,6 +16,7 @@
 #include <sys/types.h> // for uid_t, gid_t
 
 struct TranslateResponse;
+struct PreparedChildProcess;
 class Instance;
 class Listener;
 class RootLogger;
@@ -108,6 +109,12 @@ public:
 
 	[[gnu::pure]]
 	bool IsForwardingAllowed() const noexcept;
+
+	/**
+	 * Do some preparations for spawning a child process for the
+	 * currently user.
+	 */
+	void PrepareChildProcess(PreparedChildProcess &p) const noexcept;
 
 protected:
 	void Destroy() noexcept override {
