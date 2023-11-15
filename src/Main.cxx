@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
+#include "CommandLine.hxx"
 #include "Config.hxx"
 #include "DebugMode.hxx"
 #include "key/Ed25519Key.hxx"
@@ -37,7 +38,11 @@
 #include "key/RSAKey.hxx"
 #endif // HAVE_OPENSSL
 
+#include <filesystem>
+
 #include <stdlib.h>
+
+using std::string_view_literals::operator""sv;
 
 static std::unique_ptr<SecretKey>
 LoadOptionalKeyFile(const char *path)
@@ -54,20 +59,20 @@ LoadOptionalKeyFile(const char *path)
 }
 
 static SecretKeyList
-LoadHostKeys()
+LoadHostKeys(const std::filesystem::path &config_directory)
 {
 	SecretKeyList keys;
 
-	static constexpr const char *host_key_filenames[] = {
-		"/etc/cm4all/lukko/host_ed25519_key",
+	static constexpr std::string_view host_key_filenames[] = {
+		"host_ed25519_key"sv,
 #ifdef HAVE_OPENSSL
-		"/etc/cm4all/lukko/host_ecdsa_key",
-		"/etc/cm4all/lukko/host_rsa_key",
+		"host_ecdsa_key"sv,
+		"host_rsa_key"sv,
 #endif
 	};
 
-	for (const char *filename : host_key_filenames)
-		if (auto key = LoadOptionalKeyFile(filename))
+	for (const std::string_view filename : host_key_filenames)
+		if (auto key = LoadOptionalKeyFile((config_directory / filename).c_str()))
 			keys.Add(std::move(key));
 
 	if (keys.empty()) {
@@ -96,6 +101,8 @@ LoadGlobalAuthorizedKeys()
 int
 main(int argc, char **argv) noexcept
 try {
+	const auto cmdline = ParseCommandLine(argc, argv);
+
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
@@ -110,7 +117,7 @@ try {
 #endif
 
 	Config config;
-	LoadConfigFile(config, "/etc/cm4all/lukko/lukko.conf");
+	LoadConfigFile(config, cmdline.config_path);
 	config.Check();
 
 	SetupProcess();
@@ -119,7 +126,7 @@ try {
 
 	Instance instance{
 		config,
-		LoadHostKeys(),
+		LoadHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		LoadGlobalAuthorizedKeys(),
 		std::move(spawner_socket),
 	};

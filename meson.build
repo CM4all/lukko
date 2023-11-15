@@ -241,6 +241,7 @@ executable(
   'cm4all-lukko',
   sources,
   'src/Main.cxx',
+  'src/CommandLine.cxx',
   'src/Config.cxx',
   'src/Instance.cxx',
   'src/Listener.cxx',
