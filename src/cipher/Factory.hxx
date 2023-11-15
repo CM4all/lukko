@@ -22,7 +22,7 @@ constexpr std::string_view all_encryption_algorithms{
 };
 
 constexpr std::string_view all_mac_algorithms{
-	"hmac-sha2-256,hmac-sha2-512"
+	"hmac-sha2-256"
 };
 
 class Cipher;
