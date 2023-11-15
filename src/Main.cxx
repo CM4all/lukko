@@ -58,16 +58,17 @@ LoadHostKeys()
 {
 	SecretKeyList keys;
 
-	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ed25519_key"))
-		keys.Add(std::move(key));
-
+	static constexpr const char *host_key_filenames[] = {
+		"/etc/cm4all/lukko/host_ed25519_key",
 #ifdef HAVE_OPENSSL
-	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_ecdsa_key"))
-		keys.Add(std::move(key));
-
-	if (auto key = LoadOptionalKeyFile("/etc/cm4all/lukko/host_rsa_key"))
-		keys.Add(std::move(key));
+		"/etc/cm4all/lukko/host_ecdsa_key",
+		"/etc/cm4all/lukko/host_rsa_key",
 #endif
+	};
+
+	for (const char *filename : host_key_filenames)
+		if (auto key = LoadOptionalKeyFile(filename))
+			keys.Add(std::move(key));
 
 	if (keys.empty()) {
 		keys.Add(std::make_unique<Ed25519Key>(Ed25519Key::Generate{}));
