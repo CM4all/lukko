@@ -37,6 +37,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            openssh-client openssh-sftp-server \
+            python3-paramiko \
             meson \
             libgtest-dev \
             libcap-dev \
@@ -108,3 +110,6 @@ jobs:
         if: ${{ failure() }}
         continue-on-error: true
         run: cat output/meson-logs/testlog.txt
+
+      - name: Connect Tests
+        run: ./test/test_lukko.py output
