@@ -38,6 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             openssh-client openssh-sftp-server \
+            dropbear-bin \
             python3-paramiko \
             meson \
             libgtest-dev \

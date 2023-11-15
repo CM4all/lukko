@@ -18,6 +18,7 @@ build_directory = sys.argv[1]
 config_directory = os.path.join(os.path.dirname(__file__), 'config')
 
 ssh = '/usr/bin/ssh'
+dropbear_client = '/usr/bin/dbclient'
 
 key_types = ('ed25519', 'ecdsa', 'rsa')
 
@@ -82,6 +83,23 @@ def test_openssh_client(user: str, address: str, port: int) -> None:
                 options2['Ciphers'] = cipher
                 test_auth(user, address, port, options2)
 
+def test_dropbear_client(user: str, address: str, port: int) -> None:
+    for key_type in key_types:
+        for cipher in ('chacha20-poly1305@openssh.com', 'aes128-ctr', 'aes256-ctr'):
+            subprocess.check_call(
+                [
+                    dropbear_client, '-p', str(port),
+                    '-i', os.path.join(config_directory, 'dropbear', f'id_{key_type}'),
+                    '-c', cipher,
+                    '-y',
+                    f'{user}@{address}',
+                    'true',
+                ],
+                stdout=sys.stderr,
+                stdin=subprocess.DEVNULL,
+                timeout=10,
+            )
+
 def test_paramiko(user: str, address: str, port: int) -> None:
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys(os.path.join(config_directory, 'client', 'known_hosts'))
@@ -105,6 +123,7 @@ def test_paramiko(user: str, address: str, port: int) -> None:
 
 def run_tests(user: str, address: str, port: int) -> None:
     test_openssh_client(user, address, port)
+    test_dropbear_client(user, address, port)
     test_paramiko(user, address, port)
 
     # TODO:
