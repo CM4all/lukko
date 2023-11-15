@@ -2,6 +2,7 @@ cm4all-lukko (0.3) unstable; urgency=low
 
   * add command-line option "--config"
   * remove "hmac-sha2-512" from mac_algorithms (not implemented)
+  * require OpenSSL 3.0.8 or newer
   * translation: add packet MAPPED_UID_GID
 
  --   

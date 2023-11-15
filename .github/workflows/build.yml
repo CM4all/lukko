@@ -46,7 +46,6 @@ jobs:
             libseccomp-dev \
             libsystemd-dev \
             libavahi-client-dev \
-            libssl-dev \
             libmd-dev \
             libsodium-dev
 
@@ -56,7 +55,7 @@ jobs:
             -Dauto_features=enabled \
             -Ddocumentation=disabled \
             -Dtest=true \
-             --force-fallback-for=fmt,nlohmann_json \
+             --force-fallback-for=fmt,libcrypto,nlohmann_json \
             -Dwrap_mode=nofallback \
             output
 
