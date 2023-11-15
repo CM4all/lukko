@@ -18,6 +18,7 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
+#include "lib/fmt/ExceptionFormatter.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "spawn/Prepared.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -71,7 +72,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
-	 logger(instance.GetLogger())
+	 logger(StringLoggerDomain{fmt::format("{}", peer_address)})
 {
 }
 
@@ -294,7 +295,7 @@ Connection::OpenChannel(std::string_view channel_type,
 			std::span<const std::byte> payload,
 			CancellablePointer &cancel_ptr)
 {
-	fmt::print(stderr, "ChannelOpen type={} local_channel={} peer_channel={}\n",
+	logger.Fmt(1, "ChannelOpen type={} local_channel={} peer_channel={}"sv,
 		   channel_type, init.local_channel, init.peer_channel);
 
 	if (channel_type == "session"sv) {
@@ -315,7 +316,7 @@ Connection::OpenChannel(std::string_view channel_type,
 		const auto originator_port = d.ReadU32();
 		d.ExpectEnd();
 
-		fmt::print(stderr, "  connect=[{}]:{} originator=[{}]:{}\n",
+		logger.Fmt(1, "  connect=[{}]:{} originator=[{}]:{}"sv,
 			   connect_host, connect_port,
 			   originator_ip, originator_port);
 
@@ -334,7 +335,7 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 	const auto service = d.ReadString();
 	d.ExpectEnd();
 
-	fmt::print(stderr, "ServiceRequest '{}'\n", service);
+	logger.Fmt(1, "ServiceRequest '{}'"sv, service);
 
 	if (service == "ssh-userauth"sv) {
 		SendPacket(SSH::MakeServiceAccept(service));
@@ -367,7 +368,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	const auto service_name = d.ReadString();
 	const auto method_name = d.ReadString();
 
-	fmt::print(stderr, "Userauth '{}' service='{}' method='{}'\n",
+	logger.Fmt(1, "Userauth '{}' service='{}' method='{}'"sv,
 		   new_username, service_name, method_name);
 
 	if (service_name != "ssh-connection"sv) {
@@ -444,7 +445,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto public_key_algorithm = d.ReadString();
 		const auto public_key_blob = d.ReadLengthEncoded();
 
-		fmt::print(stderr, "  public_key_algorithm='{}'\n",
+		logger.Fmt(1, "  public_key_algorithm='{}'"sv,
 			   public_key_algorithm);
 
 		if (!IsAcceptedPublicKey(public_key_blob)) {
@@ -458,8 +459,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		try {
 			public_key = ParsePublicKeyBlob(public_key_blob);
 		} catch (...) {
-			logger(1, "Failed to parse the client's public key: ",
-			       std::current_exception());
+			logger.Fmt(1, "Failed to parse the client's public key: {}",
+				   std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -488,16 +489,16 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 					co_return;
 				}
 			} catch (...) {
-				logger(1, "Failed to verify the client's public key: ",
-				       std::current_exception());
+				logger.Fmt(1, "Failed to verify the client's public key: {}",
+					   std::current_exception());
 				// TODO co_await fail_sleep;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
 		}
 
-		fmt::print(stderr, "Accepted publickey for {} from {}: {} {}\n",
-			   new_username, peer_address,
+		logger.Fmt(1, "Accepted publickey for {}: {} {}"sv,
+			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
 	} else if (method_name == "hostbased"sv) {
 		// TODO only allow if explicitly enabled
@@ -510,7 +511,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto signature = d.ReadLengthEncoded();
 		d.ExpectEnd();
 
-		fmt::print(stderr, "  hostbased public_key_algorithm='{}' client_host_name='{}' client_user_name='{}'\n",
+		logger.Fmt(1, "  hostbased public_key_algorithm='{}' client_host_name='{}' client_user_name='{}'"sv,
 			   public_key_algorithm, client_host_name, client_user_name);
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
@@ -524,8 +525,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		try {
 			public_key = ParsePublicKeyBlob(public_key_blob);
 		} catch (...) {
-			logger(1, "Failed to parse the client's host public key: ",
-			       std::current_exception());
+			logger.Fmt(1, "Failed to parse the client's host public key: {}",
+				   std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -542,22 +543,22 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				co_return;
 			}
 		} catch (...) {
-			logger(1, "Failed to verify the client's public key: ",
-			       std::current_exception());
+			logger.Fmt(1, "Failed to verify the client's public key: {}",
+				   std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
 
-		fmt::print(stderr, "Accepted hostkey for {} from {}: {} {}\n",
-			   new_username, peer_address,
+		logger.Fmt(1, "Accepted hostkey for {}: {} {}"sv,
+			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {
 		/* the password was successfully verified by the
 		   translation server */
-		fmt::print(stderr, "Accepted password for {} from {}\n",
-			   new_username, peer_address);
+		logger.Fmt(1, "Accepted password for {}"sv,
+			   new_username);
 #endif // ENABLE_TRANSLATION
 	} else {
 		co_await fail_sleep;

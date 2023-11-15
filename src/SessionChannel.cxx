@@ -35,6 +35,7 @@ using std::string_view_literals::operator""sv;
 SessionChannel::SessionChannel(SSH::CConnection &_connection,
 			       SSH::ChannelInit init) noexcept
 	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
+	 logger(static_cast<Connection &>(GetConnection()).GetLogger()),
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -232,7 +233,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
-	fmt::print(stderr, "ChannelRequest '{}'\n", request_type);
+	logger.Fmt(1, "ChannelRequest '{}'"sv, request_type);
 
 	if (WasStarted())
 		/* the program was already started, and there's no
@@ -244,7 +245,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string command{d.ReadString()};
 		d.ExpectEnd();
 
-		fmt::print(stderr, "  exec '{}'\n", command);
+		logger.Fmt(1, "  exec '{}'"sv, command);
 
 		return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
@@ -257,7 +258,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string_view subsystem_name{d.ReadString()};
 		d.ExpectEnd();
 
-		fmt::print(stderr, "  subsystem '{}'\n", subsystem_name);
+		logger.Fmt(1, "  subsystem '{}'"sv, subsystem_name);
 
 		if (subsystem_name == "sftp"sv) {
 			// TODO repeat translation request with service="sftp"

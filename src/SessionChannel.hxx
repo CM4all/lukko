@@ -14,10 +14,13 @@
 
 struct PreparedChildProcess;
 class ChildProcessHandle;
+class Logger;
 
 class SessionChannel final : public SSH::Channel, ExitListener
 {
 	static constexpr std::size_t RECEIVE_WINDOW = 16384;
+
+	const Logger &logger;
 
 	std::unique_ptr<ChildProcessHandle> child;
 

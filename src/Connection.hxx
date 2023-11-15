@@ -7,6 +7,7 @@
 #include "ssh/CConnection.hxx"
 #include "key/Options.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "io/Logger.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
 #include "config.h"
@@ -38,7 +39,7 @@ class Connection final
 	const AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
 
-	const RootLogger &logger;
+	const Logger logger;
 
 	AuthorizedKeyOptions authorized_key_options;
 
@@ -67,6 +68,10 @@ public:
 		   UniqueSocketDescriptor fd, SocketAddress _peer_address,
 		   const SecretKeyList &_host_keys);
 	~Connection() noexcept;
+
+	const auto &GetLogger() const noexcept {
+		return logger;
+	}
 
 	[[gnu::const]]
 	SpawnService &GetSpawnService() const noexcept;
