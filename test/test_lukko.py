@@ -115,6 +115,7 @@ process = subprocess.Popen(
         '--config', os.path.join(config_directory, 'server', 'lukko.conf'),
     ],
     stdin=subprocess.DEVNULL,
+    env={},
 )
 
 # wait for startup to finish
