@@ -70,6 +70,9 @@ jobs:
         continue-on-error: true
         run: cat output/meson-logs/testlog.txt
 
+      - name: Connect Tests
+        run: ./test/test_lukko.py output
+
   mini:
     runs-on: ubuntu-latest
     steps:
@@ -110,6 +113,3 @@ jobs:
         if: ${{ failure() }}
         continue-on-error: true
         run: cat output/meson-logs/testlog.txt
-
-      - name: Connect Tests
-        run: ./test/test_lukko.py output
