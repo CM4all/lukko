@@ -19,6 +19,12 @@ config_directory = os.path.join(os.path.dirname(__file__), 'config')
 
 ssh = '/usr/bin/ssh'
 
+key_types = ('ed25519', 'ecdsa', 'rsa')
+
+# protect the client keys so `ssh` doesn't complain
+for key_type in key_types:
+    os.chmod(os.path.join(config_directory, 'client', f'id_{key_type}'), 0o600)
+
 def ssh_options(options: Mapping[str, str]) -> Sequence[str]:
     return [f'-o{name}={value}' for name, value in options.items()]
 
@@ -57,7 +63,7 @@ def test_openssh_client(user: str, address: str, port: int) -> None:
     }
 
     # test all client key types
-    for key_type in ('ed25519', 'ecdsa', 'rsa'):
+    for key_type in key_types:
         options2 = dict(options)
         options2['IdentityFile'] = os.path.join(config_directory, 'client', f'id_{key_type}')
         test_auth(user, address, port, options2)
