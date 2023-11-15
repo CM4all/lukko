@@ -87,12 +87,12 @@ LoadHostKeys(const std::filesystem::path &config_directory)
 }
 
 static PublicKeySet
-LoadGlobalAuthorizedKeys()
+LoadGlobalAuthorizedKeys(const std::filesystem::path &config_directory)
 {
 	PublicKeySet keys;
 
 	UniqueFileDescriptor fd;
-	if (fd.OpenReadOnly("/etc/cm4all/lukko/authorized_keys"))
+	if (fd.OpenReadOnly((config_directory / "authorized_keys"sv).c_str()))
 		LoadPublicKeysTextFile(keys, fd);
 
 	return keys;
@@ -127,7 +127,7 @@ try {
 	Instance instance{
 		config,
 		LoadHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
-		LoadGlobalAuthorizedKeys(),
+		LoadGlobalAuthorizedKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		std::move(spawner_socket),
 	};
 
