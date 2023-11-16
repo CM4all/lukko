@@ -22,6 +22,7 @@
 #include "net/SocketProtocolError.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
+#include "version.h"
 
 #ifdef HAVE_OPENSSL
 #include "KexECDH.hxx"
@@ -31,7 +32,7 @@ using std::string_view_literals::operator""sv;
 
 namespace SSH {
 
-static constexpr auto g_server_version = "SSH-2.0-CM4all_0.1 CM4all\r\n"sv;
+static constexpr auto g_server_version = "SSH-2.0-CM4all_" VERSION " CM4all\r\n"sv;
 
 static void
 SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,

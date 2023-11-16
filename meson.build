@@ -6,6 +6,10 @@ project('CM4all Lukko', 'cpp', version: '0.3',
   ],
 )
 
+version_h = configuration_data()
+version_h.set_quoted('VERSION', meson.project_version())
+configure_file(output: 'version.h', configuration: version_h)
+
 debug = get_option('b_ndebug') != 'true'
 
 compiler = meson.get_compiler('cpp')
