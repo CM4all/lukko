@@ -73,9 +73,33 @@ Connection::SendPacket(std::span<const std::byte> src)
 		src = std::span{encrypted_output}.first(encrypted_size);
 	}
 
-	socket.DirectWrite(src);
-
 	++send_seq;
+
+	const auto nbytes = socket.Write(src);
+	if (nbytes <= 0) [[unlikely]] {
+		switch (static_cast<write_result>(nbytes)) {
+		case WRITE_SOURCE_EOF:
+			// unreachable
+			break;
+
+		case WRITE_ERRNO:
+			break;
+
+		case WRITE_BLOCKING:
+			send_queue.Push(src);
+			OnWriteBlocked();
+			return;
+
+		case WRITE_DESTROYED:
+			// TODO must not happen, what now?
+			return;
+
+		case WRITE_BROKEN:
+			break;
+		}
+
+		OnBufferedError(std::make_exception_ptr(MakeSocketError("send failed")));
+	}
 }
 
 void
@@ -457,7 +481,42 @@ try {
 bool
 Connection::OnBufferedWrite()
 {
-	// TODO
+	OnWriteUnblocked();
+
+	std::array<struct iovec, 32> v;
+	std::size_t n = send_queue.Prepare(v);
+	if (n == 0) {
+		socket.UnscheduleWrite();
+		return true;
+	}
+
+	const auto nbytes = socket.WriteV(std::span{v}.first(n));
+	if (nbytes < 0) [[unlikely]] {
+		switch (static_cast<write_result>(nbytes)) {
+		case WRITE_SOURCE_EOF:
+			// unreachable
+			break;
+
+		case WRITE_ERRNO:
+			break;
+
+		case WRITE_BLOCKING:
+			return true;
+
+		case WRITE_DESTROYED:
+			return false;
+
+		case WRITE_BROKEN:
+			break;
+		}
+
+		throw MakeSocketError("send failed");
+	}
+
+	send_queue.Consume(nbytes);
+	if (send_queue.empty())
+		socket.UnscheduleWrite();
+
 	return true;
 }
 

@@ -99,6 +99,9 @@ public:
 	[[nodiscard]]
 	virtual bool OnRequest(std::string_view request_type,
 			       std::span<const std::byte> type_specific);
+
+	virtual void OnWriteBlocked() noexcept {}
+	virtual void OnWriteUnblocked() noexcept {}
 };
 
 } // namespace SSH

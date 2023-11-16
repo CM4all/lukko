@@ -54,6 +54,20 @@ SocketChannel::OnEof()
 }
 
 void
+SocketChannel::OnWriteBlocked() noexcept
+{
+	if (GetSendWindow() > 0)
+		socket.CancelRead();
+}
+
+void
+SocketChannel::OnWriteUnblocked() noexcept
+{
+	if (GetSendWindow() > 0)
+		socket.ScheduleRead();
+}
+
+void
 SocketChannel::OnSocketReady(unsigned events) noexcept
 {
 	if (events & SocketEvent::ERROR) {

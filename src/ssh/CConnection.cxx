@@ -383,4 +383,24 @@ CConnection::HandlePacket(MessageNumber msg,
 	}
 }
 
+void
+CConnection::OnWriteBlocked() noexcept
+{
+	Connection::OnWriteBlocked();
+
+	for (auto *i : channels)
+		if (i != nullptr)
+			i->OnWriteBlocked();
+}
+
+void
+CConnection::OnWriteUnblocked() noexcept
+{
+	Connection::OnWriteUnblocked();
+
+	for (auto *i : channels)
+		if (i != nullptr)
+			i->OnWriteUnblocked();
+}
+
 } // namespace SSH

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Queue.hxx"
 #include "KexState.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
@@ -32,6 +33,8 @@ class Connection : BufferedSocketHandler
 	std::string host_key_algorithm;
 
 	BufferedSocket socket;
+
+	SendQueue send_queue;
 
 	/**
 	 * If non-zero, then we're currently waiting for the payload
@@ -133,6 +136,20 @@ protected:
 
 	virtual void HandlePacket(MessageNumber msg,
 				  std::span<const std::byte> payload);
+
+	/**
+	 * The (kernel) socket buffer is full and no more outgoing packets
+	 * should be submitted to SendPacket().
+	 */
+	virtual void OnWriteBlocked() noexcept {}
+
+	/**
+	 * The (kernel) socket buffer is no longer full and
+	 * SendPacket() may be called (but not from inside this
+	 * method; this method shall only schedule events to produce
+	 * more data).
+	 */
+	virtual void OnWriteUnblocked() noexcept {}
 
 private:
 	bool IsPastKexInit() const noexcept {

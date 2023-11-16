@@ -96,6 +96,8 @@ protected:
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload) override;
+	void OnWriteBlocked() noexcept override;
+	void OnWriteUnblocked() noexcept override;
 };
 
 } // namespace SSH

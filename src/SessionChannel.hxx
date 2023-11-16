@@ -46,6 +46,8 @@ public:
 	void OnEof() override;
 	bool OnRequest(std::string_view request_type,
 		       std::span<const std::byte> type_specific) override;
+	void OnWriteBlocked() noexcept override;
+	void OnWriteUnblocked() noexcept override;
 
 private:
 	bool WasStarted() const noexcept {

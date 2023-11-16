@@ -29,6 +29,8 @@ public:
 	void OnWindowAdjust(std::size_t nbytes) override;
 	void OnData(std::span<const std::byte> payload) override;
 	void OnEof() override;
+	void OnWriteBlocked() noexcept override;
+	void OnWriteUnblocked() noexcept override;
 
 private:
 	void OnSocketReady(unsigned events) noexcept;

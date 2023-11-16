@@ -326,6 +326,20 @@ SessionChannel::OnRequest(std::string_view request_type,
 }
 
 void
+SessionChannel::OnWriteBlocked() noexcept
+{
+	if (GetSendWindow() > 0)
+		CancelRead();
+}
+
+void
+SessionChannel::OnWriteUnblocked() noexcept
+{
+	if (GetSendWindow() > 0)
+		ScheduleRead();
+}
+
+void
 SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 {
 	if (events == PipeEvent::HANGUP) {
