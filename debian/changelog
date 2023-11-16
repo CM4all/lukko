@@ -6,7 +6,7 @@ cm4all-lukko (0.3) unstable; urgency=low
   * translation: add packet MAPPED_UID_GID
   * spawn: use cm4all.slice
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 16 Nov 2023 15:07:06 +0100
 
 cm4all-lukko (0.2) unstable; urgency=low
 
