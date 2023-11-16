@@ -40,6 +40,7 @@ jobs:
             openssh-client openssh-sftp-server \
             dropbear-bin \
             python3-paramiko \
+            ruby-net-ssh \
             meson \
             libgtest-dev \
             libcap-dev \

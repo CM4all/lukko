@@ -121,10 +121,22 @@ def test_paramiko(user: str, address: str, port: int) -> None:
     stderr.read()
     stderr.close()
 
+def test_ruby_net_ssh(user: str, address: str, port: int) -> None:
+    subprocess.check_call(
+        [
+            os.path.join(os.path.dirname(__file__), 'test_ruby.rb'),
+            user, address, str(port),
+            os.path.join(config_directory, 'client', 'id_ed25519'),
+        ],
+        stdin=subprocess.DEVNULL,
+        timeout=10,
+    )
+
 def run_tests(user: str, address: str, port: int) -> None:
     test_openssh_client(user, address, port)
     test_dropbear_client(user, address, port)
     test_paramiko(user, address, port)
+    test_ruby_net_ssh(user, address, port)
 
     # TODO:
     # - more sftp commands
