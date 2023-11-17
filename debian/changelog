@@ -4,7 +4,7 @@ cm4all-lukko (0.4) unstable; urgency=low
   * improve handling of send errors on the SSH socket
   * fix exit-status/exit-signal reporting
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 17 Nov 2023 15:07:52 +0100
 
 cm4all-lukko (0.3) unstable; urgency=low
 
