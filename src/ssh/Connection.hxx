@@ -99,6 +99,13 @@ public:
 		return authenticated;
 	}
 
+	/**
+	 * Close this connection due to an error.
+	 */
+	void CloseError(std::exception_ptr e) noexcept {
+		OnBufferedError(std::move(e));
+	}
+
 protected:
 	virtual void Destroy() noexcept = 0;
 

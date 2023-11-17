@@ -107,7 +107,7 @@ Connection::SendPacket(std::span<const std::byte> src)
 		}
 
 		// TODO this will close the connection; how to tell the caller?
-		OnBufferedError(std::make_exception_ptr(MakeSocketError("send failed")));
+		CloseError(std::make_exception_ptr(MakeSocketError("send failed")));
 		return;
 	}
 

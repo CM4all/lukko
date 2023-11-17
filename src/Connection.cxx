@@ -581,7 +581,7 @@ Connection::OnUserauthCompletion(std::exception_ptr error) noexcept
 		} catch (const Disconnect &d) {
 			DoDisconnect(d.reason_code, d.msg);
 		} catch (...) {
-			OnBufferedError(std::move(error));
+			CloseError(std::move(error));
 		}
 	}
 }
