@@ -31,7 +31,10 @@ public:
 
 	~CConnection() noexcept;
 
-	void CloseChannel(Channel &channel) noexcept;
+	/**
+	 * Throws on error.
+	 */
+	void CloseChannel(Channel &channel);
 
 	/**
 	 * Exception class to be thrown from inside OpenChannel(),
@@ -42,7 +45,16 @@ public:
 		std::string_view description;
 	};
 
+	/**
+	 * If SendPacket() fails, then this method destroys the
+	 * #CConnection.
+	 */
 	void AsyncChannelOpenSuccess(Channel &channel) noexcept;
+
+	/**
+	 * If SendPacket() fails, then this method destroys the
+	 * #CConnection.
+	 */
 	void AsyncChannelOpenFailure(ChannelInit init,
 				     ChannelOpenFailureReasonCode reason_code,
 				     std::string_view description) noexcept;

@@ -69,7 +69,7 @@ SocketChannel::OnWriteUnblocked() noexcept
 
 void
 SocketChannel::OnSocketReady(unsigned events) noexcept
-{
+try {
 	if (events & SocketEvent::ERROR) {
 		// TODO log error?
 		Close();
@@ -116,4 +116,6 @@ SocketChannel::OnSocketReady(unsigned events) noexcept
 		if (empty)
 			Close();
 	}
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
 }

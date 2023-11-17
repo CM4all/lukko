@@ -127,11 +127,14 @@ protected:
 	void SendPacket(std::span<const std::byte> src);
 
 public:
+	/**
+	 * Throws on error.
+	 */
 	void SendPacket(PacketSerializer &&s);
 
 protected:
 	void SendDisconnect(DisconnectReasonCode reason_code, std::string_view msg);
-	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg);
+	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
 
 	void SendKexInit();
 	void SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key);

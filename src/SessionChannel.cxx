@@ -52,7 +52,7 @@ SessionChannel::~SessionChannel() noexcept
 }
 
 void
-SessionChannel::CloseIfInactive() noexcept
+SessionChannel::CloseIfInactive()
 {
 	if (!IsActive())
 		Close();
@@ -341,7 +341,7 @@ SessionChannel::OnWriteUnblocked() noexcept
 
 void
 SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
-{
+try {
 	if (events == PipeEvent::HANGUP) {
 		tty.Close();
 		SendEof();
@@ -368,11 +368,13 @@ SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 		SendEof();
 		CloseIfInactive();
 	}
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
 }
 
 void
 SessionChannel::OnStdoutReady([[maybe_unused]] unsigned events) noexcept
-{
+try {
 	std::byte buffer[4096];
 	std::span<std::byte> dest{buffer};
 	if (GetSendWindow() < dest.size()) {
@@ -391,11 +393,13 @@ SessionChannel::OnStdoutReady([[maybe_unused]] unsigned events) noexcept
 		SendEof();
 		CloseIfInactive();
 	}
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
 }
 
 void
 SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
-{
+try {
 	std::byte buffer[4096];
 	std::span<std::byte> dest{buffer};
 	if (GetSendWindow() < dest.size()) {
@@ -413,11 +417,13 @@ SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 		stderr_pipe.Close();
 		CloseIfInactive();
 	}
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
 }
 
 void
 SessionChannel::OnChildProcessExit(int status) noexcept
-{
+try {
 	if (WIFSIGNALED(status)) {
 		const char *signal_name = sigdescr_np(WTERMSIG(status));
 
@@ -432,4 +438,6 @@ SessionChannel::OnChildProcessExit(int status) noexcept
 	stdin_pipe.Close();
 
 	CloseIfInactive();
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
 }

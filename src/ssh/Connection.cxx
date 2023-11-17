@@ -106,9 +106,7 @@ Connection::SendPacket(std::span<const std::byte> src)
 			break;
 		}
 
-		// TODO this will close the connection; how to tell the caller?
-		CloseError(std::make_exception_ptr(MakeSocketError("send failed")));
-		return;
+		throw MakeSocketError("send failed");
 	}
 
 	if (static_cast<std::size_t>(nbytes) < src.size()) [[unlikely]] {
@@ -137,9 +135,14 @@ Connection::SendDisconnect(DisconnectReasonCode reason_code,
 }
 
 void
-Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
+Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept
 {
-	SendDisconnect(reason_code, msg);
+	try {
+		SendDisconnect(reason_code, msg);
+	} catch (...) {
+		/* ignore errors, we're going to disconnect anyway */
+	}
+
 	Destroy();
 }
 

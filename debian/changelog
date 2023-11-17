@@ -1,6 +1,7 @@
 cm4all-lukko (0.4) unstable; urgency=low
 
   * handle EAGAIN, implement a send queue
+  * improve handling of send errors on the SSH socket
   * fix exit-status/exit-signal reporting
 
  --   

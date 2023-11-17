@@ -62,7 +62,7 @@ IsOpeningChannel(const Channel &channel) noexcept
 }
 
 void
-CConnection::CloseChannel(Channel &channel) noexcept
+CConnection::CloseChannel(Channel &channel)
 {
 	assert(!IsTombstoneChannel(channel));
 	assert(!IsOpeningChannel(channel));
@@ -167,10 +167,14 @@ CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
 	opening.cancel_ptr = {};
 	delete &opening;
 
-	// TODO what if SendPacket() throws?
-	SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
-					       local_channel,
-					       channel));
+	try {
+		SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
+						       local_channel,
+						       channel));
+	} catch (...) {
+		OnBufferedError(std::current_exception());
+		return;
+	}
 
 	channels[local_channel] = &channel;
 }
@@ -189,7 +193,11 @@ CConnection::AsyncChannelOpenFailure(ChannelInit init,
 	opening.cancel_ptr = {};
 	delete &opening;
 
-	SendPacket(MakeChannelOpenFailure(init.peer_channel, reason_code, description));
+	try {
+		SendPacket(MakeChannelOpenFailure(init.peer_channel, reason_code, description));
+	} catch (...) {
+		OnBufferedError(std::current_exception());
+	}
 }
 
 inline void

@@ -73,7 +73,10 @@ public:
 		return send_window;
 	}
 
-	void Close() noexcept;
+	/**
+	 * Throws on error.
+	 */
+	void Close();
 
 	void SendWindowAdjust(uint_least32_t nbytes);
 	void SendData(std::span<const std::byte> src);

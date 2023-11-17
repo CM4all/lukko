@@ -12,7 +12,7 @@ using std::string_view_literals::operator""sv;
 namespace SSH {
 
 void
-Channel::Close() noexcept
+Channel::Close()
 {
 	connection.CloseChannel(*this);
 }

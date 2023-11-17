@@ -60,7 +60,7 @@ private:
 			child;
 	}
 
-	void CloseIfInactive() noexcept;
+	void CloseIfInactive();
 
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
