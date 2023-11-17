@@ -100,6 +100,16 @@ Connection::SendPacket(std::span<const std::byte> src)
 
 		// TODO this will close the connection; how to tell the caller?
 		OnBufferedError(std::make_exception_ptr(MakeSocketError("send failed")));
+		return;
+	}
+
+	if (static_cast<std::size_t>(nbytes) < src.size()) [[unlikely]] {
+		/* short send: this means the kernel's send buffer is
+		   full; push the rest into our send_queue and
+		   schedule writing */
+		send_queue.Push(src.subspan(nbytes));
+		OnWriteBlocked();
+		socket.ScheduleWrite();
 	}
 }
 
