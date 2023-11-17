@@ -75,6 +75,14 @@ Connection::SendPacket(std::span<const std::byte> src)
 
 	++send_seq;
 
+	if (!send_queue.empty()) {
+		/* if there is already something in the send_queue,
+		   enqueue this packet as well */
+		assert(socket.IsWritePending());
+		send_queue.Push(src);
+		return;
+	}
+
 	const auto nbytes = socket.Write(src);
 	if (nbytes <= 0) [[unlikely]] {
 		switch (static_cast<write_result>(nbytes)) {
