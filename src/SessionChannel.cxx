@@ -428,9 +428,6 @@ SessionChannel::OnChildProcessExit(int status) noexcept
 		SendExitStatus(WEXITSTATUS(status));
 	}
 
-	// TODO submit status via "exit-status" or "exit-signal"
-	(void)status;
-
 	child = {};
 	stdin_pipe.Close();
 
