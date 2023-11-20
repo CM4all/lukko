@@ -409,10 +409,20 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		Allocator alloc;
-		auto response = co_await
-			TranslateLogin(GetEventLoop(), alloc, translation_server,
-				       "ssh"sv, listener.GetTag(),
-				       new_username, password);
+		TranslateResponse response;
+
+		try {
+			response = co_await
+				TranslateLogin(GetEventLoop(), alloc, translation_server,
+					       "ssh"sv, listener.GetTag(),
+					       new_username, password);
+		} catch (...) {
+			logger(1, "Translation server error: ", std::current_exception());
+			throw Disconnect{
+				SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
+				"Configuration server failed"sv,
+			};
+		}
 
 		if (response.status != HttpStatus{}) {
 			co_await fail_sleep;

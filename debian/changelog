@@ -1,6 +1,7 @@
 cm4all-lukko (0.5) unstable; urgency=low
 
   * fix crash after translation server connect error
+  * translation server error closes with SERVICE_NOT_AVAILABLE
 
  --   
 
