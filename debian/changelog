@@ -3,7 +3,7 @@ cm4all-lukko (0.5) unstable; urgency=low
   * fix crash after translation server connect error
   * translation server error closes with SERVICE_NOT_AVAILABLE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 20 Nov 2023 17:37:48 +0100
 
 cm4all-lukko (0.4) unstable; urgency=low
 
