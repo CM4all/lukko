@@ -352,7 +352,7 @@ IsValidUsername(std::string_view username) noexcept
 	});
 }
 
-inline Co::InvokeTask
+inline Co::EagerInvokeTask
 Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 {
 	assert(!IsAuthenticated());
@@ -603,6 +603,12 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	   so the coroutine can keep using it after this method
 	   returns */
 	occupied_task = CoHandleUserauthRequest(AllocatedArray{payload});
+
+	/* we're using EagerInvokeTask here because early errors get
+	   rethrown out of this method instead of being passed to
+	   OnUserauthCompletion(); the latter would destroy this
+	   Connection instance, but this method wouldn't know and
+	   would continue accessing it */
 	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
 }
 

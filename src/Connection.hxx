@@ -61,7 +61,7 @@ class Connection final
 	 * database).  Until it finishes, most incoming packets will
 	 * cause the connection to be closed.
 	 */
-	Co::InvokeTask occupied_task;
+	Co::EagerInvokeTask occupied_task;
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
@@ -151,7 +151,7 @@ private:
 
 	void HandleServiceRequest(std::span<const std::byte> payload);
 
-	Co::InvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
+	Co::EagerInvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
 	void OnUserauthCompletion(std::exception_ptr error) noexcept;
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 
