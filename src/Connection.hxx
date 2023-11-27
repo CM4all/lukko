@@ -143,10 +143,16 @@ private:
 	 */
 	UniqueFileDescriptor OpenInHome(const char *path) const noexcept;
 
-	[[gnu::pure]]
+	/**
+	 * This method modifies the `authorized_key_options` field if
+	 * a matching key was found.
+	 */
 	bool IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
-	[[gnu::pure]]
+	/**
+	 * This method modifies the `authorized_key_options` field if
+	 * a matching key was found.
+	 */
 	bool IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
 	void HandleServiceRequest(std::span<const std::byte> payload);
