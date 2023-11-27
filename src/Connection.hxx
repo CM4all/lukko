@@ -143,6 +143,9 @@ private:
 	 */
 	UniqueFileDescriptor OpenInHome(const char *path) const noexcept;
 
+	[[gnu::pure]]
+	bool ShouldLoadHomeAuthorizedKeys() const noexcept;
+
 	/**
 	 * This method modifies the `authorized_key_options` field if
 	 * a matching key was found.

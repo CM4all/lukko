@@ -209,6 +209,17 @@ Connection::PrepareChildProcess(PreparedChildProcess &p) const noexcept
 }
 
 inline bool
+Connection::ShouldLoadHomeAuthorizedKeys() const noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation && translation->response.no_home_authorized_keys)
+		return false;
+#endif // ENABLE_TRANSLATION
+
+	return true;
+}
+
+inline bool
 Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
 #ifdef ENABLE_TRANSLATION
@@ -227,10 +238,12 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 		return true;
 	}
 
-	if (auto fd = OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
-		if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
-			authorized_key_options = std::move(*options);
-			return true;
+	if (ShouldLoadHomeAuthorizedKeys()) {
+		if (auto fd = OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
+			if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
+				authorized_key_options = std::move(*options);
+				return true;
+			}
 		}
 	}
 
