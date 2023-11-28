@@ -79,6 +79,13 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 
 Connection::~Connection() noexcept = default;
 
+void
+Connection::Terminate() noexcept
+{
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Account disabled"sv);
+}
+
 SpawnService &
 Connection::GetSpawnService() const noexcept
 {

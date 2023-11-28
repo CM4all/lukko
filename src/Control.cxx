@@ -72,7 +72,9 @@ Instance::OnControlPacket([[maybe_unused]] ControlServer &control_server,
 
 		connections.remove_and_dispose_if([tag = ToStringView(payload)](const Connection &c){
 			return c.HasTag(tag);
-		}, DeleteDisposer{});
+		}, [](Connection *c){
+			c->Terminate();
+		});
 #endif // ENABLE_TRANSLATION
 		break;
 	}

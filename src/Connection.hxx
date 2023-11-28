@@ -69,6 +69,12 @@ public:
 		   const SecretKeyList &_host_keys);
 	~Connection() noexcept;
 
+	/**
+	 * Terminate all processes and close the connection with code
+	 * #CONNECTION_LOST.
+	 */
+	void Terminate() noexcept;
+
 	const auto &GetLogger() const noexcept {
 		return logger;
 	}
@@ -123,6 +129,8 @@ public:
 	 * currently user.
 	 */
 	void PrepareChildProcess(PreparedChildProcess &p) const noexcept;
+
+	using SSH::Connection::DoDisconnect;
 
 protected:
 	void Destroy() noexcept override {
