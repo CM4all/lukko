@@ -460,6 +460,10 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response));
 		password_accepted = !password.empty();
+
+		if (translation->response.no_password != nullptr)
+			// TODO check the "no_password" payload
+			password_accepted = true;
 	} else
 #endif // ENABLE_TRANSLATION
 	{
