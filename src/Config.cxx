@@ -71,6 +71,7 @@ class LukkoConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+#ifdef ENABLE_CONTROL
 	class Control final : public ConfigParser {
 		Config &parent;
 		Config::ControlListener config;
@@ -83,6 +84,7 @@ class LukkoConfigParser final : public NestedConfigParser {
 		void ParseLine(FileLineParser &line) override;
 		void Finish() override;
 	};
+#endif // ENABLE_CONTROL
 
 public:
 	explicit LukkoConfigParser(Config &_config) noexcept
