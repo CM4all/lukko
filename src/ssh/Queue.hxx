@@ -32,6 +32,12 @@ public:
 		queue.emplace_back(src);
 	}
 
+	std::span<const std::byte> front() const noexcept {
+		assert(!empty());
+
+		return queue.front();
+	}
+
 	/**
 	 * Prepare a sendmsg() call by copying references to queued
 	 * buffers to an #iovec array.

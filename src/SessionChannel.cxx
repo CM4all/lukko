@@ -34,8 +34,9 @@ using std::string_view_literals::operator""sv;
 
 SessionChannel::SessionChannel(SSH::CConnection &_connection,
 			       SSH::ChannelInit init) noexcept
-	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
+	:SSH::BufferedChannel(_connection, init, RECEIVE_WINDOW),
 	 logger(static_cast<Connection &>(GetConnection()).GetLogger()),
+	 stdin_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdinReady)),
 	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
 	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
 	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
@@ -77,24 +78,52 @@ SessionChannel::OnWindowAdjust(std::size_t nbytes)
 	Channel::OnWindowAdjust(nbytes);
 }
 
-void
-SessionChannel::OnData(std::span<const std::byte> payload)
+std::size_t
+SessionChannel::OnBufferedData(std::span<const std::byte> payload)
 {
+	ssize_t nbytes;
+
 	if (stdin_pipe.IsDefined())
-		stdin_pipe.Write(payload);
+		nbytes = stdin_pipe.GetFileDescriptor().Write(payload);
 	else if (tty.IsDefined())
-		tty.GetFileDescriptor().Write(payload);
+		nbytes = tty.GetFileDescriptor().Write(payload);
 	else
 		/* do not update receive window if there's no
 		   destination */
-		return;
+		return payload.size();
 
-	if (ConsumeReceiveWindow(payload.size()) < RECEIVE_WINDOW/ 2)
+	if (nbytes < 0) {
+		const int e = errno;
+		if (e == EAGAIN) {
+			if (stdin_pipe.IsDefined())
+				stdin_pipe.ScheduleWrite();
+			else
+				tty.ScheduleWrite();
+
+			return 0;
+		} else {
+			// TODO log error?
+			stdin_pipe.Close();
+			return payload.size();
+		}
+	}
+
+	const std::size_t consumed = static_cast<std::size_t>(nbytes);
+	if (consumed < payload.size()) {
+		if (stdin_pipe.IsDefined())
+			stdin_pipe.ScheduleWrite();
+		else
+			tty.ScheduleWrite();
+	}
+
+	if (ConsumeReceiveWindow(consumed) < RECEIVE_WINDOW/ 2)
 		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
+
+	return consumed;
 }
 
 void
-SessionChannel::OnEof()
+SessionChannel::OnBufferedEof()
 {
 	stdin_pipe.Close();
 }
@@ -142,8 +171,7 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
 	} else {
-		UniqueFileDescriptor stdin_r;
-		std::tie(stdin_r, stdin_pipe) = CreatePipe();
+		auto [stdin_r, stdin_w] = CreatePipe();
 		auto [stdout_r, stdout_w] = CreatePipe();
 		auto [stderr_r, stderr_w] = CreatePipe();
 
@@ -151,6 +179,8 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 		p.SetStdout(std::move(stdout_w));
 		p.SetStderr(std::move(stderr_w));
 
+		stdin_w.SetNonBlocking();
+		stdin_pipe.Open(stdin_w.Release());
 		stdout_pipe.Open(stdout_r.Release());
 		stderr_pipe.Open(stderr_r.Release());
 	}
@@ -349,6 +379,14 @@ try {
 		return;
 	}
 
+	if (events & PipeEvent::WRITE) {
+		tty.CancelWrite();
+		ReadBuffer();
+	}
+
+	if ((events & PipeEvent::READ) == 0)
+		return;
+
 	std::byte buffer[4096];
 	std::span<std::byte> dest{buffer};
 
@@ -368,6 +406,16 @@ try {
 		SendEof();
 		CloseIfInactive();
 	}
+} catch (...) {
+	GetConnection().CloseError(std::current_exception());
+}
+
+void
+SessionChannel::OnStdinReady([[maybe_unused]] unsigned events) noexcept
+try {
+	stdin_pipe.Cancel();
+
+	ReadBuffer();
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());
 }

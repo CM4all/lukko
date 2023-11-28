@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ssh/Channel.hxx"
+#include "ssh/BufferedChannel.hxx"
 #include "event/SocketEvent.hxx"
 
 class UniqueSocketDescriptor;
@@ -12,7 +12,7 @@ class UniqueSocketDescriptor;
 /**
  * Copy data between a #SocketDescriptor and a SSH channel.
  */
-class SocketChannel final : public SSH::Channel
+class SocketChannel final : public SSH::BufferedChannel
 {
 	static constexpr std::size_t RECEIVE_WINDOW = 16384;
 
@@ -27,10 +27,12 @@ public:
 
 	/* virtual methods from class SSH::Channel */
 	void OnWindowAdjust(std::size_t nbytes) override;
-	void OnData(std::span<const std::byte> payload) override;
-	void OnEof() override;
 	void OnWriteBlocked() noexcept override;
 	void OnWriteUnblocked() noexcept override;
+
+	/* virtual methods from class SSH::BufferedChannel */
+	std::size_t OnBufferedData(std::span<const std::byte> payload) override;
+	void OnBufferedEof() override;
 
 private:
 	void OnSocketReady(unsigned events) noexcept;

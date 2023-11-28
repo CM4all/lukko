@@ -11,7 +11,7 @@
 SocketChannel::SocketChannel(SSH::CConnection &_connection,
 			     SSH::ChannelInit init,
 			     UniqueSocketDescriptor _socket) noexcept
-	:SSH::Channel(_connection, init, RECEIVE_WINDOW),
+	:SSH::BufferedChannel(_connection, init, RECEIVE_WINDOW),
 	 socket(_connection.GetEventLoop(), BIND_THIS_METHOD(OnSocketReady),
 		_socket.Release())
 {
@@ -34,21 +34,33 @@ SocketChannel::OnWindowAdjust(std::size_t nbytes)
 	Channel::OnWindowAdjust(nbytes);
 }
 
-void
-SocketChannel::OnData(std::span<const std::byte> payload)
+std::size_t
+SocketChannel::OnBufferedData(std::span<const std::byte> payload)
 {
 	const auto nbytes = socket.GetSocket().WriteNoWait(payload);
-	if (nbytes < 0)
-		throw MakeSocketError("Failed to send");
-	// TODO handle EAGAIN
-	// TODO handle short send
+	if (nbytes < 0) {
+		const auto e = GetSocketError();
+		if (IsSocketErrorSendWouldBlock(e)) {
+			socket.ScheduleWrite();
+			return 0;
+		}
 
-	if (ConsumeReceiveWindow(payload.size()) < RECEIVE_WINDOW/ 2)
+		throw MakeSocketError(e, "Failed to send");
+	}
+
+
+	const std::size_t consumed = static_cast<std::size_t>(nbytes);
+	if (consumed < payload.size())
+		socket.ScheduleWrite();
+
+	if (ConsumeReceiveWindow(consumed) < RECEIVE_WINDOW/ 2)
 		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
+
+	return consumed;
 }
 
 void
-SocketChannel::OnEof()
+SocketChannel::OnBufferedEof()
 {
 	socket.GetSocket().ShutdownWrite();
 }

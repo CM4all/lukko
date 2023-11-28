@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ssh/Channel.hxx"
+#include "ssh/BufferedChannel.hxx"
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -16,7 +16,7 @@ struct PreparedChildProcess;
 class ChildProcessHandle;
 class Logger;
 
-class SessionChannel final : public SSH::Channel, ExitListener
+class SessionChannel final : public SSH::BufferedChannel, ExitListener
 {
 	static constexpr std::size_t RECEIVE_WINDOW = 16384;
 
@@ -24,9 +24,9 @@ class SessionChannel final : public SSH::Channel, ExitListener
 
 	std::unique_ptr<ChildProcessHandle> child;
 
-	UniqueFileDescriptor stdin_pipe, slave_tty;
+	UniqueFileDescriptor slave_tty;
 
-	PipeEvent stdout_pipe, stderr_pipe, tty;
+	PipeEvent stdin_pipe, stdout_pipe, stderr_pipe, tty;
 
 	/**
 	 * Environment variables for the new process: a linked list of
@@ -42,12 +42,14 @@ public:
 
 	/* virtual methods from class SSH::Channel */
 	void OnWindowAdjust(std::size_t nbytes) override;
-	void OnData(std::span<const std::byte> payload) override;
-	void OnEof() override;
 	bool OnRequest(std::string_view request_type,
 		       std::span<const std::byte> type_specific) override;
 	void OnWriteBlocked() noexcept override;
 	void OnWriteUnblocked() noexcept override;
+
+	/* virtual methods from class SSH::BufferedChannel */
+	std::size_t OnBufferedData(std::span<const std::byte> payload) override;
+	void OnBufferedEof() override;
 
 private:
 	bool WasStarted() const noexcept {
@@ -84,6 +86,7 @@ private:
 	}
 
 	void OnTtyReady(unsigned events) noexcept;
+	void OnStdinReady(unsigned events) noexcept;
 	void OnStdoutReady(unsigned events) noexcept;
 	void OnStderrReady(unsigned events) noexcept;
 
