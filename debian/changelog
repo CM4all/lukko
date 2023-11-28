@@ -2,7 +2,7 @@ cm4all-lukko (0.6) unstable; urgency=low
 
   * translation: add packet NO_HOME_AUTHORIZED_KEYS
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Nov 2023 11:16:55 +0100
 
 cm4all-lukko (0.5) unstable; urgency=low
 
