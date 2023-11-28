@@ -3,7 +3,7 @@ cm4all-lukko (0.7) unstable; urgency=low
   * control: allow controlling the server with UDP datagrams
   * implement translation packet NO_PASSWORD (partially)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Nov 2023 15:19:58 +0100
 
 cm4all-lukko (0.6) unstable; urgency=low
 
