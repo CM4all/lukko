@@ -17,6 +17,10 @@
 #include "lib/avahi/ErrorHandler.hxx"
 #endif
 
+#ifdef ENABLE_CONTROL
+#include "event/net/control/Handler.hxx"
+#endif
+
 #include <forward_list>
 #include <memory>
 
@@ -24,6 +28,7 @@
 
 struct Config;
 struct ListenerConfig;
+class ControlServer;
 class SecretKey;
 class UniqueSocketDescriptor;
 class Listener;
@@ -32,9 +37,15 @@ class SpawnService;
 class SpawnServerClient;
 namespace Avahi { class Client; class Publisher; struct Service; }
 
+struct DummyBase {};
+
 class Instance final
+	:DummyBase
+#ifdef ENABLE_CONTROL
+	, ControlHandler
+#endif
 #ifdef HAVE_AVAHI
-	:Avahi::ErrorHandler
+	, Avahi::ErrorHandler
 #endif
 {
 	static constexpr size_t MAX_DATAGRAM_SIZE = 4096;
@@ -55,6 +66,10 @@ class Instance final
 
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnExit)};
 	SignalEvent sighup_event{event_loop, SIGHUP, BIND_THIS_METHOD(OnReload)};
+
+#ifdef ENABLE_CONTROL
+	std::forward_list<ControlServer> control_listeners;
+#endif
 
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> avahi_client;
@@ -114,6 +129,15 @@ public:
 private:
 	void OnExit() noexcept;
 	void OnReload(int) noexcept;
+
+	/* virtual methods from class ControlHandler */
+	void OnControlPacket(ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     std::span<const std::byte> payload,
+			     std::span<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid) override;
+
+	void OnControlError(std::exception_ptr ep) noexcept override;
 
 #ifdef HAVE_AVAHI
 	/* virtual methods from class Avahi::ErrorHandler */

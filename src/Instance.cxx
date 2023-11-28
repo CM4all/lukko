@@ -15,6 +15,10 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
 
+#ifdef ENABLE_CONTROL
+#include "event/net/control/Server.hxx"
+#endif
+
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Client.hxx"
 #include "lib/avahi/Publisher.hxx"
@@ -41,6 +45,15 @@ Instance::Instance(const Config &config,
 {
 	shutdown_listener.Enable();
 	sighup_event.Enable();
+
+#ifdef ENABLE_CONTROL
+	for (const auto &i : config.control_listeners) {
+		ControlHandler &handler = *this;
+		control_listeners.emplace_front(event_loop,
+						i.Create(SOCK_DGRAM),
+						handler);
+	}
+#endif
 }
 
 Instance::~Instance() noexcept = default;
@@ -139,6 +152,10 @@ Instance::OnExit() noexcept
 	sighup_event.Disable();
 
 	spawn_service->Shutdown();
+
+#ifdef ENABLE_CONTROL
+	control_listeners.clear();
+#endif
 
 #ifdef HAVE_AVAHI
 	avahi_publisher.reset();

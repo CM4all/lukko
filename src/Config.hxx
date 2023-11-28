@@ -30,6 +30,21 @@ struct Config {
 	std::string translation_server;
 #endif
 
+#ifdef ENABLE_CONTROL
+	struct ControlListener : SocketConfig {
+		ControlListener() {
+			pass_cred = true;
+		}
+
+		explicit ControlListener(SocketAddress _bind_address)
+			:SocketConfig(_bind_address) {
+			pass_cred = true;
+		}
+	};
+
+	std::forward_list<ControlListener> control_listeners;
+#endif // ENABLE_CONTROL
+
 	std::forward_list<ListenerConfig> listeners;
 
 	SpawnConfig spawn;

@@ -101,6 +101,7 @@ jobs:
             -Dauto_features=disabled \
             -Dtest=true \
             -Dtranslation=false \
+            -Dcontrol=false \
              --force-fallback-for=fmt \
             -Dwrap_mode=nofallback \
             output

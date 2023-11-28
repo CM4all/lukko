@@ -162,6 +162,15 @@ else
   translation_dep = dependency('', required: false)
 endif
 
+if get_option('control')
+  subdir('libcommon/src/event/net/control')
+  sources += [
+    'src/Control.cxx',
+  ]
+else
+  control_server_dep = dependency('', required: false)
+endif
+
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
@@ -169,6 +178,7 @@ conf.set('HAVE_OPENSSL', crypto_dep.found())
 conf.set('HAVE_LIBMD', libmd.found())
 conf.set('HAVE_NLOHMANN_JSON', nlohmann_json_dep.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
+conf.set('ENABLE_CONTROL', get_option('control'))
 configure_file(output: 'config.h', configuration: conf)
 
 key_sources = []
@@ -278,6 +288,7 @@ executable(
     sodium_dep,
     spawn_dep,
     translation_dep,
+    control_server_dep,
     key_dep,
     cipher_dep,
     cap_dep,

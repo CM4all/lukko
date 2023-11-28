@@ -71,6 +71,19 @@ class LukkoConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+	class Control final : public ConfigParser {
+		Config &parent;
+		Config::ControlListener config;
+
+	public:
+		explicit Control(Config &_parent) noexcept:parent(_parent) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+
 public:
 	explicit LukkoConfigParser(Config &_config) noexcept
 		:config(_config) {}
@@ -148,6 +161,40 @@ LukkoConfigParser::Listener::Finish()
 	ConfigParser::Finish();
 }
 
+#ifdef ENABLE_CONTROL
+
+void
+LukkoConfigParser::Control::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (StringIsEqual(word, "bind")) {
+		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
+							 5478, true);
+	} else if (StringIsEqual(word, "multicast_group")) {
+		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
+							    0, false);
+	} else if (StringIsEqual(word, "interface")) {
+		config.interface = line.ExpectValueAndEnd();
+	} else
+		throw LineParser::Error("Unknown option");
+}
+
+void
+LukkoConfigParser::Control::Finish()
+{
+	if (config.bind_address.IsNull())
+		throw LineParser::Error("Bind address is missing");
+
+	config.Fixup();
+
+	parent.control_listeners.emplace_front(std::move(config));
+
+	ConfigParser::Finish();
+}
+
+#endif // ENABLE_CONTROL
+
 void
 LukkoConfigParser::ParseLine2(FileLineParser &line)
 {
@@ -163,6 +210,11 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 	} else if (StringIsEqual(word, "translation_server")) {
 		config.translation_server = line.ExpectValueAndEnd();
 #endif // ENABLE_TRANSLATION
+#ifdef ENABLE_CONTROL
+	} else if (StringIsEqual(word, "control")) {
+		line.ExpectSymbolAndEol('{');
+		SetChild(std::make_unique<Control>(config));
+#endif // ENABLE_CONTROL
 	} else
 		throw LineParser::Error("Unknown option");
 }

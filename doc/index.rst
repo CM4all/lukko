@@ -73,6 +73,47 @@ Known attributes:
   ``LISTENER_TAG`` packet.
 
 
+Control Listener
+----------------
+
+The ``control`` section creates a listener for control datagrams that
+can be used to control certain behavior at runtime.  Example::
+
+   control {
+     bind "@lukko-control"
+   }
+
+   control {
+     bind "*"
+     interface "eth1"
+     multicast_group "224.0.0.123"
+   }
+
+Known attributes:
+
+- ``bind``: an adddress to bind to. May be the wildcard ``*`` or an
+  IPv4/IPv6 address followed by a port. IPv6 addresses should be
+  enclosed in square brackets to disambiguate the port
+  separator. Local sockets start with a slash :file:`/`, and abstract
+  sockets start with the symbol ``@``.
+
+- ``multicast_group``: join this multicast group, which allows
+  receiving multicast commands. Value is a multicast IPv4/IPv6
+  address.  IPv6 addresses may contain a scope identifier after a
+  percent sign (``%``).
+
+- ``interface``: limit this listener to the given network interface.
+
+The protocol is defined here:
+https://github.com/CM4all/libcommon/blob/master/src/net/control/Protocol.hxx
+
+Lukko implements only a subset of the commands:
+
+- ``VERBOSE``
+- ``DISABLE_ZEROCONF``
+- ``ENABLE_ZEROCONF``
+
+
 .. _ts:
 
 Translation Server

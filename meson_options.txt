@@ -7,6 +7,7 @@ option('seccomp', type: 'feature', description: 'seccomp support (using libsecco
 option('cap', type: 'feature', description: 'Linux capability support (using libcap)')
 
 option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
+option('control', type: 'boolean', value: true, description: 'Support the beng-proxy control protocol')
 
 option('test', type: 'boolean', value: false, description: 'Build the unit tests and debug programs')
 
