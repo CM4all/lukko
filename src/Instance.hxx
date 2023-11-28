@@ -130,6 +130,7 @@ private:
 	void OnExit() noexcept;
 	void OnReload(int) noexcept;
 
+#ifdef ENABLE_CONTROL
 	/* virtual methods from class ControlHandler */
 	void OnControlPacket(ControlServer &control_server,
 			     BengProxy::ControlCommand command,
@@ -138,6 +139,7 @@ private:
 			     SocketAddress address, int uid) override;
 
 	void OnControlError(std::exception_ptr ep) noexcept override;
+#endif // ENABLE_CONTROL
 
 #ifdef HAVE_AVAHI
 	/* virtual methods from class Avahi::ErrorHandler */
