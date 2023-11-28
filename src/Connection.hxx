@@ -102,6 +102,9 @@ public:
 #ifdef ENABLE_TRANSLATION
 	[[gnu::pure]]
 	const TranslateResponse *GetTranslationResponse() const noexcept;
+
+	[[gnu::pure]]
+	bool HasTag(std::string_view tag) const noexcept;
 #endif
 
 	[[gnu::pure]]

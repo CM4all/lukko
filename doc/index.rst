@@ -112,6 +112,7 @@ Lukko implements only a subset of the commands:
 - ``VERBOSE``
 - ``DISABLE_ZEROCONF``
 - ``ENABLE_ZEROCONF``
+- ``TERMINATE_CHILDREN``
 
 
 .. _ts:

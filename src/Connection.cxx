@@ -33,6 +33,7 @@
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Exception.hxx" // for GetFullMessage()
+#include "util/IterableSplitString.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringVerify.hxx"
 
@@ -94,7 +95,20 @@ Connection::GetTranslationResponse() const noexcept
 		: nullptr;
 }
 
-#endif
+bool
+Connection::HasTag(std::string_view tag) const noexcept
+{
+	if (translation == nullptr)
+		return false;
+
+	for (std::string_view i : IterableSplitString(translation->response.child_options.tag, '\0'))
+		if (i == tag)
+			return true;
+
+	return false;
+}
+
+#endif // ENABLE_TRANSLATION
 
 bool
 Connection::IsSftpOnly() const noexcept

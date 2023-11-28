@@ -3,8 +3,11 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
+#include "Connection.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
+#include "util/SpanCast.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
@@ -60,6 +63,17 @@ Instance::OnControlPacket([[maybe_unused]] ControlServer &control_server,
 	case ControlCommand::STOPWATCH_PIPE:
 	case ControlCommand::DISCARD_SESSION:
 	case ControlCommand::FLUSH_HTTP_CACHE:
+		break;
+
+	case ControlCommand::TERMINATE_CHILDREN:
+#ifdef ENABLE_TRANSLATION
+		if (payload.empty())
+			break;
+
+		connections.remove_and_dispose_if([tag = ToStringView(payload)](const Connection &c){
+			return c.HasTag(tag);
+		}, DeleteDisposer{});
+#endif // ENABLE_TRANSLATION
 		break;
 	}
 }
