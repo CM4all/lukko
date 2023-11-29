@@ -47,9 +47,6 @@ SessionChannel::~SessionChannel() noexcept
 {
 	stdout_pipe.Close();
 	stderr_pipe.Close();
-
-	if (child)
-		child->Kill(SIGTERM);
 }
 
 void
