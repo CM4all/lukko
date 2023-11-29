@@ -63,6 +63,8 @@ class Connection final
 	 */
 	Co::EagerInvokeTask occupied_task;
 
+	bool log_disconnect = true;
+
 public:
 	Connection(Instance &_instance, Listener &_listener,
 		   UniqueSocketDescriptor fd, SocketAddress _peer_address,

@@ -77,11 +77,20 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 {
 }
 
-Connection::~Connection() noexcept = default;
+Connection::~Connection() noexcept
+{
+	if (log_disconnect)
+		logger(1, "Disconnected");
+}
 
 void
 Connection::Terminate() noexcept
 {
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger(1, "Terminating connection");
+	}
+
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Account disabled"sv);
 }
