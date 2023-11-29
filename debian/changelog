@@ -6,7 +6,7 @@ cm4all-lukko (0.8) unstable; urgency=low
   * fix assertion failure
   * fix file descriptor leak bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 29 Nov 2023 17:37:45 +0100
 
 cm4all-lukko (0.7) unstable; urgency=low
 
