@@ -45,8 +45,10 @@ SessionChannel::SessionChannel(SSH::CConnection &_connection,
 
 SessionChannel::~SessionChannel() noexcept
 {
+	stdin_pipe.Close();
 	stdout_pipe.Close();
 	stderr_pipe.Close();
+	tty.Close();
 }
 
 void

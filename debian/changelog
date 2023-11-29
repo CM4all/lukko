@@ -4,6 +4,7 @@ cm4all-lukko (0.8) unstable; urgency=low
   * make writing to stdin/tty/socket non-blocking
   * log failed passwords
   * fix assertion failure
+  * fix file descriptor leak bug
 
  --   
 
