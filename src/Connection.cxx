@@ -459,6 +459,17 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		if (response.status != HttpStatus{}) {
+			if (password.empty())
+				logger.Fmt(1, "Rejected auth for user {}{}{}"sv,
+					   new_username,
+					   response.message != nullptr ? ": "sv : ""sv,
+					   response.message != nullptr ? response.message : "");
+			else
+				logger.Fmt(1, "Failed password for user {}{}{}"sv,
+					   new_username,
+					   response.message != nullptr ? ": "sv : ""sv,
+					   response.message != nullptr ? response.message : "");
+
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure({}, false));
 			co_return;
