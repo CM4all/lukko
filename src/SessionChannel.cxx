@@ -472,6 +472,9 @@ try {
 void
 SessionChannel::OnChildProcessExit(int status) noexcept
 try {
+	child = {};
+	stdin_pipe.Close();
+
 	if (WIFSIGNALED(status)) {
 		const char *signal_name = sigdescr_np(WTERMSIG(status));
 
@@ -481,9 +484,6 @@ try {
 	} else {
 		SendExitStatus(WEXITSTATUS(status));
 	}
-
-	child = {};
-	stdin_pipe.Close();
 
 	CloseIfInactive();
 } catch (...) {

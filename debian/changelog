@@ -3,6 +3,7 @@ cm4all-lukko (0.8) unstable; urgency=low
   * send DISCONNECT/CONNECTION_LOST on TERMINATE_CHILDREN control packet
   * make writing to stdin/tty/socket non-blocking
   * log failed passwords
+  * fix assertion failure
 
  --   
 
