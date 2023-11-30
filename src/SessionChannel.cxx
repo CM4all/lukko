@@ -14,7 +14,6 @@
 #include "system/Error.hxx"
 #include "net/ToString.hxx"
 #include "io/Pipe.hxx"
-#include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
 #include "translation/Response.hxx"
@@ -127,14 +126,14 @@ SessionChannel::OnBufferedEof()
 	stdin_pipe.Close();
 }
 
-static const char *
-LoginShellName(AllocatorPtr alloc, const char *shell) noexcept
+static std::string
+LoginShellName(const char *shell) noexcept
 {
 	const char *slash = strrchr(shell, '/');
 	if (slash != nullptr && slash[1] != 0)
 		shell = slash + 1;
 
-	return alloc.Concat('-', shell);
+	return fmt::format("-{}"sv, shell);
 }
 
 void
@@ -216,7 +215,6 @@ SessionChannel::Exec(const char *cmd)
 	if (!c.IsExecAllowed())
 		return false;
 
-	Allocator alloc;
 	PreparedChildProcess p;
 
 	PrepareChildProcess(p);
@@ -230,13 +228,15 @@ SessionChannel::Exec(const char *cmd)
 		cmd = c.GetAuthorizedKeyOptions().command.c_str();
 	}
 
+	std::string login_shell_name;
+
 	if (cmd != nullptr) {
 		p.args.push_back(shell);
 		p.args.push_back("-c");
 		p.args.push_back(cmd);
 	} else {
 		p.exec_path = shell;
-		p.args.push_back(LoginShellName(alloc, shell));
+		p.args.push_back((login_shell_name = LoginShellName(shell)).c_str());
 	}
 
 	SpawnChildProcess(std::move(p));
