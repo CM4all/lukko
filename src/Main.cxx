@@ -98,6 +98,18 @@ LoadGlobalAuthorizedKeys(const std::filesystem::path &config_directory)
 	return keys;
 }
 
+static PublicKeySet
+LoadAuthorizedHostKeys(const std::filesystem::path &config_directory)
+{
+	PublicKeySet keys;
+
+	UniqueFileDescriptor fd;
+	if (fd.OpenReadOnly((config_directory / "authorized_host_keys"sv).c_str()))
+		LoadPublicKeysTextFile(keys, fd);
+
+	return keys;
+}
+
 int
 main(int argc, char **argv) noexcept
 try {
@@ -128,6 +140,7 @@ try {
 		config,
 		LoadHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		LoadGlobalAuthorizedKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
+		LoadAuthorizedHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		std::move(spawner_socket),
 	};
 

@@ -56,6 +56,8 @@ class Instance final
 
 	const PublicKeySet global_authorized_keys;
 
+	const PublicKeySet authorized_host_keys;
+
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
 #endif
@@ -87,6 +89,7 @@ public:
 	Instance(const Config &config,
 		 SecretKeyList &&_host_key,
 		 PublicKeySet &&_global_authorized_keys,
+		 PublicKeySet &&_authorized_host_keys,
 		 UniqueSocketDescriptor spawner_socket);
 	~Instance() noexcept;
 
@@ -96,6 +99,10 @@ public:
 
 	const auto &GetGlobalAuthorizedKeys() const noexcept {
 		return global_authorized_keys;
+	}
+
+	const auto &GetAuthorizedHostKeys() const noexcept {
+		return authorized_host_keys;
 	}
 
 	auto &GetEventLoop() noexcept {

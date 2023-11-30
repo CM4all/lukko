@@ -292,9 +292,12 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 inline bool
 Connection::IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
-	// TODO
-	(void)public_key_blob;
-	return true;
+	if (const auto *options = instance.GetAuthorizedHostKeys().Find(public_key_blob)) {
+		authorized_key_options = *options;
+		return true;
+	}
+
+	return false;
 }
 
 class ResolveSocketChannelOperation final : Cancellable {
