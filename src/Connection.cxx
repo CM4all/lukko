@@ -226,6 +226,15 @@ Connection::PrepareChildProcess(PreparedChildProcess &p) const noexcept
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
 		translation->response.child_options.CopyTo(p);
+
+		if (p.cgroup != nullptr && p.cgroup->name != nullptr &&
+		    p.cgroup_session == nullptr) {
+			/* create a session cgroup for each SSH
+			   session */
+			static unsigned session_id_counter = 0;
+			p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
+			p.cgroup_session = p.strings.front().c_str();
+		}
 	} else {
 #endif // ENABLE_TRANSLATION
 		p.uid_gid.uid = uid;
