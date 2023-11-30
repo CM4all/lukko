@@ -296,7 +296,6 @@ SessionChannel::OnRequest(std::string_view request_type,
 				/* refuse to run sftp with a pty */
 				return false;
 
-			Allocator alloc;
 			PreparedChildProcess p;
 
 			PrepareChildProcess(p);
