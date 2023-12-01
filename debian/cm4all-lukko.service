@@ -3,6 +3,9 @@ Description=CM4all Lukko
 Wants=network.target
 After=network.target
 
+# the spawn-reaper cleans up empty cgroups
+Wants=cm4all-spawn-reaper.service
+
 [Service]
 Type=notify
 ExecStart=/usr/sbin/cm4all-lukko

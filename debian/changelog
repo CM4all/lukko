@@ -1,6 +1,6 @@
 cm4all-lukko (0.10) unstable; urgency=low
 
-  * 
+  * systemd: add "Wants=cm4all-spawn-reaper.service"
 
  --   
 
