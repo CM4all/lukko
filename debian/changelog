@@ -4,7 +4,7 @@ cm4all-lukko (0.9) unstable; urgency=low
   * load the authorized_host_keys file
   * add spawner setting `cgroups_writable_by_gid`
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 01 Dec 2023 17:30:44 +0100
 
 cm4all-lukko (0.8) unstable; urgency=low
 
