@@ -2,6 +2,7 @@ cm4all-lukko (0.9) unstable; urgency=low
 
   * create session cgroup
   * load the authorized_host_keys file
+  * add spawner setting `cgroups_writable_by_gid`
 
  --   
 
