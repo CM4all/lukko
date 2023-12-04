@@ -3,6 +3,10 @@ Description=CM4all Lukko
 Wants=network.target
 After=network.target
 
+# the spawn-accessory daemon provides services for our spawner
+Wants=cm4all-spawn-accessory.socket
+After=cm4all-spawn-accessory.socket
+
 # the spawn-reaper cleans up empty cgroups
 Wants=cm4all-spawn-reaper.service
 
