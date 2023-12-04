@@ -5,7 +5,7 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 13.3~),
  meson (>= 0.56),
  python3-sphinx,
- g++ (>= 4:10),
+ g++ (>= 4:12),
  libfmt-dev (>= 9),
  libgtest-dev,
  libmd-dev,
