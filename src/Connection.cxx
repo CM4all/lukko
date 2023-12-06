@@ -73,8 +73,10 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
-	 logger(StringLoggerDomain{fmt::format("{}", peer_address)})
+	 logger(StringLoggerDomain{fmt::format("{}", peer_address)}),
+	 auth_timeout(_instance.GetEventLoop(), BIND_THIS_METHOD(OnAuthTimeout))
 {
+	auth_timeout.Schedule(std::chrono::seconds{10});
 }
 
 Connection::~Connection() noexcept
@@ -648,6 +650,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 	username.assign(new_username);
 
+	auth_timeout.Cancel();
+
 	SetAuthenticated();
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 }
@@ -677,6 +681,13 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		   authentication requests received after that SHOULD
 		   be silently ignored" */
 		return;
+
+	if (!got_userauth_request) {
+		/* this is the first USERAUTH_REQUEST - reschedule the
+		   timeout with a longer duration */
+		got_userauth_request = true;
+		auth_timeout.Schedule(std::chrono::minutes{2});
+	}
 
 	/* the payload is owned by the caller, therefore we need to
 	   duplicate it into an AllocatedArray onwed by the coroutine,
@@ -747,4 +758,16 @@ Connection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	logger(1, e);
 	SSH::CConnection::OnBufferedError(std::move(e));
+}
+
+void
+Connection::OnAuthTimeout() noexcept
+{
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger(1, "Authentication timeout");
+	}
+
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Timeout"sv);
 }

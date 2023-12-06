@@ -1,5 +1,6 @@
 cm4all-lukko (0.10) unstable; urgency=low
 
+  * limit the duration of the authentication phase
   * systemd: add "Wants=cm4all-spawn-reaper.service"
   * systemd: add "After=cm4all-spawn-accessory.socket"
   * debian: add Recommends/Suggests on cm4all-spawn-*

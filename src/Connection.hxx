@@ -6,6 +6,7 @@
 
 #include "ssh/CConnection.hxx"
 #include "key/Options.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "co/InvokeTask.hxx"
@@ -41,6 +42,15 @@ class Connection final
 
 	const Logger logger;
 
+	/**
+	 * This timer disconnects when the auth phase takes too long.
+	 * At first, a very short duration is scheduled (10s) until
+	 * encryption is established; when the first USERAUTH_REQUEST
+	 * is received (#got_userauth), the timer is rescheduled,
+	 * allowing some more time for the actual user auth.
+	 */
+	CoarseTimerEvent auth_timeout;
+
 	AuthorizedKeyOptions authorized_key_options;
 
 	std::string username;
@@ -64,6 +74,12 @@ class Connection final
 	Co::EagerInvokeTask occupied_task;
 
 	bool log_disconnect = true;
+
+	/**
+	 * Tracks whether USERAUTH_REQUEST has been received already.
+	 * This is used to reschedule #auth_timeout.
+	 */
+	bool got_userauth_request = false;
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
@@ -178,6 +194,8 @@ private:
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 
 	void HandleChannelOpen(std::span<const std::byte> payload);
+
+	void OnAuthTimeout() noexcept;
 
 	/* virtual methods from class SSH::CConnection */
 	std::unique_ptr<SSH::Channel> OpenChannel(std::string_view channel_type,
