@@ -57,10 +57,6 @@ def test_openssh_client(user: str, address: str, port: int) -> None:
         'UserKnownHostsFile': os.path.join(config_directory, 'client', 'known_hosts'),
         'IdentitiesOnly': 'yes',
         'IdentityFile': os.path.join(config_directory, 'client', f'id_ed25519'),
-
-        # this is necessary or else OpenSSH will not use RSA keys (not
-        # even with SHA2)
-        'PubkeyAcceptedAlgorithms': '+ssh-rsa',
     }
 
     # test all client key types

@@ -14,12 +14,14 @@
 #include "ssh/Deserializer.hxx"
 #include "key/Key.hxx"
 #include "key/List.hxx"
+#include "key/Algorithms.hxx"
 #include "cipher/Cipher.hxx"
 #include "cipher/Factory.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
 #include "version.h"
@@ -251,6 +253,34 @@ Connection::SendNewKeys()
 }
 
 inline void
+Connection::SendExtInfo()
+{
+	PacketSerializer s{MessageNumber::EXT_INFO};
+	s.WriteU32(1);
+
+	/* sending this works around a OpenSSH client bug which causes
+	   it to ignore RSA keys; without EXT_INFO,
+	   key_sig_algorithm() skips all RSA keys unless "ssh-rsa"
+	   (RSA with SHA-1) is explicitly added to option
+	   "PubkeyAcceptedAlgorithms", even though we want to use
+	   "rsa-sha2-*" */
+	s.WriteString("server-sig-algs"sv);
+	s.WriteString(all_public_key_algorithms);
+
+	SendPacket(std::move(s));
+}
+
+static constexpr bool
+StringListContains(std::string_view haystack, std::string_view needle) noexcept
+{
+	for (const std::string_view i : IterableSplitString(haystack, ','))
+		if (i == needle)
+			return true;
+
+	return false;
+}
+
+inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
 	client_kexinit = payload;
@@ -288,6 +318,9 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 			"No supported host key"sv,
 		};
 
+	peer_wants_ext_info = StringListContains(kex_algorithms,
+						 role == Role::SERVER ? "ext-info-c"sv : "ext-info-s"sv);
+
 	SendKexInit();
 }
 
@@ -321,6 +354,9 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 
 	SendECDHKexInitReply(client_ephemeral_public_key);
 	SendNewKeys();
+
+	if (peer_wants_ext_info && role == Role::SERVER)
+		SendExtInfo();
 }
 
 void

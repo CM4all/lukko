@@ -65,6 +65,11 @@ class Connection : BufferedSocketHandler
 
 	bool authenticated = false;
 
+	/**
+	 * Did the peer announce "kex-info-c" or "kex-info-c"?
+	 */
+	bool peer_wants_ext_info = false;
+
 protected:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
@@ -139,6 +144,7 @@ protected:
 	void SendKexInit();
 	void SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key);
 	void SendNewKeys();
+	void SendExtInfo();
 
 	void HandleKexInit(std::span<const std::byte> payload);
 	void HandleNewKeys(std::span<const std::byte> payload);
