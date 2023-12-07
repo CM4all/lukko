@@ -6,7 +6,7 @@ cm4all-lukko (0.10) unstable; urgency=low
   * systemd: add "After=cm4all-spawn-accessory.socket"
   * debian: add Recommends/Suggests on cm4all-spawn-*
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 07 Dec 2023 17:25:08 +0100
 
 cm4all-lukko (0.9) unstable; urgency=low
 
