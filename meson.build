@@ -135,6 +135,8 @@ subdir('libcommon/src/event')
 subdir('libcommon/src/net')
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/lib/avahi')
+subdir('libcommon/src/memory')
+subdir('src/memory')
 
 if libsystemd.found()
   subdir('libcommon/src/lib/dbus')
@@ -294,6 +296,7 @@ executable(
     cipher_dep,
     cap_dep,
     coroutines_dep,
+    memory_dep,
   ],
   install: true,
   install_dir: 'sbin',

@@ -1,6 +1,6 @@
 cm4all-lukko (0.11) unstable; urgency=low
 
-  * 
+  * use an optimized buffer allocator
 
  --   
 

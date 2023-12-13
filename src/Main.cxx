@@ -9,6 +9,7 @@
 #include "key/Ed25519Key.hxx"
 #include "key/LoadFile.hxx"
 #include "key/TextFile.hxx"
+#include "memory/fb_pool.hxx"
 #include "spawn/Launch.hxx"
 #include "system/Error.hxx"
 #include "system/ProcessName.hxx"
@@ -135,6 +136,8 @@ try {
 	SetupProcess();
 
 	auto spawner_socket = LaunchSpawnServer(config.spawn, nullptr);
+
+	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance{
 		config,
