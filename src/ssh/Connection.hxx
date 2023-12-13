@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "Input.hxx"
-#include "Output.hxx"
+#include "IHandler.hxx"
 #include "KexState.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
@@ -20,12 +19,13 @@ class SecretKey;
 namespace SSH {
 
 class PacketSerializer;
-class Cipher;
+class Input;
+class Output;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
 enum class KexAlgorithm : uint_least8_t;
 
-class Connection : BufferedSocketHandler
+class Connection : BufferedSocketHandler, InputHandler
 {
 	const SecretKeyList &host_keys;
 
@@ -51,8 +51,8 @@ class Connection : BufferedSocketHandler
 
 	KexState kex_state;
 
-	Input input;
-	Output output;
+	Input &input;
+	Output &output;
 
 	const Role role;
 
@@ -93,9 +93,8 @@ public:
 		return socket.GetEventLoop();
 	}
 
-	bool IsEncrypted() const noexcept {
-		return input.IsEncrypted() && output.IsEncrypted();
-	}
+	[[gnu::pure]]
+	bool IsEncrypted() const noexcept;
 
 	bool IsAuthenticated() const noexcept {
 		return authenticated;
@@ -177,6 +176,9 @@ protected:
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedWrite() override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
+
+	/* virtual methods from class InputHandler */
+	bool OnInputReady() noexcept final;
 };
 
 } // namespace SSH

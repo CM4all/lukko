@@ -5,13 +5,16 @@
 #pragma once
 
 #include "Queue.hxx"
+#include "thread/Job.hxx"
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <span>
 
 class DefaultFifoBuffer;
 class BufferedSocket;
+class ThreadQueue;
 
 namespace SSH {
 
@@ -20,25 +23,79 @@ class Cipher;
 /**
  * Manage output to be sent on a SSH socket.
  */
-class Output final {
+class Output final : ThreadJob {
+	ThreadQueue &thread_queue;
+	BufferedSocket &socket;
+
 	uint_least64_t seq = 0;
 
 	std::unique_ptr<Cipher> cipher;
 
-	SendQueue queue;
+	/**
+	 * The cipher to be used once #plain_queue runs empty; it will then 
+	 */
+	std::unique_ptr<Cipher> next_cipher;
+
+	/**
+	 * The cipher used to push new packets.  It is only used by
+	 * GetCipher(), which its caller uses to calculate the padding
+	 * based on the cipher's characteristics.
+	 */
+	const Cipher *push_cipher = nullptr;
+
+	/**
+	 * Data to be sent as-is on the socket.
+	 */
+	SendQueue pending_queue;
+
+	/**
+	 * Protects #plain_queue, #next_plain_queue, #encrypted_queue,
+	 * #next_cipher.
+	 */
+	std::mutex mutex;
+
+	/**
+	 * Data to be encrypted by Run().
+	 */
+	BufferList plain_queue;
+
+	/**
+	 * Data to be encrypted by Run() using #next_cipher.  We need
+	 * two queues because #plain_queue needs to be encrypted with
+	 * the old cipher.
+	 */
+	BufferList next_plain_queue;
+
+	/**
+	 * Data encrypted by Run().  Will be moved to #pending_queue
+	 * by Done().
+	 */
+	BufferList encrypted_queue;
+
+	/**
+	 * Destroy() sets this if the #ThreadJob could not be
+	 * canceled; Done() will then delete this object.
+	 */
+	bool postponed_destroy = false;
 
 public:
+	Output(ThreadQueue &_thread_queue, BufferedSocket &_socket) noexcept;
+
+	void Destroy() noexcept;
+
 	bool IsEncrypted() const noexcept {
-		return cipher != nullptr;
+		return push_cipher != nullptr;
 	}
 
 	const Cipher *GetCipher() const noexcept {
-		return cipher.get();
+		return push_cipher;
 	}
 
 	template<typename T>
 	void SetCipher(T &&_cipher) noexcept {
-		cipher = std::forward<T>(_cipher);
+		const std::scoped_lock lock{mutex};
+		next_cipher = std::forward<T>(_cipher);
+		push_cipher = next_cipher.get();
 	}
 
 	void Push(std::span<const std::byte> src);
@@ -49,11 +106,17 @@ public:
 		DESTROYED,
 	};
 
-	FlushResult Flush(BufferedSocket &socket);
+	FlushResult Flush();
 
 private:
+	~Output() noexcept;
+
 	[[nodiscard]]
 	AllocatedArray<std::byte> EncryptPacket(std::span<const std::byte> src);
+
+	/* virtual methods from class ThreadJob */
+	void Run() noexcept override;
+	void Done() noexcept override;
 };
 
 } // namespace SSH

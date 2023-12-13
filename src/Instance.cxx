@@ -8,6 +8,7 @@
 #include "Connection.hxx"
 #include "key/Key.hxx"
 #include "spawn/Client.hxx"
+#include "thread/Pool.hxx"
 #include "event/net/MultiUdpListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -153,6 +154,8 @@ Instance::OnExit() noexcept
 	shutdown_listener.Disable();
 	sighup_event.Disable();
 
+	thread_pool_stop();
+
 	spawn_service->Shutdown();
 
 #ifdef ENABLE_CONTROL
@@ -167,6 +170,8 @@ Instance::OnExit() noexcept
 	connections.clear_and_dispose(DeleteDisposer{});
 
 	listeners.clear();
+
+	thread_pool_join();
 }
 
 void

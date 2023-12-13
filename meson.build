@@ -134,6 +134,7 @@ subdir('libcommon/src/system')
 subdir('libcommon/src/event')
 subdir('libcommon/src/net')
 subdir('libcommon/src/event/net')
+subdir('libcommon/src/thread')
 subdir('libcommon/src/lib/avahi')
 subdir('libcommon/src/memory')
 subdir('src/memory')
@@ -299,6 +300,7 @@ executable(
     cap_dep,
     coroutines_dep,
     memory_dep,
+    thread_pool_dep,
   ],
   install: true,
   install_dir: 'sbin',

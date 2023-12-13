@@ -4,25 +4,41 @@
 
 #pragma once
 
-#include "util/AllocatedArray.hxx"
+#include "List.hxx"
+#include "thread/Job.hxx"
+#include "DefaultFifoBuffer.hxx"
 
 #include <cstddef>
+#include <exception>
 #include <memory>
+#include <mutex>
 #include <span>
 
-class DefaultFifoBuffer;
+class ThreadQueue;
 template<typename T> class AllocatedArray;
 
 namespace SSH {
 
 class Cipher;
+class InputHandler;
 
 /**
  * Manage input received on a SSH socket and provides access to
  * individual packets.
  */
-class Input final {
-	uint_least64_t seq = 0;
+class Input final : ThreadJob {
+	ThreadQueue &thread_queue;
+	InputHandler &handler;
+
+	/**
+	 * The sequence of the packet returned by ReadPacket().
+	 */
+	uint_least64_t read_seq = 0;
+
+	/**
+	 * The sequence of the next packet to be decrypted.
+	 */
+	uint_least64_t decrypt_seq = 0;
 
 	/**
 	 * If non-zero, then we're currently waiting for the payload
@@ -33,28 +49,80 @@ class Input final {
 	std::unique_ptr<Cipher> cipher;
 
 	/**
-	 * Owner of the ReadPacket() return value if the payload was
-	 * decrypted.  Will be freed by ConsumePacket().
+	 * Protects #next_cipher, #raw_buffer, #decrypted_list,
+	 * #waiting_for_new_cipher, #error.
 	 */
-	AllocatedArray<std::byte> decrypted;
+	std::mutex mutex;
+
+	std::exception_ptr error;
+
+	std::unique_ptr<Cipher> next_cipher;
+
+	/**
+	 * Raw input from the socket.  It may need to be decrypted.
+	 */
+	DefaultFifoBuffer raw_buffer;
+
+	/**
+	 * A buffer for use within Run().  Unlike #raw_buffer, it is
+	 * not protected by a mutex.
+	 */
+	DefaultFifoBuffer unprotected_buffer;
+
+	/**
+	 * Decrypted packet payloads filled by Run().  Only used if
+	 * there is a cipher.
+	 */
+	BufferList decrypted_list;
+
+	bool encrypted = false;
+
+	/**
+	 * Destroy() sets this if the #ThreadJob could not be
+	 * canceled; Done() will then delete this object.
+	 */
+	bool postponed_destroy = false;
+
+	/**
+	 * True after seeing a #NEWKEYS packet.  It means #raw_buffer
+	 * needs to be decrypted, but we don't have the #Cipher
+	 * instance for it yet.  Decrypting can be resumed as son as
+	 * SetCipher() gets called.
+	 */
+	bool waiting_for_new_cipher = false;
+
+	/**
+	 * Was the last packet returned by ReadPacket() encrypted?
+	 */
+	bool consumed_encrypted = false;
 
 public:
+	Input(ThreadQueue &_thread_queue, InputHandler &_handler) noexcept;
+
+	void Destroy() noexcept;
+
 	bool IsEncrypted() const noexcept {
-		return cipher != nullptr;
+		return encrypted;
 	}
 
-	template<typename T>
-	void SetCipher(T &&_cipher) noexcept {
-		cipher = std::forward<T>(_cipher);
-	}
+	void SetCipher(std::unique_ptr<Cipher> _cipher) noexcept;
 
 	/**
 	 * Returns the sequence number of the packet most recently
 	 * returned by ReadPacket().
 	 */
 	uint_least64_t GetSeq() const noexcept {
-		return seq;
+		return read_seq;
 	}
+
+	/**
+	 * Feed data received on the socket into the packetizer.  This
+	 * will lead to a InputHandler::OnInputReady() call as soon as
+	 * packets have been decrypted.
+	 *
+	 * @return false if the #Input was destroyed
+	 */
+	bool Feed(DefaultFifoBuffer &src) noexcept;
 
 	/**
 	 * Read (and decrypt) the next packet from the buffer.
@@ -65,19 +133,28 @@ public:
 	 * Throws on error.
 	 */
 	[[nodiscard]]
-	std::span<const std::byte> ReadPacket(DefaultFifoBuffer &src);
+	std::span<const std::byte> ReadPacket();
 
 	/**
 	 * Mark the packet returned by ReadPacket() as "consumed".
 	 */
-	void ConsumePacket() noexcept {
-		++seq;
-		decrypted = {};
-	}
+	void ConsumePacket() noexcept;
 
 private:
+	~Input() noexcept;
+
+	[[nodiscard]]
+	std::span<const std::byte> ReadUnencryptedPacket();
+
+	[[nodiscard]]
+	std::span<const std::byte> ReadDecryptedPacket();
+
 	[[nodiscard]]
 	AllocatedArray<std::byte> DecryptPacket(DefaultFifoBuffer &src);
+
+	/* virtual methods from class ThreadJob */
+	void Run() noexcept override;
+	void Done() noexcept override;
 };
 
 } // namespace SSH

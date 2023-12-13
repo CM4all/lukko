@@ -4,19 +4,18 @@
 
 #pragma once
 
+#include "List.hxx"
 #include "io/Iovec.hxx"
 #include "util/AllocatedArray.hxx"
 
 #include <cassert>
-#include <cstddef>
-#include <list>
 #include <span>
 
 /**
  * Manager for a queue of buffers scheduled for sending to a socket.
  */
 class SendQueue {
-	std::list<AllocatedArray<std::byte>> queue;
+	BufferList queue;
 
 	/**
 	 * How much of the first buffer was already sent?
@@ -34,6 +33,10 @@ public:
 
 	void Push(std::span<const std::byte> src) noexcept {
 		queue.emplace_back(src);
+	}
+
+	void MoveFrom(BufferList &src) noexcept {
+		queue.splice(queue.end(), src);
 	}
 
 	std::span<const std::byte> front() const noexcept {

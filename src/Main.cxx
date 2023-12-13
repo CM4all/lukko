@@ -11,6 +11,7 @@
 #include "key/TextFile.hxx"
 #include "memory/fb_pool.hxx"
 #include "spawn/Launch.hxx"
+#include "thread/Pool.hxx"
 #include "system/Error.hxx"
 #include "system/ProcessName.hxx"
 #include "system/SetupProcess.hxx"
@@ -166,6 +167,8 @@ try {
 
 	/* main loop */
 	instance.Run();
+
+	thread_pool_deinit();
 
 	return EXIT_SUCCESS;
 } catch (...) {

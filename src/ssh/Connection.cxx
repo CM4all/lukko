@@ -3,6 +3,8 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Connection.hxx"
+#include "Input.hxx"
+#include "Output.hxx"
 #include "KexFactory.hxx"
 #include "KexCurve25519.hxx"
 #include "KexHash.hxx"
@@ -17,6 +19,7 @@
 #include "key/Algorithms.hxx"
 #include "cipher/Cipher.hxx"
 #include "cipher/Factory.hxx"
+#include "thread/Pool.hxx"
 #include "system/Urandom.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketError.hxx"
@@ -51,6 +54,8 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
 		       const SecretKeyList &_host_keys)
 	:host_keys(_host_keys),
 	 socket(event_loop),
+	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
+	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
 	 role(_role)
 {
 	socket.Init(_fd.Release(), FD_TCP,
@@ -62,7 +67,17 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
 		throw MakeSocketError("Failed to send VersionExchange");
 }
 
-Connection::~Connection() noexcept = default;
+Connection::~Connection() noexcept
+{
+	output.Destroy();
+	input.Destroy();
+}
+
+bool
+Connection::IsEncrypted() const noexcept
+{
+	return input.IsEncrypted() && output.IsEncrypted();
+}
 
 inline void
 Connection::SendPacket(std::span<const std::byte> src)
@@ -367,7 +382,7 @@ try {
 
 BufferedResult
 Connection::OnBufferedData()
-try {
+{
 	if (!version_exchanged) {
 		const auto r = std::as_bytes(socket.ReadBuffer());
 		const auto eol = std::find(r.begin(), r.end(), std::byte{'\n'});
@@ -397,21 +412,11 @@ try {
 		version_exchanged = true;
 	}
 
-	while (true) {
-		const auto payload = input.ReadPacket(socket.GetInputBuffer());
-		if (payload.data() == nullptr) {
-			socket.GetInputBuffer().FreeIfEmpty();
-			return BufferedResult::MORE;
-		}
+	if (!input.Feed(socket.GetInputBuffer()))
+		return BufferedResult::DESTROYED;
 
-		HandleRawPacket(payload);
-		input.ConsumePacket();
-	}
-} catch (const Disconnect &d) {
-	DoDisconnect(d.reason_code, d.msg);
-	return BufferedResult::DESTROYED;
-} catch (const Destroyed &) {
-	return BufferedResult::DESTROYED;
+	socket.GetInputBuffer().FreeIfEmpty();
+	return BufferedResult::MORE;
 }
 
 bool
@@ -419,7 +424,7 @@ Connection::OnBufferedWrite()
 {
 	OnWriteUnblocked();
 
-	switch (output.Flush(socket)) {
+	switch (output.Flush()) {
 	case Output::FlushResult::DONE:
 		socket.UnscheduleWrite();
 		break;
@@ -446,6 +451,32 @@ void
 Connection::OnBufferedError([[maybe_unused]] std::exception_ptr e) noexcept
 {
 	Destroy();
+}
+
+bool
+Connection::OnInputReady() noexcept
+try {
+	while (true) {
+		const auto payload = input.ReadPacket();
+		if (payload.data() == nullptr) {
+			socket.ScheduleRead();
+			return true;
+		}
+
+		HandleRawPacket(payload);
+		input.ConsumePacket();
+	}
+
+	socket.ScheduleRead();
+	return true;
+} catch (const Disconnect &d) {
+	DoDisconnect(d.reason_code, d.msg);
+	return false;
+} catch (const Destroyed &) {
+	return false;
+} catch (...) {
+	OnBufferedError(std::current_exception());
+	return false;
 }
 
 } // namespace SSH
