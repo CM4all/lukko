@@ -68,7 +68,7 @@ public:
 	std::span<const std::byte> ReadPacket(DefaultFifoBuffer &src);
 
 	/**
-	 *
+	 * Mark the packet returned by ReadPacket() as "consumed".
 	 */
 	void ConsumePacket() noexcept {
 		++seq;
