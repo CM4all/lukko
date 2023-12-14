@@ -28,6 +28,10 @@ public:
 		return queue.empty();
 	}
 
+	void Push(AllocatedArray<std::byte> &&src) noexcept {
+		queue.emplace_back(std::move(src));
+	}
+
 	void Push(std::span<const std::byte> src) noexcept {
 		queue.emplace_back(src);
 	}

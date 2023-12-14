@@ -5,13 +5,12 @@
 #pragma once
 
 #include "Input.hxx"
-#include "Queue.hxx"
+#include "Output.hxx"
 #include "KexState.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
 
 #include <cstdint>
-#include <memory>
 #include <span>
 #include <string>
 
@@ -35,8 +34,6 @@ class Connection : BufferedSocketHandler
 
 	BufferedSocket socket;
 
-	SendQueue send_queue;
-
 	/**
 	 * If non-zero, then we're currently waiting for the payload
 	 * of a packet to be received.
@@ -55,10 +52,7 @@ class Connection : BufferedSocketHandler
 	KexState kex_state;
 
 	Input input;
-
-	std::unique_ptr<Cipher> send_cipher;
-
-	uint_least64_t send_seq = 0;
+	Output output;
 
 	const Role role;
 
@@ -100,7 +94,7 @@ public:
 	}
 
 	bool IsEncrypted() const noexcept {
-		return input.IsEncrypted() && send_cipher;
+		return input.IsEncrypted() && output.IsEncrypted();
 	}
 
 	bool IsAuthenticated() const noexcept {

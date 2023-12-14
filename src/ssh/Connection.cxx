@@ -67,64 +67,16 @@ Connection::~Connection() noexcept = default;
 inline void
 Connection::SendPacket(std::span<const std::byte> src)
 {
-	std::byte encrypted_output[MAX_PACKET_SIZE + 256];
-
-	if (send_cipher) {
-		const std::size_t encrypted_size =
-			send_cipher->Encrypt(send_seq, src, encrypted_output);
-		src = std::span{encrypted_output}.first(encrypted_size);
-	}
-
-	++send_seq;
-
-	if (!send_queue.empty()) {
-		/* if there is already something in the send_queue,
-		   enqueue this packet as well */
-		assert(socket.IsWritePending());
-		send_queue.Push(src);
-		return;
-	}
-
-	const auto nbytes = socket.Write(src);
-	if (nbytes <= 0) [[unlikely]] {
-		switch (static_cast<write_result>(nbytes)) {
-		case WRITE_SOURCE_EOF:
-			// unreachable
-			break;
-
-		case WRITE_ERRNO:
-			break;
-
-		case WRITE_BLOCKING:
-			send_queue.Push(src);
-			OnWriteBlocked();
-			return;
-
-		case WRITE_DESTROYED:
-			// TODO must not happen, what now?
-			return;
-
-		case WRITE_BROKEN:
-			break;
-		}
-
-		throw MakeSocketError("send failed");
-	}
-
-	if (static_cast<std::size_t>(nbytes) < src.size()) [[unlikely]] {
-		/* short send: this means the kernel's send buffer is
-		   full; push the rest into our send_queue and
-		   schedule writing */
-		send_queue.Push(src.subspan(nbytes));
-		OnWriteBlocked();
-		socket.ScheduleWrite();
-	}
+	output.Push(src);
+	socket.DeferWrite();
 }
 
 void
 Connection::SendPacket(PacketSerializer &&s)
 {
-	SendPacket(s.Finish(send_cipher != nullptr ? send_cipher->GetBlockSize() : 8,
+	const auto *send_cipher = output.GetCipher();
+	SendPacket(s.Finish(send_cipher
+			    != nullptr ? send_cipher->GetBlockSize() : 8,
 			    send_cipher != nullptr &&
 			    send_cipher->IsHeaderExcludedFromPadding()));
 }
@@ -242,14 +194,16 @@ Connection::SendNewKeys()
 {
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
 
-	send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
-					   mac_algorithms_server_to_client,
-					   Direction::OUTGOING);
+	auto send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
+						mac_algorithms_server_to_client,
+						Direction::OUTGOING);
 	if (send_cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
 			"No client-to-server encryption algorithm"sv,
 		};
+
+	output.SetCipher(std::move(send_cipher));
 }
 
 inline void
@@ -465,39 +419,18 @@ Connection::OnBufferedWrite()
 {
 	OnWriteUnblocked();
 
-	std::array<struct iovec, 32> v;
-	std::size_t n = send_queue.Prepare(v);
-	if (n == 0) {
+	switch (output.Flush(socket)) {
+	case Output::FlushResult::DONE:
 		socket.UnscheduleWrite();
-		return true;
+		break;
+
+	case Output::FlushResult::MORE:
+		OnWriteBlocked();
+		break;
+
+	case Output::FlushResult::DESTROYED:
+		return false;
 	}
-
-	const auto nbytes = socket.WriteV(std::span{v}.first(n));
-	if (nbytes < 0) [[unlikely]] {
-		switch (static_cast<write_result>(nbytes)) {
-		case WRITE_SOURCE_EOF:
-			// unreachable
-			break;
-
-		case WRITE_ERRNO:
-			break;
-
-		case WRITE_BLOCKING:
-			return true;
-
-		case WRITE_DESTROYED:
-			return false;
-
-		case WRITE_BROKEN:
-			break;
-		}
-
-		throw MakeSocketError("send failed");
-	}
-
-	send_queue.Consume(nbytes);
-	if (send_queue.empty())
-		socket.UnscheduleWrite();
 
 	return true;
 }

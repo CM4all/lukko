@@ -268,6 +268,7 @@ executable(
   'src/DelegateOpen.cxx',
   'src/AllocatorPtr.cxx',
   'src/ssh/Input.cxx',
+  'src/ssh/Output.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
   'src/ssh/Channel.cxx',
