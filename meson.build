@@ -267,6 +267,7 @@ executable(
   'src/RConnect.cxx',
   'src/DelegateOpen.cxx',
   'src/AllocatorPtr.cxx',
+  'src/ssh/Input.cxx',
   'src/ssh/Connection.cxx',
   'src/ssh/CConnection.cxx',
   'src/ssh/Channel.cxx',

@@ -329,14 +329,16 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 {
 	(void)payload;
 
-	receive_cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
-					      mac_algorithms_client_to_server,
-					      Direction::INCOMING);
-	if (receive_cipher == nullptr)
+	auto cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
+					   mac_algorithms_client_to_server,
+					   Direction::INCOMING);
+	if (cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
 			"No client-to-server encryption algorithm"sv,
 		};
+
+	input.SetCipher(std::move(cipher));
 }
 
 inline void
@@ -387,7 +389,7 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 		break;
 
 	default:
-		SendPacket(MakeUnimplemented(receive_seq));
+		SendPacket(MakeUnimplemented(input.GetSeq()));
 	}
 }
 
@@ -407,32 +409,6 @@ try {
 		DisconnectReasonCode::PROTOCOL_ERROR,
 		"Malformed packet"sv,
 	};
-}
-
-inline AllocatedArray<std::byte>
-Connection::DecryptPacket()
-{
-	assert(receive_cipher);
-
-	const std::size_t need_src = sizeof(PacketHeader) +
-		packet_length +
-		receive_cipher->GetAuthSize();
-
-	auto r = socket.ReadBuffer();
-	if (r.size() < need_src)
-		return nullptr;
-
-	r = r.first(need_src);
-
-	AllocatedArray<std::byte> result{packet_length};
-
-	[[maybe_unused]]
-	const std::size_t nbytes =
-		receive_cipher->DecryptPayload(receive_seq, r, result);
-	assert(nbytes == packet_length);
-	socket.DisposeConsumed(need_src);
-
-	return result;
 }
 
 BufferedResult
@@ -468,66 +444,14 @@ try {
 	}
 
 	while (true) {
-		if (packet_length == 0) {
-			/* read a new PacketHeader */
-
-			auto r = socket.ReadBuffer();
-			if (r.size() < sizeof(PacketHeader))
-				return BufferedResult::MORE;
-
-			if (receive_cipher) {
-				PacketHeader header;
-				receive_cipher->DecryptHeader(receive_seq,
-							      r.first<sizeof(header)>(),
-							      ReferenceAsWritableBytes(header));
-				packet_length = header.length;
-			} else {
-				const auto &header = *reinterpret_cast<const PacketHeader *>(r.data());
-				packet_length = header.length;
-				socket.DisposeConsumed(sizeof(header));
-			}
-
-			if (packet_length == 0)
-				/* packets cannot be empty, there must
-				   be at least the "padding_length"
-				   byte (plus mandatory padding) */
-				throw SocketProtocolError{"Empty packet"};
-
-			if (packet_length > MAX_PACKET_SIZE)
-				throw SocketProtocolError{"Packet too large"};
-		}
-
-		std::span<const std::byte> r;
-
-		AllocatedArray<std::byte> decrypted;
-		if (receive_cipher) {
-			decrypted = DecryptPacket();
-			if (decrypted == nullptr)
-				return BufferedResult::MORE;
-
-			r = decrypted;
-			assert(r.size() == packet_length);
-		} else
-			r = socket.ReadBuffer();
-
-		if (r.size() < packet_length)
+		const auto payload = input.ReadPacket(socket.GetInputBuffer());
+		if (payload.data() == nullptr) {
+			socket.GetInputBuffer().FreeIfEmpty();
 			return BufferedResult::MORE;
-
-		const std::size_t padding_length = static_cast<uint8_t>(r.front());
-		if (padding_length > packet_length - 1) {
-			Destroy();
-			return BufferedResult::DESTROYED;
 		}
-
-		if (!receive_cipher)
-			socket.KeepConsumed(packet_length);
-
-		const auto payload = r.subspan(1, packet_length - padding_length - 1);
-		packet_length = 0;
 
 		HandleRawPacket(payload);
-
-		++receive_seq;
+		input.ConsumePacket();
 	}
 } catch (const Disconnect &d) {
 	DoDisconnect(d.reason_code, d.msg);

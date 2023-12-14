@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Input.hxx"
 #include "Queue.hxx"
 #include "KexState.hxx"
 #include "event/net/BufferedSocket.hxx"
@@ -53,9 +54,11 @@ class Connection : BufferedSocketHandler
 
 	KexState kex_state;
 
-	std::unique_ptr<Cipher> receive_cipher, send_cipher;
+	Input input;
 
-	uint_least64_t receive_seq = 0, send_seq = 0;
+	std::unique_ptr<Cipher> send_cipher;
+
+	uint_least64_t send_seq = 0;
 
 	const Role role;
 
@@ -97,7 +100,7 @@ public:
 	}
 
 	bool IsEncrypted() const noexcept {
-		return receive_cipher && send_cipher;
+		return input.IsEncrypted() && send_cipher;
 	}
 
 	bool IsAuthenticated() const noexcept {
@@ -171,9 +174,6 @@ private:
 	bool IsPastKexInit() const noexcept {
 		return server_kexinit != nullptr;
 	}
-
-	[[nodiscard]]
-	AllocatedArray<std::byte> DecryptPacket();
 
 	virtual void HandleRawPacket(std::span<const std::byte> payload);
 
