@@ -220,8 +220,9 @@ try {
 	}
 
 	BufferList unprotected_list;
+	bool found_newkeys = false;
 
-	while (true) {
+	do {
 		if (packet_length == 0) {
 			/* read a new PacketHeader */
 
@@ -253,20 +254,18 @@ try {
 
 		++decrypt_seq;
 
-		const bool found_newkeys = decrypted.size() >= 2 &&
+		found_newkeys = decrypted.size() >= 2 &&
 			static_cast<MessageNumber>(decrypted[1]) == MessageNumber::NEWKEYS;
 
 		unprotected_list.emplace_back(std::move(decrypted));
-
-		if (found_newkeys) {
-			waiting_for_new_cipher = true;
-			break;
-		}
-	}
+	} while (!found_newkeys);
 
 	{
 		const std::scoped_lock lock{mutex};
 		decrypted_list.splice(decrypted_list.end(), unprotected_list);
+
+		assert(!waiting_for_new_cipher);
+		waiting_for_new_cipher = found_newkeys;
 
 		if (!raw_buffer.empty())
 			again = true;
