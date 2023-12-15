@@ -253,11 +253,15 @@ try {
 
 		++decrypt_seq;
 
-		if (decrypted.size() >= 2 &&
-		    static_cast<MessageNumber>(decrypted[1]) == MessageNumber::NEWKEYS)
-			waiting_for_new_cipher = true;
+		const bool found_newkeys = decrypted.size() >= 2 &&
+			static_cast<MessageNumber>(decrypted[1]) == MessageNumber::NEWKEYS;
 
 		unprotected_list.emplace_back(std::move(decrypted));
+
+		if (found_newkeys) {
+			waiting_for_new_cipher = true;
+			break;
+		}
 	}
 
 	{
