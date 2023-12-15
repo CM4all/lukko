@@ -37,8 +37,9 @@ class Input final : ThreadJob {
 
 	/**
 	 * The sequence of the next packet to be decrypted.
+	 * Initialized by the first SetCipher() call.
 	 */
-	uint_least64_t decrypt_seq = 0;
+	uint_least64_t decrypt_seq;
 
 	/**
 	 * If non-zero, then we're currently waiting for the payload

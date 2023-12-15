@@ -38,6 +38,11 @@ Input::SetCipher(std::unique_ptr<Cipher> _cipher) noexcept
 
 	if (!encrypted) {
 		encrypted = true;
+
+		/* initialize decrypt_seq because we'll need it in
+		   Run(); we need to add 1 because our caller
+		   currently handles a #NEWKEYS packet and hasn't yet
+		   called ConsumePacket() */
 		decrypt_seq = read_seq + 1;
 	}
 
