@@ -42,7 +42,7 @@ public:
 	std::span<const std::byte> front() const noexcept {
 		assert(!empty());
 
-		return queue.front();
+		return std::span<const std::byte>{queue.front()}.subspan(consumed);
 	}
 
 	/**
