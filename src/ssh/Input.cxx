@@ -57,6 +57,22 @@ Input::SetCipher(std::unique_ptr<Cipher> _cipher) noexcept
 	thread_queue.Add(*this);
 }
 
+void
+Input::ParseHeader(const PacketHeader &header)
+{
+	packet_length = header.length;
+
+	if (packet_length < 2)
+		/* packets cannot be empty, there must be at
+		   least the "padding_length" and the
+		   "MessageNumber" byte (plus mandatory
+		   padding) */
+		throw SocketProtocolError{"Empty packet"};
+
+	if (packet_length > MAX_PACKET_SIZE)
+		throw SocketProtocolError{"Packet too large"};
+}
+
 bool
 Input::Feed(DefaultFifoBuffer &src) noexcept
 {
@@ -129,18 +145,10 @@ Input::ReadUnencryptedPacket()
 			return {};
 
 		const auto &header = *reinterpret_cast<const PacketHeader *>(r.data());
-		packet_length = header.length;
 		raw_buffer.Consume(sizeof(header));
 
-		if (packet_length < 2)
-			/* packets cannot be empty, there must be at
-			   least the "padding_length" and the
-			   "MessageNumber" byte (plus mandatory
-			   padding) */
-			throw SocketProtocolError{"Empty packet"};
-
-		if (packet_length > MAX_PACKET_SIZE)
-			throw SocketProtocolError{"Packet too large"};
+		ParseHeader(header);
+		assert(packet_length > 0);
 	}
 
 	const auto r = raw_buffer.Read();
@@ -232,17 +240,7 @@ try {
 			cipher->DecryptHeader(decrypt_seq,
 					      r.first<sizeof(header)>(),
 					      ReferenceAsWritableBytes(header));
-			packet_length = header.length;
-
-			if (packet_length < 2)
-				/* packets cannot be empty, there must
-				   be at least the "padding_length"
-				   and the "MessageNumber" byte (plus
-				   mandatory padding) */
-				throw SocketProtocolError{"Empty packet"};
-
-			if (packet_length > MAX_PACKET_SIZE)
-				throw SocketProtocolError{"Packet too large"};
+			ParseHeader(header);
 		}
 
 		auto decrypted = DecryptPacket(unprotected_buffer);

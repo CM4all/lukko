@@ -19,6 +19,7 @@ template<typename T> class AllocatedArray;
 
 namespace SSH {
 
+struct PacketHeader;
 class Cipher;
 class InputHandler;
 
@@ -141,6 +142,11 @@ public:
 
 private:
 	~Input() noexcept;
+
+	/**
+	 * Throws on error.
+	 */
+	void ParseHeader(const PacketHeader &header);
 
 	[[nodiscard]]
 	std::span<const std::byte> ReadUnencryptedPacket();
