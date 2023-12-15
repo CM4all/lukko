@@ -105,7 +105,7 @@ Input::DecryptPacket(DefaultFifoBuffer &src)
 	src.Consume(need_src);
 
 	const std::size_t padding_length = static_cast<uint8_t>(result.front());
-	if (padding_length > packet_length - 1)
+	if (padding_length > packet_length - 2)
 		throw SocketProtocolError{"Bad padding length"};
 
 	/* remove padding */
@@ -132,10 +132,11 @@ Input::ReadUnencryptedPacket()
 		packet_length = header.length;
 		raw_buffer.Consume(sizeof(header));
 
-		if (packet_length == 0)
-			/* packets cannot be empty, there must
-			   be at least the "padding_length"
-			   byte (plus mandatory padding) */
+		if (packet_length < 2)
+			/* packets cannot be empty, there must be at
+			   least the "padding_length" and the
+			   "MessageNumber" byte (plus mandatory
+			   padding) */
 			throw SocketProtocolError{"Empty packet"};
 
 		if (packet_length > MAX_PACKET_SIZE)
@@ -148,7 +149,7 @@ Input::ReadUnencryptedPacket()
 		return {};
 
 	const std::size_t padding_length = static_cast<uint8_t>(r.front());
-	if (padding_length > packet_length - 1)
+	if (padding_length > packet_length - 2)
 		throw SocketProtocolError{"Bad padding length"};
 
 	raw_buffer.Consume(packet_length);
@@ -156,8 +157,7 @@ Input::ReadUnencryptedPacket()
 	const auto payload = r.subspan(1, packet_length - padding_length - 1);
 	packet_length = 0;
 
-	if (!payload.empty() &&
-	    static_cast<MessageNumber>(payload.front()) == MessageNumber::NEWKEYS)
+	if (static_cast<MessageNumber>(payload.front()) == MessageNumber::NEWKEYS)
 		waiting_for_new_cipher = true;
 
 	return payload;
@@ -234,10 +234,11 @@ try {
 					      ReferenceAsWritableBytes(header));
 			packet_length = header.length;
 
-			if (packet_length == 0)
+			if (packet_length < 2)
 				/* packets cannot be empty, there must
 				   be at least the "padding_length"
-				   byte (plus mandatory padding) */
+				   and the "MessageNumber" byte (plus
+				   mandatory padding) */
 				throw SocketProtocolError{"Empty packet"};
 
 			if (packet_length > MAX_PACKET_SIZE)
@@ -249,10 +250,11 @@ try {
 			// need more data
 			break;
 
+		assert(decrypted.size() >= 2);
+
 		++decrypt_seq;
 
-		found_newkeys = decrypted.size() >= 2 &&
-			static_cast<MessageNumber>(decrypted[1]) == MessageNumber::NEWKEYS;
+		found_newkeys = static_cast<MessageNumber>(decrypted[1]) == MessageNumber::NEWKEYS;
 
 		unprotected_list.emplace_back(std::move(decrypted));
 	} while (!found_newkeys);
