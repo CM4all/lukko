@@ -6,6 +6,7 @@ cm4all-lukko (0.11) unstable; urgency=low
   * implement "kex-strict-*-v00@openssh.com"
   * experimental proxying
   * log DISCONNECT descriptions
+  * enlarge per-channel receive window to 1 MB
 
  --   
 

@@ -18,7 +18,7 @@ class Logger;
 
 class SessionChannel final : public SSH::BufferedChannel, ExitListener
 {
-	static constexpr std::size_t RECEIVE_WINDOW = 16384;
+	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
 
 	const Logger &logger;
 
