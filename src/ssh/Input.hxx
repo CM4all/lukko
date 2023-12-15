@@ -50,14 +50,12 @@ class Input final : ThreadJob {
 	std::unique_ptr<Cipher> cipher;
 
 	/**
-	 * Protects #next_cipher, #raw_buffer, #decrypted_list,
+	 * Protects #raw_buffer, #decrypted_list,
 	 * #waiting_for_new_cipher, #error.
 	 */
 	std::mutex mutex;
 
 	std::exception_ptr error;
-
-	std::unique_ptr<Cipher> next_cipher;
 
 	/**
 	 * Raw input from the socket.  It may need to be decrypted.

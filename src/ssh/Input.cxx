@@ -33,6 +33,7 @@ Input::Destroy() noexcept
 void
 Input::SetCipher(std::unique_ptr<Cipher> _cipher) noexcept
 {
+	assert(waiting_for_new_cipher);
 	assert(packet_length == 0);
 	assert(_cipher);
 
@@ -48,10 +49,9 @@ Input::SetCipher(std::unique_ptr<Cipher> _cipher) noexcept
 
 	{
 		const std::scoped_lock lock{mutex};
-		assert(waiting_for_new_cipher);
 
 		waiting_for_new_cipher = false;
-		next_cipher = std::move(_cipher);
+		cipher = std::move(_cipher);
 	}
 
 	thread_queue.Add(*this);
@@ -212,9 +212,6 @@ try {
 		const std::scoped_lock lock{mutex};
 		if (error || waiting_for_new_cipher)
 			return;
-
-		if (next_cipher)
-			cipher = std::move(next_cipher);
 
 		unprotected_buffer.MoveFromAllowBothNull(raw_buffer);
 	}
