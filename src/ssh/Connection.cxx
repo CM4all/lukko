@@ -416,7 +416,9 @@ Connection::OnBufferedData()
 		return BufferedResult::DESTROYED;
 
 	socket.GetInputBuffer().FreeIfEmpty();
-	return BufferedResult::MORE;
+	return socket.IsFull()
+		? BufferedResult::OK
+		: BufferedResult::MORE;
 }
 
 bool
