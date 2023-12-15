@@ -174,15 +174,19 @@ Input::ReadUnencryptedPacket()
 inline std::span<const std::byte>
 Input::ReadDecryptedPacket()
 {
-	assert(!waiting_for_new_cipher);
-
 	if (error)
 		std::rethrow_exception(error);
 
 	const std::scoped_lock lock{mutex};
 
-	if (decrypted_list.empty())
+	if (decrypted_list.empty()) {
+		/* if there was a NEWKEYS packet, it must have been
+		   handled by now and SetCipher() must have been
+		   called */
+		assert(!waiting_for_new_cipher);
+
 		return {};
+	}
 
 	// skip the padding_length field
 	return std::span{decrypted_list.front()}.subspan(1);
@@ -191,8 +195,6 @@ Input::ReadDecryptedPacket()
 std::span<const std::byte>
 Input::ReadPacket()
 {
-	assert(!waiting_for_new_cipher);
-
 	if (IsEncrypted()) {
 		consumed_encrypted = true;
 		return ReadDecryptedPacket();
