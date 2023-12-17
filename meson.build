@@ -184,6 +184,20 @@ conf.set('ENABLE_TRANSLATION', get_option('translation'))
 conf.set('ENABLE_CONTROL', get_option('control'))
 configure_file(output: 'config.h', configuration: conf)
 
+libdigest = static_library(
+  'digest',
+  'src/Digest.cxx',
+  include_directories: inc,
+  dependencies: [
+    libmd,
+    sodium_dep,
+  ],
+)
+
+digest_dep = declare_dependency(
+  link_with: libdigest,
+)
+
 key_sources = []
 
 if crypto_dep.found()
@@ -204,7 +218,6 @@ endif
 libkey = static_library(
   'key',
   key_sources,
-  'src/Digest.cxx',
   'src/key/List.cxx',
   'src/key/Ed25519Key.cxx',
   'src/key/Parser.cxx',
@@ -215,9 +228,8 @@ libkey = static_library(
   'src/key/Fingerprint.cxx',
   include_directories: inc,
   dependencies: [
-    sodium_dep,
+    digest_dep,
     crypto_dep,
-    libmd,
     system_dep,
     io_dep,
   ],
@@ -283,6 +295,7 @@ executable(
   'src/system/SetupProcess.cxx',
   include_directories: inc,
   dependencies: [
+    digest_dep,
     libsystemd,
     fmt_dep,
     event_net_dep,
