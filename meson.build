@@ -201,12 +201,7 @@ digest_dep = declare_dependency(
 subdir('src/openssl')
 subdir('src/key')
 subdir('src/cipher')
-
-if ssh_openssl_dep.found()
-  sources += [
-    'src/ssh/KexECDH.cxx',
-  ]
-endif
+subdir('src/ssh')
 
 executable(
   'cm4all-lukko',
@@ -222,22 +217,10 @@ executable(
   'src/RConnect.cxx',
   'src/DelegateOpen.cxx',
   'src/AllocatorPtr.cxx',
-  'src/ssh/Input.cxx',
-  'src/ssh/Output.cxx',
-  'src/ssh/Connection.cxx',
-  'src/ssh/CConnection.cxx',
-  'src/ssh/Channel.cxx',
-  'src/ssh/BufferedChannel.cxx',
-  'src/ssh/KexFactory.cxx',
-  'src/ssh/KexCurve25519.cxx',
-  'src/ssh/KexHash.cxx',
-  'src/ssh/KexProposal.cxx',
-  'src/ssh/KexState.cxx',
-  'src/ssh/TerminalMode.cxx',
   'src/system/SetupProcess.cxx',
   include_directories: inc,
   dependencies: [
-    digest_dep,
+    ssh_dep,
     libsystemd,
     fmt_dep,
     event_net_dep,
@@ -246,12 +229,10 @@ executable(
     io_dep,
     io_config_dep,
     avahi_dep,
-    sodium_dep,
     spawn_dep,
     translation_dep,
     control_server_dep,
     key_dep,
-    cipher_dep,
     cap_dep,
     coroutines_dep,
     memory_dep,
