@@ -105,7 +105,7 @@ add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language:
 libsystemd = dependency('libsystemd', required: get_option('systemd'))
 libmd = dependency('libmd', required: get_option('libmd'))
 
-inc = include_directories('src', 'libcommon/src')
+inc = include_directories('.', 'src', 'libcommon/src')
 
 libcommon_require_avahi = get_option('zeroconf')
 libcommon_require_cap = get_option('cap')
@@ -198,17 +198,12 @@ digest_dep = declare_dependency(
   link_with: libdigest,
 )
 
+subdir('src/openssl')
+
 key_sources = []
 
-if crypto_dep.found()
+if ssh_openssl_dep.found()
   key_sources += [
-    'src/openssl/DeserializeBN.cxx',
-    'src/openssl/DeserializeEC.cxx',
-    'src/openssl/DeserializeRSA.cxx',
-    'src/openssl/SerializeBN.cxx',
-    'src/openssl/SerializeEVP.cxx',
-    'src/openssl/Sign.cxx',
-    'src/openssl/Verify.cxx',
     'src/key/ECDSAKey.cxx',
     'src/key/RSAKey.cxx',
     'src/ssh/KexECDH.cxx',
@@ -228,8 +223,8 @@ libkey = static_library(
   'src/key/Fingerprint.cxx',
   include_directories: inc,
   dependencies: [
+    ssh_openssl_dep,
     digest_dep,
-    crypto_dep,
     system_dep,
     io_dep,
   ],
