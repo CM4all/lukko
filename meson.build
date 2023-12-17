@@ -199,66 +199,8 @@ digest_dep = declare_dependency(
 )
 
 subdir('src/openssl')
-
-key_sources = []
-
-if ssh_openssl_dep.found()
-  key_sources += [
-    'src/key/ECDSAKey.cxx',
-    'src/key/RSAKey.cxx',
-  ]
-endif
-
-libkey = static_library(
-  'key',
-  key_sources,
-  'src/key/List.cxx',
-  'src/key/Ed25519Key.cxx',
-  'src/key/Parser.cxx',
-  'src/key/LoadFile.cxx',
-  'src/key/Options.cxx',
-  'src/key/Set.cxx',
-  'src/key/TextFile.cxx',
-  'src/key/Fingerprint.cxx',
-  include_directories: inc,
-  dependencies: [
-    ssh_openssl_dep,
-    digest_dep,
-    system_dep,
-    io_dep,
-  ],
-)
-
-key_dep = declare_dependency(
-  link_with: libkey,
-  dependencies: [
-  ],
-)
-
-cipher_sources = [
-  'src/cipher/Factory.cxx',
-  'src/cipher/ChaCha20Poly1305Cipher.cxx',
-  'src/cipher/HmacSHA256Cipher.cxx',
-]
-
-if crypto_dep.found()
-  cipher_sources += 'src/cipher/OsslCipher.cxx'
-endif
-
-libcipher = static_library(
-  'cipher',
-  cipher_sources,
-  include_directories: inc,
-  dependencies: [
-    sodium_dep,
-  ],
-)
-
-cipher_dep = declare_dependency(
-  link_with: libcipher,
-  dependencies: [
-  ],
-)
+subdir('src/key')
+subdir('src/cipher')
 
 if ssh_openssl_dep.found()
   sources += [
