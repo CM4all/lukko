@@ -206,7 +206,6 @@ if ssh_openssl_dep.found()
   key_sources += [
     'src/key/ECDSAKey.cxx',
     'src/key/RSAKey.cxx',
-    'src/ssh/KexECDH.cxx',
   ]
 endif
 
@@ -260,6 +259,12 @@ cipher_dep = declare_dependency(
   dependencies: [
   ],
 )
+
+if ssh_openssl_dep.found()
+  sources += [
+    'src/ssh/KexECDH.cxx',
+  ]
+endif
 
 executable(
   'cm4all-lukko',
