@@ -5,8 +5,8 @@
 #include "Connection.hxx"
 #include "Input.hxx"
 #include "Output.hxx"
+#include "KexInterface.hxx"
 #include "KexFactory.hxx"
-#include "KexCurve25519.hxx"
 #include "KexHash.hxx"
 #include "KexProposal.hxx"
 #include "Sizes.hxx"
@@ -28,10 +28,6 @@
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
 #include "version.h"
-
-#ifdef HAVE_OPENSSL
-#include "KexECDH.hxx"
-#endif
 
 using std::string_view_literals::operator""sv;
 
@@ -146,6 +142,8 @@ Connection::SendKexInit()
 inline void
 Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key)
 {
+	assert(kex_algorithm);
+
 	PacketSerializer s{MessageNumber::ECDH_KEX_INIT_REPLY};
 
 	const auto kex_host_key_length = s.PrepareLength();
@@ -159,17 +157,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	Serializer shared_secret;
 
-	switch (kex_algorithm) {
-	case KexAlgorithm::CURVE25519_SHA256:
-		Curve25519KexReply(client_ephemeral_public_key, s, shared_secret);
-		break;
-
-#ifdef HAVE_OPENSSL
-	case KexAlgorithm::ECDH_SHA256_NISTP256:
-		KexECDHReply(client_ephemeral_public_key, s, shared_secret);
-		break;
-#endif
-	}
+	kex_algorithm->MakeReply(client_ephemeral_public_key, s, shared_secret);
 
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
 	s.CommitLength(server_ephemeral_public_key_length);
@@ -270,14 +258,12 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	d.ReadU32(); // reserved
 	d.ExpectEnd();
 
-	try {
-		kex_algorithm = ChooseKexAlgorithm(kex_algorithms);
-	} catch (NoSupportedKexAlgorithm) {
+	kex_algorithm = MakeKex(kex_algorithms);
+	if (!kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
 			"No supported KEX algorithm"sv,
 		};
-	}
 
 	std::tie(host_key, host_key_algorithm) =
 		host_keys.Choose(server_host_key_algorithms);

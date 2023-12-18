@@ -36,9 +36,9 @@ EVP_PKEY_derive(Serializer &s, EVP_PKEY_CTX &ctx)
 }
 
 void
-KexECDHReply(std::span<const std::byte> client_ephemeral_public_key,
-	     Serializer &server_ephemeral_public_key,
-	     Serializer &shared_secret)
+ECDHKex::MakeReply(std::span<const std::byte> client_ephemeral_public_key,
+		   Serializer &server_ephemeral_public_key,
+		   Serializer &shared_secret)
 {
 	const auto client_key = DeserializeECPublic("P-256"sv, client_ephemeral_public_key);
 	const auto server_key = GenerateEcKey();

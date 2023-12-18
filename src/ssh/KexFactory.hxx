@@ -6,10 +6,12 @@
 
 #include "config.h"
 
-#include <cstdint>
+#include <memory>
 #include <string_view>
 
 namespace SSH {
+
+class Kex;
 
 static constexpr std::string_view all_kex_algorithms =
 	"curve25519-sha256"
@@ -18,19 +20,10 @@ static constexpr std::string_view all_kex_algorithms =
 #endif
 	"";
 
-enum class KexAlgorithm : uint_least8_t {
-	CURVE25519_SHA256,
-#ifdef HAVE_OPENSSL
-	ECDH_SHA256_NISTP256,
-#endif
-};
-
-struct NoSupportedKexAlgorithm {};
-
 /**
- * Throws #NoSupportedKexAlgorithm on error.
+ * Returns nullptr if #algorithms contains no supported algorithm.
  */
-KexAlgorithm
-ChooseKexAlgorithm(std::string_view algorithms);
+std::unique_ptr<Kex>
+MakeKex(std::string_view algorithms) noexcept;
 
 } // namespace SSH

@@ -2,16 +2,19 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include <cstddef>
-#include <span>
+#pragma once
+
+#include "KexInterface.hxx"
 
 namespace SSH {
 
 class Serializer;
 
-void
-Curve25519KexReply(std::span<const std::byte> client_ephemeral_public_key,
-		   Serializer &server_ephemeral_public_key,
-		   Serializer &shared_secret);
+class Curve25519Kex final : public Kex {
+public:
+	void MakeReply(std::span<const std::byte> client_ephemeral_public_key,
+		       Serializer &server_ephemeral_public_key,
+		       Serializer &shared_secret) override;
+};
 
 } // namespace SSH

@@ -3,24 +3,29 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "KexFactory.hxx"
+#include "KexCurve25519.hxx"
 #include "util/IterableSplitString.hxx"
+
+#ifdef HAVE_OPENSSL
+#include "KexECDH.hxx"
+#endif
 
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
 
-KexAlgorithm
-ChooseKexAlgorithm(std::string_view algorithms)
+std::unique_ptr<Kex>
+MakeKex(std::string_view algorithms) noexcept
 {
 	for (const std::string_view a : IterableSplitString(algorithms, ','))
 		if (a == "curve25519-sha256"sv)
-			return KexAlgorithm::CURVE25519_SHA256;
+			return std::make_unique<Curve25519Kex>();
 #ifdef HAVE_OPENSSL
 		else if (a == "ecdh-sha2-nistp256"sv)
-			return KexAlgorithm::ECDH_SHA256_NISTP256;
+			return std::make_unique<ECDHKex>();
 #endif
 
-	throw NoSupportedKexAlgorithm{};
+	return {};
 }
 
 } // namespace SSH

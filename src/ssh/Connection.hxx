@@ -21,6 +21,7 @@ namespace SSH {
 class PacketSerializer;
 class Input;
 class Output;
+class Kex;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
 enum class KexAlgorithm : uint_least8_t;
@@ -51,12 +52,12 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	KexState kex_state;
 
+	std::unique_ptr<Kex> kex_algorithm;
+
 	Input &input;
 	Output &output;
 
 	const Role role;
-
-	KexAlgorithm kex_algorithm;
 
 	bool version_exchanged = false;
 
