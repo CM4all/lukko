@@ -65,11 +65,9 @@ struct Connection::Translation {
 #endif // ENABLE_TRANSLATION
 
 Connection::Connection(Instance &_instance, Listener &_listener,
-		       UniqueSocketDescriptor _fd, SocketAddress _peer_address,
-		       const SecretKeyList &_host_keys)
+		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
-			  SSH::Role::SERVER,
-			  _host_keys),
+			  SSH::Role::SERVER),
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
@@ -726,7 +724,7 @@ IsAllowedWhileOccupied(SSH::MessageNumber msg) noexcept
 	return false;
 }
 
-inline void
+void
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
@@ -751,6 +749,18 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 	default:
 		SSH::CConnection::HandlePacket(msg, payload);
 	}
+}
+
+std::string_view
+Connection::GetServerHostKeyAlgorithms() const noexcept
+{
+	return instance.GetHostKeys().GetAlgorithms();
+}
+
+std::pair<const SecretKey *, std::string_view>
+Connection::ChooseHostKey(std::string_view algorithms) const noexcept
+{
+	return instance.GetHostKeys().Choose(algorithms);
 }
 
 void

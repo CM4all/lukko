@@ -83,8 +83,7 @@ class Connection final
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
-		   UniqueSocketDescriptor fd, SocketAddress _peer_address,
-		   const SecretKeyList &_host_keys);
+		   UniqueSocketDescriptor fd, SocketAddress _peer_address);
 	~Connection() noexcept;
 
 	/**
@@ -206,6 +205,9 @@ private:
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,
 			  std::span<const std::byte> payload) override;
+
+	std::string_view GetServerHostKeyAlgorithms() const noexcept override;
+	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
 
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;

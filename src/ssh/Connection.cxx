@@ -15,7 +15,6 @@
 #include "ssh/MakePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "key/Key.hxx"
-#include "key/List.hxx"
 #include "key/Algorithms.hxx"
 #include "cipher/Cipher.hxx"
 #include "cipher/Factory.hxx"
@@ -46,10 +45,8 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 }
 
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
-		       Role _role,
-		       const SecretKeyList &_host_keys)
-	:host_keys(_host_keys),
-	 socket(event_loop),
+		       Role _role)
+	:socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
 	 role(_role)
@@ -111,6 +108,12 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 	Destroy();
 }
 
+std::string_view
+Connection::GetServerHostKeyAlgorithms() const noexcept
+{
+	return all_public_key_algorithms;
+}
+
 inline void
 Connection::SendKexInit()
 {
@@ -118,7 +121,7 @@ Connection::SendKexInit()
 
 	KexProposal proposal{
 		.kex_algorithms = all_kex_algorithms,
-		.server_host_key_algorithms = role == Role::SERVER ? host_keys.GetAlgorithms() : all_public_key_algorithms,
+		.server_host_key_algorithms = GetServerHostKeyAlgorithms(),
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
 		.mac_algorithms_client_to_server = all_mac_algorithms,
@@ -294,8 +297,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 
 	switch (role) {
 	case Role::SERVER:
-		std::tie(host_key, host_key_algorithm) =
-			host_keys.Choose(server_host_key_algorithms);
+		std::tie(host_key, host_key_algorithm) = ChooseHostKey(server_host_key_algorithms);
 		if (host_key == nullptr)
 			throw Disconnect{
 				DisconnectReasonCode::KEY_EXCHANGE_FAILED,

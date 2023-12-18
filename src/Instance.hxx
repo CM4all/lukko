@@ -97,6 +97,10 @@ public:
 		return logger;
 	}
 
+	const auto &GetHostKeys() const noexcept {
+		return host_keys;
+	}
+
 	const auto &GetGlobalAuthorizedKeys() const noexcept {
 		return global_authorized_keys;
 	}

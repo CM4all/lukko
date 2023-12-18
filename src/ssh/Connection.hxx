@@ -13,7 +13,6 @@
 #include <span>
 #include <string>
 
-class SecretKeyList;
 class SecretKey;
 
 namespace SSH {
@@ -28,8 +27,6 @@ enum class KexAlgorithm : uint_least8_t;
 
 class Connection : BufferedSocketHandler, InputHandler
 {
-	const SecretKeyList &host_keys;
-
 	const SecretKey *host_key;
 	std::string host_key_algorithm;
 
@@ -86,8 +83,7 @@ protected:
 
 public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor fd,
-		   Role _role,
-		   const SecretKeyList &_host_keys);
+		   Role _role);
 	~Connection() noexcept;
 
 	auto &GetEventLoop() const noexcept {
@@ -151,6 +147,14 @@ protected:
 
 	virtual void HandlePacket(MessageNumber msg,
 				  std::span<const std::byte> payload);
+
+	[[gnu::pure]]
+	virtual std::string_view GetServerHostKeyAlgorithms() const noexcept;
+
+	[[gnu::pure]]
+	virtual std::pair<const SecretKey *, std::string_view> ChooseHostKey([[maybe_unused]] std::string_view algorithms) const noexcept {
+		return {nullptr, {}};
+	}
 
 	/**
 	 * Called after key exchange (KEX) has completed successfully

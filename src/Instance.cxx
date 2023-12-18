@@ -135,8 +135,7 @@ Instance::AddConnection(Listener &listener, UniqueSocketDescriptor fd,
 			SocketAddress peer_address) noexcept
 {
 	try {
-		auto *c = new Connection(*this, listener, std::move(fd), peer_address,
-					 host_keys);
+		auto *c = new Connection(*this, listener, std::move(fd), peer_address);
 		connections.push_front(*c);
 	} catch (...) {
 		logger(1, std::current_exception());
