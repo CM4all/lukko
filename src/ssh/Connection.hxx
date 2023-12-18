@@ -41,9 +41,9 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	std::size_t packet_length = 0;
 
-	std::string client_version;
+	std::string peer_version;
 
-	AllocatedArray<std::byte> client_kexinit, server_kexinit;
+	AllocatedArray<std::byte> peer_kexinit, my_kexinit;
 
 	std::string encryption_algorithms_client_to_server,
 		encryption_algorithms_server_to_client,
@@ -165,8 +165,14 @@ protected:
 	virtual void OnWriteUnblocked() noexcept {}
 
 private:
+	const auto &GetServerKexinit() const {
+		return role == Role::SERVER
+			? my_kexinit
+			: peer_kexinit;
+	}
+
 	bool IsPastKexInit() const noexcept {
-		return server_kexinit != nullptr;
+		return GetServerKexinit() != nullptr;
 	}
 
 	virtual void HandleRawPacket(std::span<const std::byte> payload);

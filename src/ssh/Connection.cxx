@@ -134,7 +134,7 @@ Connection::SendKexInit()
 
 	const auto kex_mark = s.Mark();
 	SerializeKex(s, cookie, proposal);
-	server_kexinit = s.Since(kex_mark);
+	my_kexinit = s.Since(kex_mark);
 
 	SendPacket(std::move(s));
 }
@@ -164,8 +164,12 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
 
+	const std::string_view client_version = peer_version;
 	auto server_version = g_server_version;
 	server_version.remove_suffix(2); // remove CR LF
+
+	const std::span<const std::byte> client_kexinit = peer_kexinit;
+	const std::span<const std::byte> server_kexinit = my_kexinit;
 
 	std::byte hash_buffer[DIGEST_MAX_SIZE];
 	const auto hashlen = CalcKexHash(hash_alg,
@@ -239,7 +243,7 @@ StringListContains(std::string_view haystack, std::string_view needle) noexcept
 inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
-	client_kexinit = payload;
+	peer_kexinit = payload;
 
 	Deserializer d{payload};
 	d.ReadN(16); // cookie
@@ -398,7 +402,7 @@ Connection::OnBufferedData()
 		if (s.ends_with('\r'))
 			s.remove_suffix(1);
 
-		client_version.assign(s);
+		peer_version.assign(s);
 
 		version_exchanged = true;
 	}
