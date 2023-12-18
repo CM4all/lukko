@@ -28,6 +28,7 @@ libssh = static_library(
     sodium_dep,
     crypto_dep,
     event_net_dep,
+    memory_dep,
     thread_pool_dep,
     system_dep,
     util_dep,
