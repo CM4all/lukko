@@ -13,7 +13,14 @@ namespace SSH {
 
 class Kex;
 
-static constexpr std::string_view all_kex_algorithms =
+static constexpr std::string_view all_server_kex_algorithms =
+	"curve25519-sha256"
+#ifdef HAVE_OPENSSL
+	",ecdh-sha2-nistp256"
+#endif
+	"";
+
+static constexpr std::string_view all_client_kex_algorithms =
 	"curve25519-sha256"
 #ifdef HAVE_OPENSSL
 	",ecdh-sha2-nistp256"

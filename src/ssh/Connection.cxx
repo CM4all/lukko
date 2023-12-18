@@ -120,7 +120,7 @@ Connection::SendKexInit()
 	PacketSerializer s{MessageNumber::KEXINIT};
 
 	KexProposal proposal{
-		.kex_algorithms = all_kex_algorithms,
+		.kex_algorithms = role == Role::SERVER ? all_server_kex_algorithms : all_client_kex_algorithms,
 		.server_host_key_algorithms = GetServerHostKeyAlgorithms(),
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
