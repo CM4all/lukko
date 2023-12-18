@@ -32,6 +32,15 @@ MakeUnimplemented(uint_least32_t seq) noexcept
 
 [[gnu::pure]]
 inline PacketSerializer
+MakeServiceRequest(std::string_view service_name) noexcept
+{
+	PacketSerializer s{MessageNumber::SERVICE_REQUEST};
+	s.WriteString(service_name);
+	return s;
+}
+
+[[gnu::pure]]
+inline PacketSerializer
 MakeServiceAccept(std::string_view service_name) noexcept
 {
 	PacketSerializer s{MessageNumber::SERVICE_ACCEPT};
