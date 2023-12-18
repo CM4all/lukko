@@ -190,6 +190,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	SendPacket(std::move(s));
 
 	kex_state.DeriveKeys(hash, shared_secret_, role, true);
+	kex_algorithm.reset();
 }
 
 inline void
