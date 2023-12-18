@@ -22,8 +22,10 @@ static constexpr std::string_view all_kex_algorithms =
 
 /**
  * Returns nullptr if #algorithms contains no supported algorithm.
+ *
+ * Throws on error.
  */
 std::unique_ptr<Kex>
-MakeKex(std::string_view algorithms) noexcept;
+MakeKex(std::string_view algorithms);
 
 } // namespace SSH
