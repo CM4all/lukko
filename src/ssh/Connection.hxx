@@ -139,6 +139,7 @@ protected:
 	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
 
 	void SendKexInit();
+	void SendECDHKexInit();
 	void SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key);
 	void SendNewKeys();
 	void SendExtInfo();
@@ -146,6 +147,7 @@ protected:
 	void HandleKexInit(std::span<const std::byte> payload);
 	void HandleNewKeys(std::span<const std::byte> payload);
 	void HandleECDHKexInit(std::span<const std::byte> payload);
+	void HandleECDHKexInitReply(std::span<const std::byte> payload);
 
 	virtual void HandlePacket(MessageNumber msg,
 				  std::span<const std::byte> payload);

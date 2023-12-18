@@ -116,9 +116,9 @@ Connection::SendKexInit()
 {
 	PacketSerializer s{MessageNumber::KEXINIT};
 
-	const KexProposal proposal{
+	KexProposal proposal{
 		.kex_algorithms = all_kex_algorithms,
-		.server_host_key_algorithms = host_keys.GetAlgorithms(),
+		.server_host_key_algorithms = role == Role::SERVER ? host_keys.GetAlgorithms() : all_public_key_algorithms,
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
 		.mac_algorithms_client_to_server = all_mac_algorithms,
@@ -140,8 +140,24 @@ Connection::SendKexInit()
 }
 
 inline void
+Connection::SendECDHKexInit()
+{
+	assert(role == Role::CLIENT);
+	assert(kex_algorithm);
+
+	PacketSerializer s{MessageNumber::ECDH_KEX_INIT};
+
+	const auto ephemeral_public_key_length = s.PrepareLength();
+	kex_algorithm->SerializeEphemeralPublicKey(s);
+	s.CommitLength(ephemeral_public_key_length);
+
+	SendPacket(std::move(s));
+}
+
+inline void
 Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key)
 {
+	assert(role == Role::SERVER);
 	assert(kex_algorithm);
 
 	PacketSerializer s{MessageNumber::ECDH_KEX_INIT_REPLY};
@@ -273,18 +289,26 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 			"No supported KEX algorithm"sv,
 		};
 
-	std::tie(host_key, host_key_algorithm) =
-		host_keys.Choose(server_host_key_algorithms);
-	if (host_key == nullptr)
-		throw Disconnect{
-			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
-			"No supported host key"sv,
-		};
-
 	peer_wants_ext_info = StringListContains(kex_algorithms,
 						 role == Role::SERVER ? "ext-info-c"sv : "ext-info-s"sv);
 
-	SendKexInit();
+	switch (role) {
+	case Role::SERVER:
+		std::tie(host_key, host_key_algorithm) =
+			host_keys.Choose(server_host_key_algorithms);
+		if (host_key == nullptr)
+			throw Disconnect{
+				DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+				"No supported host key"sv,
+			};
+
+		SendKexInit();
+		break;
+
+	case Role::CLIENT:
+		SendECDHKexInit();
+		break;
+	}
 }
 
 inline void
@@ -312,6 +336,12 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 inline void
 Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 {
+	if (role != Role::SERVER)
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Unexpected packet"sv,
+		};
+
 	if (!IsPastKexInit())
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
@@ -329,6 +359,79 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 	d.ExpectEnd();
 
 	SendECDHKexInitReply(client_ephemeral_public_key);
+	SendNewKeys();
+
+	if (peer_wants_ext_info && role == Role::SERVER)
+		SendExtInfo();
+}
+
+inline void
+Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
+{
+	if (role != Role::CLIENT)
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Unexpected packet"sv,
+		};
+
+	if (!IsPastKexInit())
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"No KEXINIT"sv,
+		};
+
+	if (output.IsEncrypted())
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Duplicate KEX"sv,
+		};
+
+	assert(kex_algorithm);
+
+	Deserializer d{payload};
+
+	const auto server_host_key_blob = d.ReadLengthEncoded();
+	const auto server_ephemeral_public_key = d.ReadLengthEncoded();
+	const auto signature = d.ReadLengthEncoded();
+	d.ExpectEnd();
+
+	// TODO do we trust server_host_key_blob?
+
+	Serializer client_ephemeral_public_key_;
+	kex_algorithm->SerializeEphemeralPublicKey(client_ephemeral_public_key_);
+	const auto client_ephemeral_public_key = client_ephemeral_public_key_.Finish();
+
+	Serializer shared_secret;
+	kex_algorithm->GenerateSharedSecret(server_ephemeral_public_key, shared_secret);
+	const auto shared_secret_ = shared_secret.Finish();
+
+	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
+
+	auto client_version = g_server_version;
+	client_version.remove_suffix(2); // remove CR LF
+
+	const std::span<const std::byte> client_kexinit = my_kexinit;
+	const std::span<const std::byte> server_kexinit = peer_kexinit;
+
+	const std::string_view server_version = peer_version;
+
+	std::byte hash_buffer[DIGEST_MAX_SIZE];
+	const auto hashlen = CalcKexHash(hash_alg,
+					 client_version,
+					 server_version,
+					 client_kexinit,
+					 server_kexinit,
+					 server_host_key_blob,
+					 client_ephemeral_public_key,
+					 server_ephemeral_public_key,
+					 shared_secret_,
+					 hash_buffer);
+
+	const auto hash = std::span{hash_buffer}.first(hashlen);
+
+	kex_state.DeriveKeys(hash, shared_secret_, role, true);
+	kex_algorithm.reset();
+
 	SendNewKeys();
 
 	if (peer_wants_ext_info && role == Role::SERVER)
@@ -360,6 +463,10 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 
 	case MessageNumber::ECDH_KEX_INIT:
 		HandleECDHKexInit(payload);
+		break;
+
+	case MessageNumber::ECDH_KEX_INIT_REPLY:
+		HandleECDHKexInitReply(payload);
 		break;
 
 	default:
@@ -415,6 +522,9 @@ Connection::OnBufferedData()
 		peer_version.assign(s);
 
 		version_exchanged = true;
+
+		if (role == Role::CLIENT)
+			SendKexInit();
 	}
 
 	if (!input.Feed(socket.GetInputBuffer()))
