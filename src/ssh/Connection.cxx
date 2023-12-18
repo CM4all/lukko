@@ -305,6 +305,12 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 			"No KEXINIT"sv,
 		};
 
+	if (output.IsEncrypted())
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Duplicate KEX"sv,
+		};
+
 	Deserializer d{payload};
 	const auto client_ephemeral_public_key = d.ReadLengthEncoded();
 	d.ExpectEnd();
