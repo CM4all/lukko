@@ -390,8 +390,6 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 	const auto service = d.ReadString();
 	d.ExpectEnd();
 
-	logger.Fmt(1, "ServiceRequest '{}'"sv, service);
-
 	if (service == "ssh-userauth"sv) {
 		have_service_userauth = true;
 		SendPacket(SSH::MakeServiceAccept(service));
