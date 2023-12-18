@@ -393,6 +393,7 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 	logger.Fmt(1, "ServiceRequest '{}'"sv, service);
 
 	if (service == "ssh-userauth"sv) {
+		have_service_userauth = true;
 		SendPacket(SSH::MakeServiceAccept(service));
 	} else
 		throw Disconnect{SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
@@ -679,6 +680,12 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		   authentication requests received after that SHOULD
 		   be silently ignored" */
 		return;
+
+	if (!have_service_userauth)
+		throw Disconnect{
+			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
+			"Service ssh-userauth not requested"sv
+		};
 
 	if (!got_userauth_request) {
 		/* this is the first USERAUTH_REQUEST - reschedule the

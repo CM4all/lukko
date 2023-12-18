@@ -75,6 +75,8 @@ class Connection final
 
 	bool log_disconnect = true;
 
+	bool have_service_userauth = false;
+
 	/**
 	 * Tracks whether USERAUTH_REQUEST has been received already.
 	 * This is used to reschedule #auth_timeout.
