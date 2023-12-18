@@ -142,6 +142,8 @@ public:
 	 */
 	void SendPacket(PacketSerializer &&s);
 
+	void SendPacket(MessageNumber msg, std::span<const std::byte> src);
+
 protected:
 	void SendDisconnect(DisconnectReasonCode reason_code, std::string_view msg);
 	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;

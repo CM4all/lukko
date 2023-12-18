@@ -90,6 +90,14 @@ Connection::SendPacket(PacketSerializer &&s)
 }
 
 void
+Connection::SendPacket(MessageNumber msg, std::span<const std::byte> payload)
+{
+	SSH::PacketSerializer s{msg};
+	s.WriteN(payload);
+	SendPacket(std::move(s));
+}
+
+void
 Connection::SendDisconnect(DisconnectReasonCode reason_code,
 			   std::string_view msg)
 {
