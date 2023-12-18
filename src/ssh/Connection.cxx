@@ -344,16 +344,10 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 			"Unexpected packet"sv,
 		};
 
-	if (!IsPastKexInit())
+	if (!IsPastKexInit() || !kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"No KEXINIT"sv,
-		};
-
-	if (output.IsEncrypted())
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Duplicate KEX"sv,
 		};
 
 	Deserializer d{payload};
@@ -376,19 +370,11 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 			"Unexpected packet"sv,
 		};
 
-	if (!IsPastKexInit())
+	if (!IsPastKexInit() || !kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"No KEXINIT"sv,
 		};
-
-	if (output.IsEncrypted())
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Duplicate KEX"sv,
-		};
-
-	assert(kex_algorithm);
 
 	Deserializer d{payload};
 

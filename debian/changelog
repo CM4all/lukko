@@ -3,7 +3,6 @@ cm4all-lukko (0.11) unstable; urgency=low
   * use an optimized buffer allocator
   * move cipher calls to worker threads
   * fix channel buffering miscalculation
-  * disallow duplicate KEX init
 
  --   
 
