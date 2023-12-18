@@ -331,6 +331,12 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 {
 	(void)payload;
 
+	if (kex_state.session_id.empty())
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"No session id"sv,
+		};
+
 	auto cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
 					   mac_algorithms_client_to_server,
 					   Direction::INCOMING);
