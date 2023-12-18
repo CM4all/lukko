@@ -7,12 +7,18 @@
 #include "openssl/DeserializeEC.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/Key.hxx"
-#include "lib/openssl/UniqueEVP.hxx"
 #include "openssl/SerializeEVP.hxx"
 
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
+
+ECDHKex::ECDHKex()
+	:key(GenerateEcKey())
+{
+}
+
+ECDHKex::~ECDHKex() noexcept = default;
 
 static void
 EVP_PKEY_derive(Serializer &s, EVP_PKEY_CTX &ctx)
@@ -41,11 +47,11 @@ ECDHKex::MakeReply(std::span<const std::byte> client_ephemeral_public_key,
 		   Serializer &shared_secret)
 {
 	const auto client_key = DeserializeECPublic("P-256"sv, client_ephemeral_public_key);
-	const auto server_key = GenerateEcKey();
+	auto &server_key = *key;
 
-	SerializePublicKey(server_ephemeral_public_key, *server_key);
+	SerializePublicKey(server_ephemeral_public_key, server_key);
 
-	const UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(server_key.get(), nullptr));
+	const UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(&server_key, nullptr));
 	if (!ctx)
 		throw SslError{"EVP_PKEY_CTX_new() failed"};
 
