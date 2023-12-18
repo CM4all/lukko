@@ -10,8 +10,8 @@ namespace SSH {
 class Serializer;
 
 void
-KexECDH(std::span<const std::byte> client_ephemeral_public_key,
-	Serializer &server_ephemeral_public_key,
-	Serializer &shared_secret);
+KexECDHReply(std::span<const std::byte> client_ephemeral_public_key,
+	     Serializer &server_ephemeral_public_key,
+	     Serializer &shared_secret);
 
 } // namespace SSH

@@ -161,12 +161,12 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	switch (kex_algorithm) {
 	case KexAlgorithm::CURVE25519_SHA256:
-		Curve25519Kex(client_ephemeral_public_key, s, shared_secret);
+		Curve25519KexReply(client_ephemeral_public_key, s, shared_secret);
 		break;
 
 #ifdef HAVE_OPENSSL
 	case KexAlgorithm::ECDH_SHA256_NISTP256:
-		KexECDH(client_ephemeral_public_key, s, shared_secret);
+		KexECDHReply(client_ephemeral_public_key, s, shared_secret);
 		break;
 #endif
 	}

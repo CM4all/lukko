@@ -51,9 +51,9 @@ KexCurve25519CalcSharedKey(std::span<const std::byte, crypto_scalarmult_curve255
 }
 
 void
-Curve25519Kex(std::span<const std::byte> client_ephemeral_public_key,
-	      Serializer &server_ephemeral_public_key,
-	      Serializer &shared_secret)
+Curve25519KexReply(std::span<const std::byte> client_ephemeral_public_key,
+		   Serializer &server_ephemeral_public_key,
+		   Serializer &shared_secret)
 {
 	if (client_ephemeral_public_key.size() != crypto_scalarmult_curve25519_BYTES)
 		throw std::invalid_argument{"Wrong size"};
