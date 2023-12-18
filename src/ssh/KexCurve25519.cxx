@@ -14,12 +14,22 @@
 
 namespace SSH {
 
-static void
-KexCurve25519GenerateKey(std::span<std::byte, crypto_scalarmult_curve25519_SCALARBYTES> key,
-			 std::span<std::byte, crypto_scalarmult_curve25519_BYTES> pub)
+Curve25519Kex::Curve25519Kex()
 {
-	UrandomFill(key);
+	static_assert(sizeof(secret_key) == crypto_scalarmult_curve25519_SCALARBYTES);
 
+	UrandomFill(secret_key);
+}
+
+Curve25519Kex::~Curve25519Kex() noexcept
+{
+	sodium_memzero(&secret_key, sizeof(secret_key));
+}
+
+static void
+Curve25519SecretKeyToPublicKey(std::span<const std::byte, crypto_scalarmult_curve25519_SCALARBYTES> key,
+			       std::span<std::byte, crypto_scalarmult_curve25519_BYTES> pub)
+{
 	if (crypto_scalarmult_curve25519_base(reinterpret_cast<unsigned char *>(pub.data()),
 					      reinterpret_cast<const unsigned char *>(key.data())) != 0)
 		throw std::runtime_error{"crypto_scalarmult_curve25519_base() failed"};
@@ -58,12 +68,10 @@ Curve25519Kex::MakeReply(std::span<const std::byte> client_ephemeral_public_key,
 	if (client_ephemeral_public_key.size() != crypto_scalarmult_curve25519_BYTES)
 		throw std::invalid_argument{"Wrong size"};
 
-	std::byte server_key[crypto_scalarmult_curve25519_SCALARBYTES];
-	KexCurve25519GenerateKey(server_key,
-				 server_ephemeral_public_key.WriteN<crypto_scalarmult_curve25519_BYTES>());
-	AtScopeExit(&server_key) { sodium_memzero(server_key, sizeof(server_key)); };
+	Curve25519SecretKeyToPublicKey(secret_key,
+				       server_ephemeral_public_key.WriteN<crypto_scalarmult_curve25519_BYTES>());
 
-	KexCurve25519CalcSharedKey(server_key,
+	KexCurve25519CalcSharedKey(secret_key,
 				   client_ephemeral_public_key.first<crypto_scalarmult_curve25519_BYTES>(),
 				   shared_secret, false);
 }
