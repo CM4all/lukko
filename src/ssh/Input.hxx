@@ -115,6 +115,10 @@ public:
 		return read_seq;
 	}
 
+	void ResetSeq() noexcept {
+		read_seq = decrypt_seq = 0;
+	}
+
 	/**
 	 * Feed data received on the socket into the packetizer.  This
 	 * will lead to a InputHandler::OnInputReady() call as soon as

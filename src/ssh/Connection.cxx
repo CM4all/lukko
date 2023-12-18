@@ -295,6 +295,19 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	peer_wants_ext_info = StringListContains(kex_algorithms,
 						 role == Role::SERVER ? "ext-info-c"sv : "ext-info-s"sv);
 
+	if (StringListContains(kex_algorithms,
+			       role == Role::SERVER ? "kex-strict-c-v00@openssh.com"sv : "kex-strict-s-v00@openssh.com"sv)) {
+		peer_wants_strict_key_exchange = true;
+
+		if (!first_packet_was_kexinit)
+			throw Disconnect{
+				DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+				"First packet was not KEXINIT"sv,
+			};
+
+		output.AutoResetSeq();
+	}
+
 	switch (role) {
 	case Role::SERVER:
 		std::tie(host_key, host_key_algorithm) = ChooseHostKey(server_host_key_algorithms);
@@ -330,6 +343,9 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 	const bool was_encrypted = input.IsEncrypted();
 
 	input.SetCipher(std::move(cipher));
+
+	if (peer_wants_strict_key_exchange)
+		input.ResetSeq();
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
@@ -426,9 +442,43 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 		SendExtInfo();
 }
 
+static constexpr bool
+IsAllowedKexMessage(MessageNumber msg, Role role) noexcept
+{
+	switch (msg) {
+	case MessageNumber::DISCONNECT:
+	case MessageNumber::NEWKEYS:
+		return true;
+
+	case MessageNumber::ECDH_KEX_INIT:
+		return role == Role::SERVER;
+
+	case MessageNumber::ECDH_KEX_INIT_REPLY:
+		return role == Role::CLIENT;
+
+	default:
+		return false;
+	}
+}
+
 void
 Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 {
+	if (!input.IsEncrypted()) {
+		if (!IsPastKexInit()) {
+			/* this is the first packet */
+
+			if (msg != MessageNumber::KEXINIT)
+				first_packet_was_kexinit = false;
+		} else if (peer_wants_strict_key_exchange &&
+			   !IsAllowedKexMessage(msg, role)) {
+			throw Disconnect{
+				DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+				"Unexpected KEX packet"sv,
+			};
+		}
+	}
+
 	switch (msg) {
 	case MessageNumber::DISCONNECT:
 		Destroy();

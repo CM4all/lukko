@@ -124,6 +124,9 @@ Output::Run() noexcept
 			/* switch to next_cipher */
 			cipher = std::move(next_cipher);
 			plain_queue.swap(next_plain_queue);
+
+			if (auto_reset_seq)
+				seq = 0;
 		}
 
 		src.swap(plain_queue);

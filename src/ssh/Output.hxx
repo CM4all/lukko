@@ -78,6 +78,8 @@ class Output final : ThreadJob {
 	 */
 	bool postponed_destroy = false;
 
+	bool auto_reset_seq = false;
+
 public:
 	Output(ThreadQueue &_thread_queue, BufferedSocket &_socket) noexcept;
 
@@ -96,6 +98,10 @@ public:
 		const std::scoped_lock lock{mutex};
 		next_cipher = std::forward<T>(_cipher);
 		push_cipher = next_cipher.get();
+	}
+
+	void AutoResetSeq() noexcept {
+		auto_reset_seq = true;
 	}
 
 	void Push(std::span<const std::byte> src);

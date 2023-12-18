@@ -65,6 +65,18 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool peer_wants_ext_info = false;
 
+	/**
+	 * Did the peer announce ""kex-strict-[cs]-v00@openssh.com"?
+	 */
+	bool peer_wants_strict_key_exchange;
+
+	/**
+	 * Remember whether the first packet was KEXINIT.  If not and
+	 * then KEXINIT enables #peer_wants_strict_key_exchange, the
+	 * connection will be terminated.
+	 */
+	bool first_packet_was_kexinit = true;
+
 protected:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
