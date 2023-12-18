@@ -216,6 +216,7 @@ executable(
   'src/SocketChannel.cxx',
   'src/RConnect.cxx',
   'src/DelegateOpen.cxx',
+  'src/OutgoingConnection.cxx',
   'src/AllocatorPtr.cxx',
   'src/system/SetupProcess.cxx',
   include_directories: inc,

@@ -15,6 +15,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 #ifdef ENABLE_TRANSLATION
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
+	 proxy_to(config.proxy_to),
 	 logger(instance.GetLogger()) {}
 
 void

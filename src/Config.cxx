@@ -146,6 +146,10 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 #ifdef ENABLE_TRANSLATION
 		config.tag = line.ExpectValueAndEnd();
 #endif // ENABLE_TRANSLATION
+	} else if (StringIsEqual(word, "proxy_to")) {
+		// TODO experimental feature
+		config.proxy_to = ParseSocketAddress(line.ExpectValueAndEnd(),
+						     22, false);
 	} else
 		throw LineParser::Error("Unknown option");
 }

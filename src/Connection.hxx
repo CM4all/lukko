@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "OutgoingConnection.hxx"
 #include "ssh/CConnection.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -32,7 +33,8 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
-	  public SSH::CConnection
+	  public SSH::CConnection,
+	  OutgoingConnectionHandler
 {
 	Instance &instance;
 	Listener &listener;
@@ -73,6 +75,8 @@ class Connection final
 	 */
 	Co::EagerInvokeTask occupied_task;
 
+	std::unique_ptr<OutgoingConnection> outgoing;
+
 	bool log_disconnect = true;
 
 	bool have_service_userauth = false;
@@ -82,6 +86,8 @@ class Connection final
 	 * This is used to reschedule #auth_timeout.
 	 */
 	bool got_userauth_request = false;
+
+	bool outgoing_ready;
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
@@ -213,4 +219,13 @@ private:
 
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;
+
+	/* virtual methods from class OutgoingConnectionHandler */
+	void OnOutgoingDestroy() noexcept override;
+	void OnOutgoingUserauthService() override;
+	void OnOutgoingUserauthSuccess() override;
+	[[noreturn]]
+	void OnOutgoingUserauthFailure() override;
+	void OnOutgoingHandlePacket(SSH::MessageNumber msg,
+				    std::span<const std::byte> payload) override;
 };

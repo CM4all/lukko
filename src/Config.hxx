@@ -19,6 +19,8 @@ struct ListenerConfig : SocketConfig {
 	std::string tag;
 #endif
 
+	AllocatedSocketAddress proxy_to;
+
 	ListenerConfig() {
 		listen = 256;
 		tcp_no_delay = true;

@@ -21,6 +21,7 @@
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "spawn/Prepared.hxx"
+#include "event/net/CoConnectSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
@@ -649,8 +650,16 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 	auth_timeout.Cancel();
 
-	SetAuthenticated();
-	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
+	if (const auto proxy_to = listener.GetProxyTo(); !proxy_to.IsNull()) {
+		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
+
+		OutgoingConnectionHandler &handler = *this;
+		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(), std::move(s), handler);
+		outgoing_ready = false;
+	} else {
+		SetAuthenticated();
+		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
+	}
 }
 
 inline void
@@ -742,6 +751,30 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 			"Occupied"sv
 		};
 
+	if (outgoing && outgoing_ready) {
+		switch (msg) {
+		case SSH::MessageNumber::GLOBAL_REQUEST:
+		case SSH::MessageNumber::REQUEST_SUCCESS:
+		case SSH::MessageNumber::REQUEST_FAILURE:
+		case SSH::MessageNumber::CHANNEL_OPEN:
+		case SSH::MessageNumber::CHANNEL_OPEN_CONFIRMATION:
+		case SSH::MessageNumber::CHANNEL_OPEN_FAILURE:
+		case SSH::MessageNumber::CHANNEL_WINDOW_ADJUST:
+		case SSH::MessageNumber::CHANNEL_DATA:
+		case SSH::MessageNumber::CHANNEL_EXTENDED_DATA:
+		case SSH::MessageNumber::CHANNEL_EOF:
+		case SSH::MessageNumber::CHANNEL_CLOSE:
+		case SSH::MessageNumber::CHANNEL_REQUEST:
+		case SSH::MessageNumber::CHANNEL_SUCCESS:
+		case SSH::MessageNumber::CHANNEL_FAILURE:
+			outgoing->SendPacket(msg, payload);
+			return;
+
+		default:
+			break;
+		}
+	}
+
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
 		HandleServiceRequest(payload);
@@ -785,4 +818,61 @@ Connection::OnAuthTimeout() noexcept
 
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Timeout"sv);
+}
+
+void
+Connection::OnOutgoingDestroy() noexcept
+{
+	outgoing.reset();
+
+	// TODO
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Disconnected"sv);
+}
+
+void
+Connection::OnOutgoingUserauthService()
+{
+	assert(outgoing);
+	assert(!outgoing_ready);
+
+	const auto [key, algorithm] = instance.GetHostKeys().Choose("ssh-ed25519"sv); // TODO
+	if (key == nullptr)
+		throw std::runtime_error{"No host key"};
+
+	outgoing->SendUserauthRequestHostbased(username, *key, algorithm);
+}
+
+void
+Connection::OnOutgoingUserauthSuccess()
+{
+	assert(outgoing);
+	assert(!outgoing_ready);
+
+	outgoing_ready = true;
+
+	SetAuthenticated();
+	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
+}
+
+void
+Connection::OnOutgoingUserauthFailure()
+{
+	assert(outgoing);
+	assert(!outgoing_ready);
+
+	// TODO
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Proxy auth failed"sv);
+	throw Destroyed{};
+}
+
+void
+Connection::OnOutgoingHandlePacket(SSH::MessageNumber msg,
+				   std::span<const std::byte> payload)
+{
+	assert(outgoing);
+	assert(outgoing_ready);
+
+	SendPacket(msg, payload);
 }

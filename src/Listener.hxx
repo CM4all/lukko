@@ -5,6 +5,7 @@
 #pragma once
 
 #include "event/net/ServerSocket.hxx"
+#include "net/SocketAddress.hxx"
 #include "config.h"
 
 struct ListenerConfig;
@@ -18,6 +19,8 @@ class Listener final : ServerSocket {
 	const std::string_view tag;
 #endif // ENABLE_TRANSLATION
 
+	const SocketAddress proxy_to;
+
 	const RootLogger &logger;
 
 public:
@@ -28,6 +31,10 @@ public:
 		return tag;
 	}
 #endif // ENABLE_TRANSLATION
+
+	SocketAddress GetProxyTo() const noexcept {
+		return proxy_to;
+	}
 
 	using ServerSocket::GetLocalAddress;
 
