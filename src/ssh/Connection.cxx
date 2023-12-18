@@ -154,21 +154,18 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	const auto server_ephemeral_public_key_length = s.PrepareLength();
 	const auto server_ephemeral_public_key_mark = s.Mark();
-
-	Serializer shared_secret;
-
 	kex_algorithm->SerializeEphemeralPublicKey(s);
-	kex_algorithm->GenerateSharedSecret(client_ephemeral_public_key, shared_secret);
-
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
 	s.CommitLength(server_ephemeral_public_key_length);
+
+	Serializer shared_secret;
+	kex_algorithm->GenerateSharedSecret(client_ephemeral_public_key, shared_secret);
+	const auto shared_secret_ = shared_secret.Finish();
 
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
 
 	auto server_version = g_server_version;
 	server_version.remove_suffix(2); // remove CR LF
-
-	const auto shared_secret_ = shared_secret.Finish();
 
 	std::byte hash_buffer[DIGEST_MAX_SIZE];
 	const auto hashlen = CalcKexHash(hash_alg,
