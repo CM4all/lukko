@@ -13,6 +13,8 @@ class Serializer;
 
 class Kex {
 public:
+	virtual ~Kex() noexcept = default;
+
 	virtual void MakeReply(std::span<const std::byte> client_ephemeral_public_key,
 			       Serializer &server_ephemeral_public_key,
 			       Serializer &shared_secret) = 0;
