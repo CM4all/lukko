@@ -209,7 +209,12 @@ Connection::SendNewKeys()
 			"No client-to-server encryption algorithm"sv,
 		};
 
+	const bool was_encrypted = output.IsEncrypted();
+
 	output.SetCipher(std::move(send_cipher));
+
+	if (!was_encrypted && IsEncrypted())
+		OnEncrypted();
 }
 
 inline void
@@ -296,7 +301,12 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 			"No client-to-server encryption algorithm"sv,
 		};
 
+	const bool was_encrypted = input.IsEncrypted();
+
 	input.SetCipher(std::move(cipher));
+
+	if (!was_encrypted && IsEncrypted())
+		OnEncrypted();
 }
 
 inline void

@@ -151,6 +151,12 @@ protected:
 				  std::span<const std::byte> payload);
 
 	/**
+	 * Called after key exchange (KEX) has completed successfully
+	 * and a cipher has been established for both directions.
+	 */
+	virtual void OnEncrypted() {}
+
+	/**
 	 * The (kernel) socket buffer is full and no more outgoing packets
 	 * should be submitted to SendPacket().
 	 */
