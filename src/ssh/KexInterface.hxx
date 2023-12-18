@@ -15,9 +15,9 @@ class Kex {
 public:
 	virtual ~Kex() noexcept = default;
 
-	virtual void MakeReply(std::span<const std::byte> client_ephemeral_public_key,
-			       Serializer &server_ephemeral_public_key,
-			       Serializer &shared_secret) = 0;
+	virtual void SerializeEphemeralPublicKey(Serializer &s) const = 0;
+	virtual void GenerateSharedSecret(std::span<const std::byte> client_ephemeral_public_key,
+					  Serializer &s) = 0;
 };
 
 } // namespace SSH

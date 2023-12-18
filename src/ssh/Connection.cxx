@@ -157,7 +157,8 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	Serializer shared_secret;
 
-	kex_algorithm->MakeReply(client_ephemeral_public_key, s, shared_secret);
+	kex_algorithm->SerializeEphemeralPublicKey(s);
+	kex_algorithm->GenerateSharedSecret(client_ephemeral_public_key, shared_secret);
 
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
 	s.CommitLength(server_ephemeral_public_key_length);

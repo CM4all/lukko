@@ -19,9 +19,9 @@ public:
 	Curve25519Kex();
 	~Curve25519Kex() noexcept override;
 
-	void MakeReply(std::span<const std::byte> client_ephemeral_public_key,
-		       Serializer &server_ephemeral_public_key,
-		       Serializer &shared_secret) override;
+	void SerializeEphemeralPublicKey(Serializer &s) const override;
+	void GenerateSharedSecret(std::span<const std::byte> client_ephemeral_public_key,
+				  Serializer &s) override;
 };
 
 } // namespace SSH

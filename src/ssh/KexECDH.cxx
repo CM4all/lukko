@@ -42,16 +42,18 @@ EVP_PKEY_derive(Serializer &s, EVP_PKEY_CTX &ctx)
 }
 
 void
-ECDHKex::MakeReply(std::span<const std::byte> client_ephemeral_public_key,
-		   Serializer &server_ephemeral_public_key,
-		   Serializer &shared_secret)
+ECDHKex::SerializeEphemeralPublicKey(Serializer &s) const
+{
+	SerializePublicKey(s, *key);
+}
+
+void
+ECDHKex::GenerateSharedSecret(std::span<const std::byte> client_ephemeral_public_key,
+			      Serializer &shared_secret)
 {
 	const auto client_key = DeserializeECPublic("P-256"sv, client_ephemeral_public_key);
-	auto &server_key = *key;
 
-	SerializePublicKey(server_ephemeral_public_key, server_key);
-
-	const UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(&server_key, nullptr));
+	const UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(key.get(), nullptr));
 	if (!ctx)
 		throw SslError{"EVP_PKEY_CTX_new() failed"};
 
