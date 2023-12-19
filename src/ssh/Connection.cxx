@@ -107,6 +107,8 @@ Connection::SendDisconnect(DisconnectReasonCode reason_code,
 void
 Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept
 {
+	OnDisconnecting(reason_code, msg);
+
 	try {
 		SendDisconnect(reason_code, msg);
 	} catch (...) {
@@ -260,6 +262,16 @@ Connection::SendExtInfo()
 	s.WriteString(all_public_key_algorithms);
 
 	SendPacket(std::move(s));
+}
+
+inline void
+Connection::HandleDisconnect(std::span<const std::byte> payload)
+{
+	const auto p = ParseDisconnect(payload);
+	OnDisconnected(p.reason_code, p.description);
+
+	Destroy();
+	throw Destroyed{};
 }
 
 static constexpr bool
@@ -476,8 +488,8 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 
 	switch (msg) {
 	case MessageNumber::DISCONNECT:
-		Destroy();
-		throw Destroyed{};
+		HandleDisconnect(payload);
+		break;
 
 	case MessageNumber::IGNORE:
 		break;

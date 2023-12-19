@@ -10,7 +10,26 @@
 
 namespace SSH {
 
+enum class DisconnectReasonCode : uint32_t;
 enum class ChannelExtendedDataType : uint32_t;
+
+struct Disconnect {
+	std::string_view description;
+	DisconnectReasonCode reason_code;
+};
+
+[[gnu::pure]]
+inline auto
+ParseDisconnect(std::span<const std::byte> raw) noexcept
+{
+	Disconnect p;
+	Deserializer d{raw};
+	p.reason_code = static_cast<DisconnectReasonCode>(d.ReadU32());
+	p.description = d.ReadString();
+	d.ReadString(); // language tag
+	d.ExpectEnd();
+	return p;
+}
 
 struct ServiceRequest {
 	std::string_view service_name;

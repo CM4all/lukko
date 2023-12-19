@@ -154,6 +154,8 @@ protected:
 	void SendNewKeys();
 	void SendExtInfo();
 
+	[[noreturn]]
+	void HandleDisconnect(std::span<const std::byte> payload);
 	void HandleKexInit(std::span<const std::byte> payload);
 	void HandleNewKeys(std::span<const std::byte> payload);
 	void HandleECDHKexInit(std::span<const std::byte> payload);
@@ -189,6 +191,22 @@ protected:
 	 * more data).
 	 */
 	virtual void OnWriteUnblocked() noexcept {}
+
+	/**
+	 * Called right before sending a DISCONNECT packet to the
+	 * peer.  This may be used for logging (but not for I/O or for
+	 * actually disconnecting).
+	 */
+	virtual void OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
+				    [[maybe_unused]] std::string_view msg) noexcept {}
+
+	/**
+	 * Called before handling a DISCONNECT packet received from
+	 * the peer.  This may be used for logging (but not for I/O or
+	 * for actually disconnecting).
+	 */
+	virtual void OnDisconnected([[maybe_unused]] DisconnectReasonCode reason_code,
+				    [[maybe_unused]] std::string_view msg) noexcept {}
 
 private:
 	const auto &GetServerKexinit() const {
