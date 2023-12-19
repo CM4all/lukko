@@ -26,15 +26,15 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv,
  polkitd (>= 121)
 Recommends: cm4all-spawn-reaper
 Suggests: cm4all-spawn-accessory
-Description: MySQL proxy
- lukko is a proxy server for MySQL connections with Lua scripting.
+Description: SSH server
+ Lukko is a SSH server.
 
 Package: cm4all-lukko-doc
 Section: doc
 Architecture: all
 Built-Using: ${sphinxdoc:Built-Using}
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}
-Description: MySQL proxy, documentation
- lukko is a proxy server for MySQL connections with Lua scripting.
+Description: SSH server, documentation
+ Lukko is a SSH server.
  .
  This package contains documentation.
