@@ -16,6 +16,7 @@
 #include "key/Fingerprint.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
+#include "ssh/ParsePacket.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
@@ -387,13 +388,11 @@ Connection::OpenChannel(std::string_view channel_type,
 inline void
 Connection::HandleServiceRequest(std::span<const std::byte> payload)
 {
-	SSH::Deserializer d{payload};
-	const auto service = d.ReadString();
-	d.ExpectEnd();
+	const auto p = SSH::ParseServiceRequest(payload);
 
-	if (service == "ssh-userauth"sv) {
+	if (p.service_name == "ssh-userauth"sv) {
 		have_service_userauth = true;
-		SendPacket(SSH::MakeServiceAccept(service));
+		SendPacket(SSH::MakeServiceAccept(p.service_name));
 	} else
 		throw Disconnect{SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
 			"Unsupported service"sv};

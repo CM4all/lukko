@@ -5,8 +5,8 @@
 #include "CConnection.hxx"
 #include "Channel.hxx"
 #include "Serializer.hxx"
-#include "Deserializer.hxx"
 #include "MakePacket.hxx"
+#include "ParsePacket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 
@@ -244,101 +244,80 @@ try {
 inline void
 CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const auto channel_type = d.ReadString();
-	const uint_least32_t peer_channel = d.ReadU32();
-	const uint_least32_t initial_window_size = d.ReadU32();
-	d.ReadU32(); // TODO maximum packet size
+	const auto p = ParseChannelOpen(payload);
 
-	HandleChannelOpen(channel_type, peer_channel, initial_window_size,
-			  d.GetRest());
+	HandleChannelOpen(p.channel_type, p.peer_channel, p.initial_window_size,
+			  p.channel_type_specific_data);
 }
 
 inline void
 CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	const uint_least32_t nbytes = d.ReadU32();
-	d.ExpectEnd();
+	const auto p = ParseChannelWindowAdjust(payload);
 
-	if (nbytes == 0)
+	if (p.nbytes == 0)
 		throw std::invalid_argument{"Bad window adjustment"};
 
-	auto &channel = GetChannel(local_channel);
-	channel.OnWindowAdjust(nbytes);
+	auto &channel = GetChannel(p.local_channel);
+	channel.OnWindowAdjust(p.nbytes);
 }
 
 inline void
 CConnection::HandleChannelData(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	std::span<const std::byte> data = d.ReadLengthEncoded();
-	d.ExpectEnd();
+	const auto p = ParseChannelData(payload);
 
-	auto &channel = GetChannel(local_channel);
-	if (data.size() > channel.GetReceiveWindow())
+	auto &channel = GetChannel(p.local_channel);
+	if (p.data.size() > channel.GetReceiveWindow())
 		throw std::invalid_argument{"Receive window exceeded"};
 
-	channel.OnData(data);
+	channel.OnData(p.data);
 }
 
 inline void
 CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	const auto data_type = static_cast<ChannelExtendedDataType>(d.ReadU32());
-	std::span<const std::byte> data = d.ReadLengthEncoded();
-	d.ExpectEnd();
+	const auto p = ParseChannelExtendedData(payload);
 
-	auto &channel = GetChannel(local_channel);
-	if (data.size() > channel.GetReceiveWindow())
+	auto &channel = GetChannel(p.local_channel);
+	if (p.data.size() > channel.GetReceiveWindow())
 		throw std::invalid_argument{"Receive window exceeded"};
 
-	channel.OnExtendedData(data_type, data);
+	channel.OnExtendedData(p.data_type, p.data);
 }
 
 inline void
 CConnection::HandleChannelEof(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	d.ExpectEnd();
+	const auto p = ParseChannelEof(payload);
 
-	auto &channel = GetChannel(local_channel);
+	auto &channel = GetChannel(p.local_channel);
 	channel.OnEof();
 }
 
 inline void
 CConnection::HandleChannelClose(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	d.ExpectEnd();
+	const auto p = ParseChannelClose(payload);
 
-	const auto &channel = GetChannel(local_channel);
+	const auto &channel = GetChannel(p.local_channel);
 	if (!IsTombstoneChannel(channel))
 		SendPacket(MakeChannelClose(channel.GetPeerChannel()));
 
-	delete channels[local_channel];
-	channels[local_channel] = nullptr;
+	delete channels[p.local_channel];
+	channels[p.local_channel] = nullptr;
 }
 
 inline void
 CConnection::HandleChannelRequest(std::span<const std::byte> payload)
 {
-	Deserializer d{payload};
-	const uint_least32_t local_channel = d.ReadU32();
-	const std::string_view request_type = d.ReadString();
-	const bool want_reply = d.ReadBool();
+	const auto p = ParseChannelRequest(payload);
 
-	auto &channel = GetChannel(local_channel);
+	auto &channel = GetChannel(p.local_channel);
 	const uint_least32_t peer_channel = channel.GetPeerChannel();
-	const bool success = channel.OnRequest(request_type, d.GetRest());
+	const bool success = channel.OnRequest(p.request_type, p.type_specific_data);
 
-	if (want_reply) {
+	if (p.want_reply) {
 		PacketSerializer s{
 			success
 			? MessageNumber::CHANNEL_SUCCESS

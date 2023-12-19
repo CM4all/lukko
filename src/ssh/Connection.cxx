@@ -13,7 +13,7 @@
 #include "Protocol.hxx"
 #include "Serializer.hxx"
 #include "MakePacket.hxx"
-#include "Deserializer.hxx"
+#include "ParsePacket.hxx"
 #include "key/Key.hxx"
 #include "key/Algorithms.hxx"
 #include "cipher/Cipher.hxx"
@@ -277,33 +277,23 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 {
 	peer_kexinit = payload;
 
-	Deserializer d{payload};
-	d.ReadN(16); // cookie
-	const auto kex_algorithms = d.ReadString();
-	const auto server_host_key_algorithms = d.ReadString(); // server_host_key_algorithms
-	encryption_algorithms_client_to_server.assign(d.ReadString());
-	encryption_algorithms_server_to_client.assign(d.ReadString());
-	mac_algorithms_client_to_server.assign(d.ReadString());
-	mac_algorithms_server_to_client.assign(d.ReadString());
-	d.ReadString(); // compression_algorithms_client_to_server
-	d.ReadString(); // compression_algorithms_server_to_client
-	d.ReadString(); // languages_client_to_server
-	d.ReadString(); // languages_server_to_client
-	d.ReadBool(); // first_kex_packet_follows
-	d.ReadU32(); // reserved
-	d.ExpectEnd();
+	const auto p = ParseKexInit(payload);
+	encryption_algorithms_client_to_server = p.encryption_algorithms_client_to_server;
+	encryption_algorithms_server_to_client = p.encryption_algorithms_server_to_client;
+	mac_algorithms_client_to_server = p.mac_algorithms_client_to_server;
+	mac_algorithms_server_to_client = p.mac_algorithms_server_to_client;
 
-	kex_algorithm = MakeKex(kex_algorithms);
+	kex_algorithm = MakeKex(p.kex_algorithms);
 	if (!kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
 			"No supported KEX algorithm"sv,
 		};
 
-	peer_wants_ext_info = StringListContains(kex_algorithms,
+	peer_wants_ext_info = StringListContains(p.kex_algorithms,
 						 role == Role::SERVER ? "ext-info-c"sv : "ext-info-s"sv);
 
-	if (StringListContains(kex_algorithms,
+	if (StringListContains(p.kex_algorithms,
 			       role == Role::SERVER ? "kex-strict-c-v00@openssh.com"sv : "kex-strict-s-v00@openssh.com"sv)) {
 		peer_wants_strict_key_exchange = true;
 
@@ -318,7 +308,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 
 	switch (role) {
 	case Role::SERVER:
-		std::tie(host_key, host_key_algorithm) = ChooseHostKey(server_host_key_algorithms);
+		std::tie(host_key, host_key_algorithm) = ChooseHostKey(p.server_host_key_algorithms);
 		if (host_key == nullptr)
 			throw Disconnect{
 				DisconnectReasonCode::KEY_EXCHANGE_FAILED,
@@ -380,11 +370,9 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 			"No KEXINIT"sv,
 		};
 
-	Deserializer d{payload};
-	const auto client_ephemeral_public_key = d.ReadLengthEncoded();
-	d.ExpectEnd();
+	const auto p = ParseECDHKexInit(payload);
 
-	SendECDHKexInitReply(client_ephemeral_public_key);
+	SendECDHKexInitReply(p.client_ephemeral_public_key);
 	SendNewKeys();
 
 	if (peer_wants_ext_info && role == Role::SERVER)
@@ -406,12 +394,7 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 			"No KEXINIT"sv,
 		};
 
-	Deserializer d{payload};
-
-	const auto server_host_key_blob = d.ReadLengthEncoded();
-	const auto server_ephemeral_public_key = d.ReadLengthEncoded();
-	const auto signature = d.ReadLengthEncoded();
-	d.ExpectEnd();
+	const auto p = ParseECDHKexInitReply(payload);
 
 	// TODO do we trust server_host_key_blob?
 
@@ -420,7 +403,7 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 	const auto client_ephemeral_public_key = client_ephemeral_public_key_.Finish();
 
 	Serializer shared_secret;
-	kex_algorithm->GenerateSharedSecret(server_ephemeral_public_key, shared_secret);
+	kex_algorithm->GenerateSharedSecret(p.server_ephemeral_public_key, shared_secret);
 	const auto shared_secret_ = shared_secret.Finish();
 
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
@@ -439,9 +422,9 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 					 server_version,
 					 client_kexinit,
 					 server_kexinit,
-					 server_host_key_blob,
+					 p.server_host_key_blob,
 					 client_ephemeral_public_key,
-					 server_ephemeral_public_key,
+					 p.server_ephemeral_public_key,
 					 shared_secret_,
 					 hash_buffer);
 

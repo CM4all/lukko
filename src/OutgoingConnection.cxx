@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "OutgoingConnection.hxx"
-#include "ssh/Deserializer.hxx"
+#include "ssh/ParsePacket.hxx"
 #include "key/Key.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/PacketSerializer.hxx"
@@ -70,12 +70,10 @@ OutgoingConnection::SendUserauthRequestHostbased(std::string_view username,
 inline void
 OutgoingConnection::HandleServiceAccept(std::span<const std::byte> payload)
 {
-	SSH::Deserializer d{payload};
-	const auto service_name = d.ReadString();
-	d.ExpectEnd();
+	const auto p = SSH::ParseServiceAccept(payload);
 
 	if (state == State::SERVICE_REQUEST_SSH_USERAUTH &&
-	    service_name == "ssh-userauth"sv) {
+	    p.service_name == "ssh-userauth"sv) {
 		state = State::SERVICE_SSH_USERAUTH;
 
 		handler.OnOutgoingUserauthService();
