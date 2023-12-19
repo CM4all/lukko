@@ -152,7 +152,7 @@ process = subprocess.Popen(
 )
 
 # wait for startup to finish
-time.sleep(0.1)
+time.sleep(0.2)
 
 run_tests(os.environ['USER'], '127.0.0.1', 2200)
 
