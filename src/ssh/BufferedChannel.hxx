@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Channel.hxx"
-#include "Queue.hxx"
+#include "memory/BufferQueue.hxx"
 
 namespace SSH {
 
@@ -14,7 +14,7 @@ namespace SSH {
  * payloads.
  */
 class BufferedChannel : public Channel {
-	SendQueue queue;
+	BufferQueue queue;
 
 	bool eof_pending = false;
 

@@ -36,7 +36,7 @@ void
 BufferedChannel::ReadBuffer()
 {
 	while (!queue.empty()) {
-		const auto payload = queue.front();
+		const auto payload = queue.Read();
 		const auto nbytes = OnBufferedData(payload);
 		queue.Consume(nbytes);
 
