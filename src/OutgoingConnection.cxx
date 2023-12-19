@@ -159,6 +159,20 @@ OutgoingConnection::OnEncrypted()
 }
 
 void
+OutgoingConnection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
+				    std::string_view msg) noexcept
+{
+	handler.OnOutgoingDisconnecting(reason_code, msg);
+}
+
+void
+OutgoingConnection::OnDisconnected(SSH::DisconnectReasonCode reason_code,
+				   std::string_view msg) noexcept
+{
+	handler.OnOutgoingDisconnected(reason_code, msg);
+}
+
+void
 OutgoingConnection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	PrintException(e);

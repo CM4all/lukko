@@ -801,6 +801,26 @@ Connection::ChooseHostKey(std::string_view algorithms) const noexcept
 }
 
 void
+Connection::OnDisconnecting([[maybe_unused]] SSH::DisconnectReasonCode reason_code,
+			    std::string_view msg) noexcept
+{
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger.Fmt(1, "Disconnecting: {}", msg);
+	}
+}
+
+void
+Connection::OnDisconnected([[maybe_unused]] SSH::DisconnectReasonCode reason_code,
+			   std::string_view msg) noexcept
+{
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger.Fmt(1, "Client disconnected: {}", msg);
+	}
+}
+
+void
 Connection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	logger(1, e);
@@ -874,4 +894,24 @@ Connection::OnOutgoingHandlePacket(SSH::MessageNumber msg,
 	assert(outgoing_ready);
 
 	SendPacket(msg, payload);
+}
+
+void
+Connection::OnOutgoingDisconnecting([[maybe_unused]] SSH::DisconnectReasonCode reason_code,
+				    std::string_view msg) noexcept
+{
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger.Fmt(1, "Disconnecting outgoing: {}", msg);
+	}
+}
+
+void
+Connection::OnOutgoingDisconnected([[maybe_unused]] SSH::DisconnectReasonCode reason_code,
+				   std::string_view msg) noexcept
+{
+	if (log_disconnect) {
+		log_disconnect = false;
+		logger.Fmt(1, "Outgoing server disconnected: {}", msg);
+	}
 }

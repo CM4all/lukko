@@ -216,6 +216,10 @@ private:
 
 	std::string_view GetServerHostKeyAlgorithms() const noexcept override;
 	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
+	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,
+			     std::string_view msg) noexcept override;
+	void OnDisconnected(SSH::DisconnectReasonCode reason_code,
+			    std::string_view msg) noexcept override;
 
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;
@@ -228,4 +232,8 @@ private:
 	void OnOutgoingUserauthFailure() override;
 	void OnOutgoingHandlePacket(SSH::MessageNumber msg,
 				    std::span<const std::byte> payload) override;
+	void OnOutgoingDisconnecting(SSH::DisconnectReasonCode reason_code,
+				     std::string_view msg) noexcept override;
+	void OnOutgoingDisconnected(SSH::DisconnectReasonCode reason_code,
+				    std::string_view msg) noexcept override;
 };
