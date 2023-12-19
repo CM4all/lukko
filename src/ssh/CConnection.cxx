@@ -228,13 +228,14 @@ try {
 
 	assert(channel->GetLocalChannel() == local_channel);
 	assert(channel->GetPeerChannel() == peer_channel);
-	assert(channels[local_channel] != nullptr);
+	assert(channels[local_channel] == opening);
 	assert(IsOpeningChannel(*channels[local_channel]));
 
 	SendPacket(MakeChannelOpenConfirmation(peer_channel, local_channel, *channel));
 
-	delete static_cast<OpeningChannel *>(channels[local_channel]);
+	assert(channels[local_channel] == opening);
 	channels[local_channel] = channel.release();
+	delete opening;
 } catch (const ChannelOpenFailure &failure) {
 	SendPacket(MakeChannelOpenFailure(peer_channel,
 					  failure.reason_code,
