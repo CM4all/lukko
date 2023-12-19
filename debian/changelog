@@ -7,6 +7,7 @@ cm4all-lukko (0.11) unstable; urgency=low
   * experimental proxying
   * log DISCONNECT descriptions
   * enlarge per-channel receive window to 1 MB
+  * enlarge kernel pipe buffers to 256 kB
 
  --   
 

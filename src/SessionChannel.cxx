@@ -23,6 +23,7 @@
 
 #include <tuple> // for std::tie()
 
+#include <fcntl.h>
 #include <pty.h> // for openpty()
 #include <signal.h>
 #include <sys/wait.h> // for WCOREDUMP()
@@ -172,6 +173,12 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 		auto [stdin_r, stdin_w] = CreatePipe();
 		auto [stdout_r, stdout_w] = CreatePipe();
 		auto [stderr_r, stderr_w] = CreatePipe();
+
+		/* allocate 256 kB for each pipe to maximize
+		   throughput */
+		constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
+		fcntl(stdout_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+		fcntl(stdin_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
 		p.SetStdin(std::move(stdin_r));
 		p.SetStdout(std::move(stdout_w));
