@@ -303,6 +303,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 				"First packet was not KEXINIT"sv,
 			};
 
+		input.AutoResetSeq();
 		output.AutoResetSeq();
 	}
 
@@ -347,9 +348,6 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 	const bool was_encrypted = input.IsEncrypted();
 
 	input.SetCipher(std::move(cipher));
-
-	if (peer_wants_strict_key_exchange)
-		input.ResetSeq();
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();

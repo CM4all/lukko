@@ -96,6 +96,8 @@ class Input final : ThreadJob {
 	 */
 	bool consumed_encrypted = false;
 
+	bool auto_reset_seq = false;
+
 public:
 	Input(ThreadQueue &_thread_queue, InputHandler &_handler) noexcept;
 
@@ -115,8 +117,8 @@ public:
 		return read_seq;
 	}
 
-	void ResetSeq() noexcept {
-		read_seq = decrypt_seq = 0;
+	void AutoResetSeq() noexcept {
+		auto_reset_seq = true;
 	}
 
 	/**

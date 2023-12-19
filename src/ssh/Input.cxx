@@ -47,6 +47,15 @@ Input::SetCipher(std::unique_ptr<Cipher> _cipher) noexcept
 		decrypt_seq = read_seq + 1;
 	}
 
+	if (auto_reset_seq) {
+		decrypt_seq = 0;
+
+		/* read_seq will be incremented by ConsumePacket() and
+		   then needs to be zero, so initialize it to -1
+		   now */
+		read_seq = -1;
+	}
+
 	{
 		const std::scoped_lock lock{mutex};
 
