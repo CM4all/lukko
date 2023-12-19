@@ -9,7 +9,7 @@ cm4all-lukko (0.11) unstable; urgency=low
   * enlarge per-channel receive window to 1 MB
   * enlarge kernel pipe buffers to 256 kB
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Dec 2023 20:17:26 +0100
 
 cm4all-lukko (0.10) unstable; urgency=low
 
