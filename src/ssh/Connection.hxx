@@ -32,12 +32,6 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	BufferedSocket socket;
 
-	/**
-	 * If non-zero, then we're currently waiting for the payload
-	 * of a packet to be received.
-	 */
-	std::size_t packet_length = 0;
-
 	std::string peer_version;
 
 	AllocatedArray<std::byte> peer_kexinit, my_kexinit;
