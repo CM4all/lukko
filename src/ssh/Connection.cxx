@@ -489,7 +489,6 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 	switch (msg) {
 	case MessageNumber::DISCONNECT:
 		HandleDisconnect(payload);
-		break;
 
 	case MessageNumber::IGNORE:
 		break;
@@ -620,10 +619,8 @@ Connection::OnInputReady() noexcept
 try {
 	while (true) {
 		const auto payload = input.ReadPacket();
-		if (payload.data() == nullptr) {
-			socket.ScheduleRead();
-			return true;
-		}
+		if (payload.data() == nullptr)
+			break;
 
 		HandleRawPacket(payload);
 		input.ConsumePacket();
