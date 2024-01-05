@@ -22,7 +22,7 @@ struct TranslateResponse;
 struct PreparedChildProcess;
 class Instance;
 class Listener;
-class RootLogger;
+class SocketForwardListener;
 class UniqueFileDescriptor;
 class SpawnService;
 template<class T> class AllocatedArray;
@@ -66,6 +66,8 @@ class Connection final
 	gid_t gid;
 	std::string home_path;
 	std::string shell;
+
+	IntrusiveList<SocketForwardListener> socket_forward_listeners;
 
 	/**
 	 * If this is set, then the connection is currently occupied
@@ -148,6 +150,11 @@ public:
 
 	[[gnu::pure]]
 	bool IsForwardingAllowed() const noexcept;
+
+	[[gnu::pure]]
+	bool IsBindingAllowed() const noexcept {
+		return IsForwardingAllowed();
+	}
 
 	/**
 	 * Do some preparations for spawning a child process for the

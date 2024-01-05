@@ -1,6 +1,6 @@
 cm4all-lukko (0.12) unstable; urgency=low
 
-  * 
+  * implement "tcpip-forward" (for "ssh -R")
 
  --   
 

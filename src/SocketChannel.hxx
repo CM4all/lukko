@@ -14,11 +14,11 @@ class UniqueSocketDescriptor;
  */
 class SocketChannel final : public SSH::BufferedChannel
 {
-	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
-
 	SocketEvent socket;
 
 public:
+	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
+
 	SocketChannel(SSH::CConnection &_connection,
 		      SSH::ChannelInit init,
 		      UniqueSocketDescriptor _socket) noexcept;

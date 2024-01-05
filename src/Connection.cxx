@@ -7,7 +7,9 @@
 #include "Listener.hxx"
 #include "SessionChannel.hxx"
 #include "SocketChannel.hxx"
+#include "SocketForwardListener.hxx"
 #include "RConnect.hxx"
+#include "RBind.hxx"
 #include "DelegateOpen.hxx"
 #include "DebugMode.hxx"
 #include "key/Parser.hxx"
@@ -23,6 +25,7 @@
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/CoConnectSocket.hxx"
+#include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
@@ -34,6 +37,7 @@
 #include "util/AllocatedArray.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "util/Exception.hxx" // for GetFullMessage()
 #include "util/IterableSplitString.hxx"
 #include "util/StringAPI.hxx"
@@ -81,6 +85,8 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 
 Connection::~Connection() noexcept
 {
+	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
+
 	if (log_disconnect)
 		logger(1, "Disconnected");
 }
@@ -718,11 +724,44 @@ Co::EagerTask<bool>
 Connection::HandleGlobalRequest(std::string_view request_name,
 				std::span<const std::byte> request_specific_data)
 {
-	(void)request_specific_data;
-
 	logger.Fmt(1, "GlobalRequest name={}"sv, request_name);
 
-	co_return false;
+	if (request_name == "tcpip-forward"sv) {
+		if (!IsBindingAllowed())
+			co_return false;
+
+		SSH::Deserializer d{request_specific_data};
+		/* copy the string because the co_await will
+		   invalidate the request_specific_data buffer */
+		std::string bind_address{d.ReadString()};
+		const auto bind_port = d.ReadU32();
+		d.ExpectEnd();
+
+		logger.Fmt(1, "  bind=[{}]:{}"sv, bind_address, bind_port);
+
+		// TODO support special strings according to RFC 4254 7.1
+		// TODO suport bind_port==0 (REQUEST_SUCCESS contains port number)
+
+		auto s = co_await ResolveBindTCP(*this, bind_address, bind_port);
+		if (!s.Listen(16))
+			throw MakeSocketError("listen() failed");
+
+		auto *l = new SocketForwardListener(*this, std::move(bind_address),
+						    bind_port, std::move(s));
+		socket_forward_listeners.push_back(*l);
+
+		co_return true;
+	} else if (request_name == "cancel-tcpip-forward"sv) {
+		SSH::Deserializer d{request_specific_data};
+		const auto bind_address = d.ReadString();
+		const auto bind_port = d.ReadU32();
+		d.ExpectEnd();
+
+		co_return socket_forward_listeners.remove_and_dispose_if([bind_address, bind_port](const auto &l){
+			return l.IsBindAddress(bind_address, bind_port);
+		}, DeleteDisposer{}) > 0;
+	} else
+		co_return false;
 }
 
 /**
