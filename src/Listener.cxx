@@ -19,7 +19,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 logger(instance.GetLogger()) {}
 
 void
-Listener::OnAccept(UniqueSocketDescriptor &&connection_fd,
+Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		   SocketAddress peer_address) noexcept
 {
 	instance.AddConnection(*this, std::move(connection_fd), peer_address);
