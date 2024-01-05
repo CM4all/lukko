@@ -347,10 +347,10 @@ private:
 };
 
 std::unique_ptr<SSH::Channel>
-Connection::OpenChannel(std::string_view channel_type,
-			SSH::ChannelInit init,
-			std::span<const std::byte> payload,
-			CancellablePointer &cancel_ptr)
+Connection::CreateChannel(std::string_view channel_type,
+			  SSH::ChannelInit init,
+			  std::span<const std::byte> payload,
+			  CancellablePointer &cancel_ptr)
 {
 	logger.Fmt(1, "ChannelOpen type={} local_channel={} peer_channel={}"sv,
 		   channel_type, init.local_channel, init.peer_channel);
@@ -381,8 +381,8 @@ Connection::OpenChannel(std::string_view channel_type,
 		operation->Start(connect_host, connect_port, cancel_ptr);
 		return {};
 	} else
-		return SSH::CConnection::OpenChannel(channel_type, init, payload,
-						     cancel_ptr);
+		return SSH::CConnection::CreateChannel(channel_type, init, payload,
+						       cancel_ptr);
 }
 
 inline void

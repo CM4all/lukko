@@ -20,7 +20,7 @@ class Channel;
 
 /**
  * Add SSH channel support to class #Connection.  Override method
- * OpenChannel().
+ * CreateChannel().
  */
 class CConnection : public Connection
 {
@@ -39,7 +39,7 @@ public:
 	void CloseChannel(Channel &channel);
 
 	/**
-	 * Exception class to be thrown from inside OpenChannel(),
+	 * Exception class to be thrown from inside CreateChannel(),
 	 * caught by HandleChannelOpen().
 	 */
 	struct ChannelOpenFailure {
@@ -102,10 +102,10 @@ protected:
 	 * is asynchronous; upon completion, call
 	 * AsyncChannelOpenSuccess() or AsyncChannelOpenFailure())
 	 */
-	virtual std::unique_ptr<Channel> OpenChannel(std::string_view channel_type,
-						     ChannelInit init,
-						     std::span<const std::byte> payload,
-						     CancellablePointer &cancel_ptr);
+	virtual std::unique_ptr<Channel> CreateChannel(std::string_view channel_type,
+						       ChannelInit init,
+						       std::span<const std::byte> payload,
+						       CancellablePointer &cancel_ptr);
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,

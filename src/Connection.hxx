@@ -209,10 +209,10 @@ private:
 	void OnAuthTimeout() noexcept;
 
 	/* virtual methods from class SSH::CConnection */
-	std::unique_ptr<SSH::Channel> OpenChannel(std::string_view channel_type,
-						  SSH::ChannelInit init,
-						  std::span<const std::byte> payload,
-						  CancellablePointer &cancel_ptr) override;
+	std::unique_ptr<SSH::Channel> CreateChannel(std::string_view channel_type,
+						    SSH::ChannelInit init,
+						    std::span<const std::byte> payload,
+						    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,

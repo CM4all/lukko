@@ -120,10 +120,10 @@ CConnection::GetChannel(uint_least32_t local_channel)
 #endif
 
 std::unique_ptr<Channel>
-CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
-			 [[maybe_unused]] ChannelInit init,
-			 [[maybe_unused]] std::span<const std::byte> payload,
-			 [[maybe_unused]] CancellablePointer &cancel_ptr)
+CConnection::CreateChannel([[maybe_unused]] std::string_view channel_type,
+			   [[maybe_unused]] ChannelInit init,
+			   [[maybe_unused]] std::span<const std::byte> payload,
+			   [[maybe_unused]] CancellablePointer &cancel_ptr)
 {
 	throw ChannelOpenFailure{
 		ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
@@ -219,8 +219,8 @@ try {
 	auto *opening = new OpeningChannel(*this, init, 0);
 	channels[local_channel] = opening;
 
-	auto channel = OpenChannel(channel_type, init, payload,
-				   opening->cancel_ptr);
+	auto channel = CreateChannel(channel_type, init, payload,
+				     opening->cancel_ptr);
 	if (!channel) {
 		// asynchronous open (or already failed)
 		assert(channels[local_channel] == nullptr ||
