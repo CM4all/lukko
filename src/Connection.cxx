@@ -714,16 +714,15 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
 }
 
-inline void
-Connection::HandleGlobalRequest(std::string_view request_name, bool want_reply,
+inline bool
+Connection::HandleGlobalRequest(std::string_view request_name,
 				std::span<const std::byte> request_specific_data)
 {
 	(void)request_specific_data;
 
 	logger.Fmt(1, "GlobalRequest name={}"sv, request_name);
 
-	if (want_reply)
-		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::REQUEST_FAILURE});
+	return false;
 }
 
 inline void
@@ -731,8 +730,13 @@ Connection::HandleGlobalRequest(std::span<const std::byte> payload)
 {
 	const auto p = SSH::ParseGlobalRequest(payload);
 
-	HandleGlobalRequest(p.request_name, p.want_reply,
-			    p.request_specific_data);
+	const bool success = HandleGlobalRequest(p.request_name,
+						 p.request_specific_data);
+
+	if (p.want_reply)
+		SendPacket(SSH::PacketSerializer{success
+				? SSH::MessageNumber::REQUEST_SUCCESS
+				: SSH::MessageNumber::REQUEST_FAILURE});
 }
 
 /**
