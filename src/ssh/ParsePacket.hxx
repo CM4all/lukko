@@ -252,4 +252,22 @@ ParseChannelRequest(std::span<const std::byte> raw) noexcept
 	return p;
 }
 
+struct GlobalRequest {
+	std::string_view request_name;
+	std::span<const std::byte> request_specific_data;
+	bool want_reply;
+};
+
+[[gnu::pure]]
+inline auto
+ParseGlobalRequest(std::span<const std::byte> raw) noexcept
+{
+	GlobalRequest p;
+	Deserializer d{raw};
+	p.request_name = d.ReadString();
+	p.want_reply = d.ReadBool();
+	p.request_specific_data = d.GetRest();
+	return p;
+}
+
 } // namespace SSH

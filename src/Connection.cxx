@@ -714,6 +714,27 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
 }
 
+inline void
+Connection::HandleGlobalRequest(std::string_view request_name, bool want_reply,
+				std::span<const std::byte> request_specific_data)
+{
+	(void)request_specific_data;
+
+	logger.Fmt(1, "GlobalRequest name={}"sv, request_name);
+
+	if (want_reply)
+		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::REQUEST_FAILURE});
+}
+
+inline void
+Connection::HandleGlobalRequest(std::span<const std::byte> payload)
+{
+	const auto p = SSH::ParseGlobalRequest(payload);
+
+	HandleGlobalRequest(p.request_name, p.want_reply,
+			    p.request_specific_data);
+}
+
 /**
  * Is this message allowed while the connection is "occupied"?
  */
@@ -781,6 +802,10 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 
 	case SSH::MessageNumber::USERAUTH_REQUEST:
 		HandleUserauthRequest(payload);
+		break;
+
+	case SSH::MessageNumber::GLOBAL_REQUEST:
+		HandleGlobalRequest(payload);
 		break;
 
 	default:

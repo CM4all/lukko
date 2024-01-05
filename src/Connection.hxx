@@ -200,6 +200,10 @@ private:
 	void OnUserauthCompletion(std::exception_ptr error) noexcept;
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 
+	void HandleGlobalRequest(std::string_view request_name, bool want_reply,
+				 std::span<const std::byte> request_specific_data);
+	void HandleGlobalRequest(std::span<const std::byte> payload);
+
 	void HandleChannelOpen(std::span<const std::byte> payload);
 
 	void OnAuthTimeout() noexcept;
