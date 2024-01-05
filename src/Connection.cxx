@@ -714,7 +714,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
 }
 
-bool
+Co::EagerTask<bool>
 Connection::HandleGlobalRequest(std::string_view request_name,
 				std::span<const std::byte> request_specific_data)
 {
@@ -722,7 +722,7 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 
 	logger.Fmt(1, "GlobalRequest name={}"sv, request_name);
 
-	return false;
+	co_return false;
 }
 
 /**

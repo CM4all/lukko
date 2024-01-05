@@ -205,8 +205,8 @@ private:
 	void OnAuthTimeout() noexcept;
 
 	/* virtual methods from class SSH::GConnection */
-	bool HandleGlobalRequest(std::string_view request_name,
-				 std::span<const std::byte> request_specific_data) override;
+	Co::EagerTask<bool> HandleGlobalRequest(std::string_view request_name,
+						std::span<const std::byte> request_specific_data) override;
 
 	/* virtual methods from class SSH::CConnection */
 	std::unique_ptr<SSH::Channel> CreateChannel(std::string_view channel_type,
