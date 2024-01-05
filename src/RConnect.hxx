@@ -10,6 +10,7 @@ namespace Co { template<typename> class Task; }
 class UniqueSocketDescriptor;
 class Connection;
 
+[[nodiscard]]
 Co::Task<UniqueSocketDescriptor>
 ResolveConnectTCP(const Connection &ssh_connection,
 		  std::string_view host, unsigned port) noexcept;
