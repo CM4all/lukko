@@ -200,13 +200,13 @@ private:
 	void OnUserauthCompletion(std::exception_ptr error) noexcept;
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 
-	bool HandleGlobalRequest(std::string_view request_name,
-				 std::span<const std::byte> request_specific_data);
-	void HandleGlobalRequest(std::span<const std::byte> payload);
-
 	void HandleChannelOpen(std::span<const std::byte> payload);
 
 	void OnAuthTimeout() noexcept;
+
+	/* virtual methods from class SSH::GConnection */
+	bool HandleGlobalRequest(std::string_view request_name,
+				 std::span<const std::byte> request_specific_data) override;
 
 	/* virtual methods from class SSH::CConnection */
 	std::unique_ptr<SSH::Channel> CreateChannel(std::string_view channel_type,

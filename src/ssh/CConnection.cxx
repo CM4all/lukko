@@ -484,7 +484,7 @@ CConnection::HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload)
 {
 	if (!IsEncrypted() || !IsAuthenticated())
-		return Connection::HandlePacket(msg, payload);
+		return GConnection::HandlePacket(msg, payload);
 
 	switch (msg) {
 	case MessageNumber::CHANNEL_OPEN:
@@ -524,14 +524,14 @@ CConnection::HandlePacket(MessageNumber msg,
 		break;
 
 	default:
-		Connection::HandlePacket(msg, payload);
+		GConnection::HandlePacket(msg, payload);
 	}
 }
 
 void
 CConnection::OnWriteBlocked() noexcept
 {
-	Connection::OnWriteBlocked();
+	GConnection::OnWriteBlocked();
 
 	for (auto *i : channels)
 		if (i != nullptr)
@@ -541,7 +541,7 @@ CConnection::OnWriteBlocked() noexcept
 void
 CConnection::OnWriteUnblocked() noexcept
 {
-	Connection::OnWriteUnblocked();
+	GConnection::OnWriteUnblocked();
 
 	for (auto *i : channels)
 		if (i != nullptr)

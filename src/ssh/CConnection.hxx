@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Connection.hxx"
+#include "GConnection.hxx"
 
 #include <array>
 #include <cstdint>
@@ -36,14 +36,14 @@ public:
  * Add SSH channel support to class #Connection.  Override method
  * CreateChannel().
  */
-class CConnection : public Connection
+class CConnection : public GConnection
 {
 	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
 
 	std::array<Channel *, 64> channels{};
 
 public:
-	using Connection::Connection;
+	using GConnection::GConnection;
 
 	~CConnection() noexcept;
 

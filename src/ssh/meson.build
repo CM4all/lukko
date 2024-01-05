@@ -12,6 +12,7 @@ libssh = static_library(
   'Input.cxx',
   'Output.cxx',
   'Connection.cxx',
+  'GConnection.cxx',
   'CConnection.cxx',
   'Channel.cxx',
   'BufferedChannel.cxx',
