@@ -9,11 +9,7 @@
 
 #pragma once
 
-#include <cstddef>
-
 class SlicePool;
-
-static constexpr size_t FB_SIZE = 32768;
 
 /**
  * Global initialization.
