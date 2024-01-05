@@ -138,6 +138,7 @@ CConnection::OpenChannel([[maybe_unused]] std::string_view channel_type,
 static PacketSerializer
 MakeChannelOpenConfirmation(uint_least32_t peer_channel,
 			    uint_least32_t local_channel,
+			    uint_least32_t maximum_packet_size,
 			    const Channel &channel)
 {
 	assert(channel.GetPeerChannel() == peer_channel);
@@ -147,7 +148,7 @@ MakeChannelOpenConfirmation(uint_least32_t peer_channel,
 	s.WriteU32(peer_channel);
 	s.WriteU32(local_channel);
 	s.WriteU32(channel.GetReceiveWindow()); // TODO
-	s.WriteU32(32768);
+	s.WriteU32(maximum_packet_size);
 	channel.SerializeOpenConfirmation(s);
 	return s;
 }
@@ -170,6 +171,7 @@ CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
 	try {
 		SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
 						       local_channel,
+						       MAXIMUM_PACKET_SIZE,
 						       channel));
 	} catch (...) {
 		OnBufferedError(std::current_exception());
@@ -231,7 +233,9 @@ try {
 	assert(channels[local_channel] == opening);
 	assert(IsOpeningChannel(*channels[local_channel]));
 
-	SendPacket(MakeChannelOpenConfirmation(peer_channel, local_channel, *channel));
+	SendPacket(MakeChannelOpenConfirmation(peer_channel, local_channel,
+					       MAXIMUM_PACKET_SIZE,
+					       *channel));
 
 	assert(channels[local_channel] == opening);
 	channels[local_channel] = channel.release();

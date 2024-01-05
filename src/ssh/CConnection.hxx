@@ -24,6 +24,8 @@ class Channel;
  */
 class CConnection : public Connection
 {
+	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
+
 	std::array<Channel *, 64> channels{};
 
 public:
