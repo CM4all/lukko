@@ -28,13 +28,10 @@
 #include "spawn/ProcessHandle.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/Interface.hxx"
+#include "net/EasyMessage.hxx"
 #include "net/RConnectSocket.hxx"
-#include "net/ReceiveMessage.hxx"
-#include "net/ScmRightsBuilder.hxx"
-#include "net/SendMessage.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "io/Iovec.hxx"
 #include "util/SpanCast.hxx"
 
 static int
@@ -59,18 +56,7 @@ NsResolveConnectTCPFunction(PreparedChildProcess &&)
 
 	auto socket = ResolveConnectStreamSocket(host, port,
 						 std::chrono::seconds{5});
-
-	static constexpr std::byte dummy[1]{};
-	static constexpr struct iovec v[1] = {
-		MakeIovec(dummy),
-	};
-
-	MessageHeader msg{v};
-	ScmRightsBuilder<1> b{msg};
-	b.push_back(socket.Get());
-	b.Finish(msg);
-
-	SendMessage(control, msg, 0);
+	EasySendMessage(control, socket.ToFileDescriptor());
 
 	return 0;
 }
@@ -153,14 +139,11 @@ private:
 
 	void OnSocketReady([[maybe_unused]] unsigned events) noexcept {
 		try {
-			ReceiveMessageBuffer<1, CMSG_SPACE(sizeof(int) * 1)> rbuf;
-			auto r = ReceiveMessage(socket.GetSocket(), rbuf, 0);
-			if (r.fds.size() != 1)
+			auto fd = EasyReceiveMessageWithOneFD(socket.GetSocket());
+			if (!fd.IsDefined())
 				throw std::runtime_error{"Bad number of fds"};
 
-			value = UniqueSocketDescriptor{r.fds.front().Release()};
-			// TODO why does this not compile?
-			//value = std::move(r.fds.front());
+			value = UniqueSocketDescriptor{fd.Release()};
 		} catch (...) {
 			error = std::current_exception();
 		}
