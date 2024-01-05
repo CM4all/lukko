@@ -17,6 +17,20 @@ namespace SSH {
 enum class ChannelOpenFailureReasonCode : uint32_t;
 struct ChannelInit;
 class Channel;
+class RequestedChannel;
+class Serializer;
+
+/**
+ * A factory for a channel requested from this host to the peer.  An
+ * instance is created by the OpenChannel() caller.
+ */
+class ChannelFactory {
+public:
+	virtual void SerializeOpen(Serializer &s) const = 0;
+	virtual std::unique_ptr<Channel> CreateChannel(ChannelInit init) = 0;
+	virtual void OnChannelOpenFailure(ChannelOpenFailureReasonCode code,
+					  std::string_view description) noexcept = 0;
+};
 
 /**
  * Add SSH channel support to class #Connection.  Override method
@@ -32,6 +46,23 @@ public:
 	using Connection::Connection;
 
 	~CConnection() noexcept;
+
+	/**
+	 * Send a CHANNEL_OPEN to the peer.  As soon as the peer
+	 * confirms, the #ChannelFactory is asked to create the
+	 * #Channel instance; if the peer instead rejects the channel,
+	 * ChannelFactory::OnChannelOpenFailure() is called.
+	 *
+	 * Throws on error.
+	 *
+	 * @param factory the factory that will create the #Channel
+	 * instance or receives a failure callback; its lifetime is
+	 * managed by the caller
+	 */
+	void OpenChannel(std::string_view channel_type,
+			 uint_least32_t initial_window_size,
+			 ChannelFactory &factory,
+			 CancellablePointer &cancel_ptr);
 
 	/**
 	 * Throws on error.
@@ -75,11 +106,15 @@ private:
 	 */
 	Channel &GetChannel(uint_least32_t local_channel);
 
+	RequestedChannel &PopRequestedChannel(uint_least32_t local_channel);
+
 	void HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t peer_channel,
 			       uint_least32_t initial_window_size,
 			       std::span<const std::byte> payload);
 	void HandleChannelOpen(std::span<const std::byte> payload);
+	void HandleChannelOpenConfirmation(std::span<const std::byte> payload);
+	void HandleChannelOpenFailure(std::span<const std::byte> payload);
 	void HandleChannelWindowAdjust(std::span<const std::byte> payload);
 	void HandleChannelData(std::span<const std::byte> payload);
 	void HandleChannelExtendedData(std::span<const std::byte> payload);

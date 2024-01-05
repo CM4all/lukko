@@ -149,6 +149,48 @@ ParseChannelOpen(std::span<const std::byte> raw) noexcept
 	return p;
 }
 
+struct ChannelOpenConfirmation {
+	uint_least32_t local_channel;
+	uint_least32_t peer_channel;
+	uint_least32_t initial_window_size;
+	uint_least32_t maximum_packet_size;
+	std::span<const std::byte> channel_type_specific_data;
+};
+
+[[gnu::pure]]
+inline auto
+ParseChannelOpenConfirmation(std::span<const std::byte> raw) noexcept
+{
+	ChannelOpenConfirmation p;
+	Deserializer d{raw};
+	p.local_channel = d.ReadU32();
+	p.peer_channel = d.ReadU32();
+	p.initial_window_size = d.ReadU32();
+	p.maximum_packet_size = d.ReadU32();
+	p.channel_type_specific_data = d.GetRest();
+	return p;
+}
+
+struct ChannelOpenFailure {
+	uint_least32_t local_channel;
+	ChannelOpenFailureReasonCode reason_code;
+	std::string_view description;
+};
+
+[[gnu::pure]]
+inline auto
+ParseChannelOpenFailure(std::span<const std::byte> raw) noexcept
+{
+	ChannelOpenFailure p;
+	Deserializer d{raw};
+	p.local_channel = d.ReadU32();
+	p.reason_code = static_cast<ChannelOpenFailureReasonCode>(d.ReadU32());
+	p.description = d.ReadString(); // description
+	d.ReadString(); // language_tag;
+	d.ExpectEnd();
+	return p;
+}
+
 struct ChannelWindowAdjust {
 	uint_least32_t local_channel;
 	uint_least32_t nbytes;

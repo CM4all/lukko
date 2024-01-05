@@ -10,6 +10,8 @@
 #include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 
+#include <cassert>
+
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
@@ -20,6 +22,96 @@ CConnection::~CConnection() noexcept
 {
 	for (auto *i : channels)
 		delete i;
+}
+
+/**
+ * A placeholder for the real #Channel instance that is being
+ * requested from the peer asynchronously.
+ */
+class RequestedChannel final : public Channel, Cancellable {
+	ChannelFactory &factory;
+
+	bool canceled = false;
+
+public:
+	RequestedChannel(CConnection &_connection,
+			 uint_least32_t _local_channel,
+			 ChannelFactory &_factory,
+			 CancellablePointer &cancel_ptr) noexcept
+		:Channel(_connection,
+			 { .local_channel = _local_channel },
+			 0),
+		 factory(_factory)
+	{
+		cancel_ptr = *this;
+	}
+
+	std::unique_ptr<Channel> OnChannelOpenConfirmation(const ChannelOpenConfirmation &p) {
+		assert(p.local_channel == GetLocalChannel());
+
+		if (canceled) {
+			delete this;
+			return {};
+		}
+
+		auto &_factory = factory;
+		delete this;
+		return _factory.CreateChannel({
+				.local_channel = p.local_channel,
+				.peer_channel = p.peer_channel,
+				.send_window = p.initial_window_size,
+			});
+	}
+
+	void OnChannelOpenFailure(ChannelOpenFailureReasonCode code,
+				  std::string_view description) noexcept {
+		if (canceled) {
+			delete this;
+			return;
+		}
+
+		auto &_factory = factory;
+		delete this;
+		_factory.OnChannelOpenFailure(code, description);
+	}
+
+private:
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		assert(!canceled);
+		canceled = true;
+	}
+};
+
+[[gnu::pure]]
+static bool
+IsRequestedChannel(const Channel &channel) noexcept
+{
+	return dynamic_cast<const RequestedChannel *>(&channel) != nullptr;
+}
+
+void
+CConnection::OpenChannel(std::string_view channel_type,
+			 uint_least32_t initial_window_size,
+			 ChannelFactory &factory,
+			 CancellablePointer &cancel_ptr)
+{
+	// TODO what if this throws ChannelOpenFailure?
+	const uint_least32_t local_channel = AllocateChannelIndex();
+
+	{
+		PacketSerializer s{MessageNumber::CHANNEL_OPEN};
+		s.WriteString(channel_type);
+		s.WriteU32(local_channel);
+		s.WriteU32(initial_window_size);
+		s.WriteU32(MAXIMUM_PACKET_SIZE);
+		factory.SerializeOpen(s);
+		SendPacket(std::move(s));
+	}
+
+	auto *requested = new RequestedChannel(*this, local_channel,
+					       factory, cancel_ptr);
+	channels[local_channel] = requested;
 }
 
 /**
@@ -104,6 +196,7 @@ CConnection::GetChannel(uint_least32_t local_channel)
 {
 	if (local_channel >= channels.size() ||
 	    channels[local_channel] == nullptr ||
+	    IsRequestedChannel(*channels[local_channel]) ||
 	    IsOpeningChannel(*channels[local_channel])) {
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
@@ -112,6 +205,21 @@ CConnection::GetChannel(uint_least32_t local_channel)
 	}
 
 	return *channels[local_channel];
+}
+
+RequestedChannel &
+CConnection::PopRequestedChannel(uint_least32_t local_channel)
+{
+	if (local_channel >= channels.size() ||
+	    channels[local_channel] == nullptr ||
+	    !IsRequestedChannel(*channels[local_channel])) {
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Bad channel"sv,
+		};
+	}
+
+	return *static_cast<RequestedChannel *>(std::exchange(channels[local_channel], nullptr));
 }
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -256,6 +364,43 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 }
 
 inline void
+CConnection::HandleChannelOpenConfirmation(std::span<const std::byte> payload)
+{
+	const auto p = ParseChannelOpenConfirmation(payload);
+	auto &requested_channel = PopRequestedChannel(p.local_channel);
+
+	auto channel = requested_channel.OnChannelOpenConfirmation(p);
+
+	if (!channel) {
+		/* was canceled - tell the peer to close the channel
+		   that was just confirmed */
+
+		SendPacket(MakeChannelClose(p.peer_channel));
+
+		const ChannelInit init{
+			.local_channel = p.local_channel,
+			.peer_channel = p.peer_channel,
+			.send_window = p.initial_window_size,
+		};
+
+		channels[p.local_channel] = new TombstoneChannel(*this, init,
+								 p.initial_window_size);
+		return;
+	}
+
+	channels[p.local_channel] = channel.release();
+}
+
+inline void
+CConnection::HandleChannelOpenFailure(std::span<const std::byte> payload)
+{
+	const auto p = ParseChannelOpenFailure(payload);
+	auto &channel = PopRequestedChannel(p.local_channel);
+
+	channel.OnChannelOpenFailure(p.reason_code, p.description);
+}
+
+inline void
 CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelWindowAdjust(payload);
@@ -344,6 +489,14 @@ CConnection::HandlePacket(MessageNumber msg,
 	switch (msg) {
 	case MessageNumber::CHANNEL_OPEN:
 		HandleChannelOpen(payload);
+		break;
+
+	case MessageNumber::CHANNEL_OPEN_CONFIRMATION:
+		HandleChannelOpenConfirmation(payload);
+		break;
+
+	case MessageNumber::CHANNEL_OPEN_FAILURE:
+		HandleChannelOpenFailure(payload);
 		break;
 
 	case MessageNumber::CHANNEL_WINDOW_ADJUST:
