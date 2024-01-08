@@ -4,6 +4,7 @@
 
 #include "RBind.hxx"
 #include "Connection.hxx"
+#include "net/BindSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketPair.hxx"
@@ -13,6 +14,8 @@
 #include "config.h"
 
 #include <string>
+
+using std::string_view_literals::operator""sv;
 
 #ifdef HAVE_NLOHMANN_JSON
 #include "event/systemd/CoResolvedClient.hxx"
@@ -33,6 +36,19 @@
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringAPI.hxx"
+
+static UniqueSocketDescriptor
+SshResolveBindStreamSocket(const char *host, unsigned port)
+{
+	if (StringIsEqual(host, "localhost"))
+		/* special case in RFC 4254 7.1; by binding to all
+		   addresses on the loopback device, we can bind both
+		   IPv4 and IPv6 with one socket */
+		return BindLoopback(SOCK_STREAM, port);
+	else
+		return ResolveBindStreamSocket(host, port);
+}
 
 static int
 NsResolveBindTCPFunction(PreparedChildProcess &&)
@@ -54,7 +70,7 @@ NsResolveBindTCPFunction(PreparedChildProcess &&)
 
 	host[nbytes] = 0;
 
-	auto socket = ResolveBindStreamSocket(host, port);
+	auto socket = SshResolveBindStreamSocket(host, port);
 	EasySendMessage(control, socket.ToFileDescriptor());
 
 	return 0;
@@ -171,6 +187,12 @@ static Co::Task<UniqueSocketDescriptor>
 NormalResolveBindTCP([[maybe_unused]] EventLoop &event_loop,
 		     std::string_view host, const unsigned port)
 {
+	if (host == "localhost"sv)
+		/* special case in RFC 4254 7.1; by binding to all
+		   addresses on the loopback device, we can bind both
+		   IPv4 and IPv6 with one socket */
+		co_return BindLoopback(SOCK_STREAM, port);
+
 #ifdef HAVE_NLOHMANN_JSON
 	// TODO use the other addresses as fallback?
 	const auto addresses = co_await Systemd::CoResolveHostname(event_loop, host, port);
