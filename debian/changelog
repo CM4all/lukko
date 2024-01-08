@@ -2,7 +2,7 @@ cm4all-lukko (0.12) unstable; urgency=low
 
   * implement "tcpip-forward" (for "ssh -R")
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 08 Jan 2024 11:40:14 +0100
 
 cm4all-lukko (0.11) unstable; urgency=low
 
