@@ -46,6 +46,9 @@ SshResolveBindStreamSocket(const char *host, unsigned port)
 		   addresses on the loopback device, we can bind both
 		   IPv4 and IPv6 with one socket */
 		return BindLoopback(SOCK_STREAM, port);
+	else if (*host == 0)
+		/* another special case in RFC 4254 7.1 */
+		return BindPort(SOCK_STREAM, port);
 	else
 		return ResolveBindStreamSocket(host, port);
 }
@@ -192,6 +195,9 @@ NormalResolveBindTCP([[maybe_unused]] EventLoop &event_loop,
 		   addresses on the loopback device, we can bind both
 		   IPv4 and IPv6 with one socket */
 		co_return BindLoopback(SOCK_STREAM, port);
+	else if (host.empty())
+		/* another special case in RFC 4254 7.1 */
+		co_return BindPort(SOCK_STREAM, port);
 
 #ifdef HAVE_NLOHMANN_JSON
 	// TODO use the other addresses as fallback?
