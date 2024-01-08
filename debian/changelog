@@ -1,6 +1,6 @@
 cm4all-lukko (0.13) unstable; urgency=low
 
-  * 
+  * fix crash on certain malformed packets
 
  --   
 

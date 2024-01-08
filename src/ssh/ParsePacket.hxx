@@ -18,9 +18,8 @@ struct Disconnect {
 	DisconnectReasonCode reason_code;
 };
 
-[[gnu::pure]]
 inline auto
-ParseDisconnect(std::span<const std::byte> raw) noexcept
+ParseDisconnect(std::span<const std::byte> raw)
 {
 	Disconnect p;
 	Deserializer d{raw};
@@ -35,9 +34,8 @@ struct ServiceRequest {
 	std::string_view service_name;
 };
 
-[[gnu::pure]]
 inline auto
-ParseServiceRequest(std::span<const std::byte> raw) noexcept
+ParseServiceRequest(std::span<const std::byte> raw)
 {
 	ServiceRequest p;
 	Deserializer d{raw};
@@ -50,9 +48,8 @@ struct ServiceAccept {
 	std::string_view service_name;
 };
 
-[[gnu::pure]]
 inline auto
-ParseServiceAccept(std::span<const std::byte> raw) noexcept
+ParseServiceAccept(std::span<const std::byte> raw)
 {
 	ServiceAccept p;
 	Deserializer d{raw};
@@ -70,9 +67,8 @@ struct KexInit {
 	std::string_view mac_algorithms_server_to_client;
 };
 
-[[gnu::pure]]
 inline auto
-ParseKexInit(std::span<const std::byte> raw) noexcept
+ParseKexInit(std::span<const std::byte> raw)
 {
 	KexInit p;
 	Deserializer d{raw};
@@ -97,9 +93,8 @@ struct ECDHKexInit {
 	std::span<const std::byte> client_ephemeral_public_key;
 };
 
-[[gnu::pure]]
 inline auto
-ParseECDHKexInit(std::span<const std::byte> raw) noexcept
+ParseECDHKexInit(std::span<const std::byte> raw)
 {
 	ECDHKexInit p;
 	Deserializer d{raw};
@@ -114,9 +109,8 @@ struct ECDHKexInitReply {
 	std::span<const std::byte> signature;
 };
 
-[[gnu::pure]]
 inline auto
-ParseECDHKexInitReply(std::span<const std::byte> raw) noexcept
+ParseECDHKexInitReply(std::span<const std::byte> raw)
 {
 	ECDHKexInitReply p;
 	Deserializer d{raw};
@@ -135,9 +129,8 @@ struct ChannelOpen {
 	std::span<const std::byte> channel_type_specific_data;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelOpen(std::span<const std::byte> raw) noexcept
+ParseChannelOpen(std::span<const std::byte> raw)
 {
 	ChannelOpen p;
 	Deserializer d{raw};
@@ -157,9 +150,8 @@ struct ChannelOpenConfirmation {
 	std::span<const std::byte> channel_type_specific_data;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelOpenConfirmation(std::span<const std::byte> raw) noexcept
+ParseChannelOpenConfirmation(std::span<const std::byte> raw)
 {
 	ChannelOpenConfirmation p;
 	Deserializer d{raw};
@@ -177,9 +169,8 @@ struct ChannelOpenFailure {
 	std::string_view description;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelOpenFailure(std::span<const std::byte> raw) noexcept
+ParseChannelOpenFailure(std::span<const std::byte> raw)
 {
 	ChannelOpenFailure p;
 	Deserializer d{raw};
@@ -196,9 +187,8 @@ struct ChannelWindowAdjust {
 	uint_least32_t nbytes;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelWindowAdjust(std::span<const std::byte> raw) noexcept
+ParseChannelWindowAdjust(std::span<const std::byte> raw)
 {
 	ChannelWindowAdjust p;
 	Deserializer d{raw};
@@ -213,9 +203,8 @@ struct ChannelData {
 	std::span<const std::byte> data;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelData(std::span<const std::byte> raw) noexcept
+ParseChannelData(std::span<const std::byte> raw)
 {
 	ChannelData p;
 	Deserializer d{raw};
@@ -231,9 +220,8 @@ struct ChannelExtendedData {
 	std::span<const std::byte> data;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelExtendedData(std::span<const std::byte> raw) noexcept
+ParseChannelExtendedData(std::span<const std::byte> raw)
 {
 	ChannelExtendedData p;
 	Deserializer d{raw};
@@ -248,9 +236,8 @@ struct ChannelEof {
 	uint_least32_t local_channel;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelEof(std::span<const std::byte> raw) noexcept
+ParseChannelEof(std::span<const std::byte> raw)
 {
 	ChannelEof p;
 	Deserializer d{raw};
@@ -263,9 +250,8 @@ struct ChannelClose {
 	uint_least32_t local_channel;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelClose(std::span<const std::byte> raw) noexcept
+ParseChannelClose(std::span<const std::byte> raw)
 {
 	ChannelClose p;
 	Deserializer d{raw};
@@ -281,9 +267,8 @@ struct ChannelRequest {
 	bool want_reply;
 };
 
-[[gnu::pure]]
 inline auto
-ParseChannelRequest(std::span<const std::byte> raw) noexcept
+ParseChannelRequest(std::span<const std::byte> raw)
 {
 	ChannelRequest p;
 	Deserializer d{raw};
@@ -300,9 +285,8 @@ struct GlobalRequest {
 	bool want_reply;
 };
 
-[[gnu::pure]]
 inline auto
-ParseGlobalRequest(std::span<const std::byte> raw) noexcept
+ParseGlobalRequest(std::span<const std::byte> raw)
 {
 	GlobalRequest p;
 	Deserializer d{raw};
