@@ -46,8 +46,11 @@ SshResolveBindStreamSocket(const char *host, unsigned port)
 		   addresses on the loopback device, we can bind both
 		   IPv4 and IPv6 with one socket */
 		return BindLoopback(SOCK_STREAM, port);
-	else if (*host == 0)
+	else if (StringIsEqual(host, "*"))
 		/* another special case in RFC 4254 7.1 */
+		/* in the SSH protocol, this is an empty string; the
+		   "*" is just a placeholder because our internal
+		   protocol can't handle empty strings */
 		return BindPort(SOCK_STREAM, port);
 	else
 		return ResolveBindStreamSocket(host, port);
@@ -131,6 +134,12 @@ public:
 		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady),
 			_socket.Release())
 		{
+			if (host.empty())
+				/* this protocol doesn't allow an
+				   empty string, so use a
+				   placeholder */
+				host = "*"sv;
+
 			auto s = socket.GetSocket();
 			// TODO handle send errors
 			s.Send(ReferenceAsBytes(port));
