@@ -80,7 +80,9 @@ static void
 SendOpen(SocketDescriptor s, std::string_view path)
 {
 	// TODO handle send errors
-	s.Send(AsBytes(path));
+	const auto nbytes = s.Send(AsBytes(path));
+	if (nbytes < 0)
+		throw MakeSocketError("Failed to send");
 }
 
 UniqueFileDescriptor
