@@ -32,10 +32,13 @@ using std::string_view_literals::operator""sv;
 #include "spawn/Prepared.hxx"
 #include "spawn/Interface.hxx"
 #include "net/EasyMessage.hxx"
+#include "net/MsgHdr.hxx"
 #include "net/RBindSocket.hxx"
+#include "net/SendMessage.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
 #include "util/SpanCast.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringAPI.hxx"
 
 static UniqueSocketDescriptor
@@ -46,7 +49,7 @@ SshResolveBindStreamSocket(const char *host, unsigned port)
 		   addresses on the loopback device, we can bind both
 		   IPv4 and IPv6 with one socket */
 		return BindLoopback(SOCK_STREAM, port);
-	else if (StringIsEqual(host, "*"))
+	else if (StringIsEmpty(host))
 		/* another special case in RFC 4254 7.1 */
 		/* in the SSH protocol, this is an empty string; the
 		   "*" is just a placeholder because our internal
@@ -60,21 +63,29 @@ static int
 NsResolveBindTCPFunction(PreparedChildProcess &&)
 {
 	SocketDescriptor control{3};
+
 	unsigned port;
 	char host[1024];
 
-	control.Receive(ReferenceAsWritableBytes(port));
-	auto nbytes = control.Receive(std::as_writable_bytes(std::span{host}));
-	if (nbytes < 0)
-		throw MakeSocketError("Failed to receive");
+	std::array v{
+		MakeIovec(ReferenceAsWritableBytes(port)),
+		MakeIovec(std::as_writable_bytes(std::span{host})),
+	};
 
-	if (nbytes == 0)
+	auto msg = MakeMsgHdr(v);
+
+	auto nbytes = recvmsg(control.Get(), &msg, 0);
+	if (nbytes < 0)
+		throw MakeSocketError("recvmsg() failed");
+
+	if (static_cast<std::size_t>(nbytes) < sizeof(port))
 		throw SocketClosedPrematurelyError{};
 
-	if (static_cast<std::size_t>(nbytes) >= sizeof(host))
+	std::size_t host_length = static_cast<std::size_t>(nbytes) - sizeof(port);
+	if (host_length >= sizeof(host))
 		throw SocketBufferFullError{};
 
-	host[nbytes] = 0;
+	host[host_length] = 0;
 
 	auto socket = SshResolveBindStreamSocket(host, port);
 	EasySendMessage(control, socket.ToFileDescriptor());
@@ -128,27 +139,29 @@ class SpawnResolveBindOperation final
 public:
 	SpawnResolveBindOperation(EventLoop &event_loop,
 				  UniqueSocketDescriptor _socket,
-				  std::unique_ptr<ChildProcessHandle> &&_process,
-				  std::string_view host, unsigned port)
+				  std::unique_ptr<ChildProcessHandle> &&_process)
 		:process(std::move(_process)),
 		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady),
 			_socket.Release())
 		{
-			if (host.empty())
-				/* this protocol doesn't allow an
-				   empty string, so use a
-				   placeholder */
-				host = "*"sv;
-
-			auto s = socket.GetSocket();
-			// TODO handle send errors
-			s.Send(ReferenceAsBytes(port));
-			s.Send(AsBytes(host));
-			socket.ScheduleRead();
 		}
 
 	~SpawnResolveBindOperation() noexcept {
 		socket.Close();
+	}
+
+	void SendRequest(std::string_view host, const unsigned &port) {
+		const std::array v{
+			MakeIovec(ReferenceAsBytes(port)),
+			MakeIovec(AsBytes(host)),
+		};
+
+		const auto nbytes = SendMessage(socket.GetSocket(), MessageHeader{v},
+						MSG_NOSIGNAL);
+		if (nbytes != sizeof(port) + host.size())
+			throw SocketBufferFullError{};
+
+		socket.ScheduleRead();
 	}
 
 	Awaitable operator co_await() noexcept {
@@ -188,9 +201,9 @@ NsResolveBindTCP(EventLoop &event_loop,
 	auto [control_socket, child_handle] =
 		SpawnNsResolveBindTCPFunction(spawn_service, options);
 
-	co_return co_await SpawnResolveBindOperation(event_loop, std::move(control_socket),
-						     std::move(child_handle),
-						     host, port);
+	SpawnResolveBindOperation o{event_loop, std::move(control_socket), std::move(child_handle)};
+	o.SendRequest(host, port);
+	co_return co_await o;
 }
 
 #endif // ENABLE_TRANSLATION
