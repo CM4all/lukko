@@ -186,7 +186,7 @@ Connection::OpenHome() const noexcept
 	UniqueFileDescriptor fd;
 
 	if (const char *home = GetHome())
-		fd.Open(home, O_PATH|O_DIRECTORY);
+		(void)fd.Open(home, O_PATH|O_DIRECTORY);
 
 	return fd;
 }
