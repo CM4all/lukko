@@ -5,7 +5,7 @@
 #include "ChaCha20Poly1305Cipher.hxx"
 #include "lib/sodium/OnetimeauthPoly1305.hxx"
 #include "lib/sodium/StreamChaCha20.hxx"
-#include "util/ByteOrder.hxx"
+#include "util/PackedBigEndian.hxx"
 #include "util/SpanCast.hxx"
 
 #include <sodium/utils.h>
