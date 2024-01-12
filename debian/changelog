@@ -2,7 +2,7 @@ cm4all-lukko (0.13) unstable; urgency=low
 
   * fix crash on certain malformed packets
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 12 Jan 2024 12:48:25 +0100
 
 cm4all-lukko (0.12) unstable; urgency=low
 
