@@ -52,7 +52,7 @@ NsResolveConnectTCPFunction(PreparedChildProcess &&)
 
 	auto msg = MakeMsgHdr(v);
 
-	auto nbytes = recvmsg(control.Get(), &msg, 0);
+	auto nbytes = control.Receive(msg);
 	if (nbytes < 0)
 		throw MakeSocketError("recvmsg() failed");
 
