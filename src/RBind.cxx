@@ -32,7 +32,6 @@ using std::string_view_literals::operator""sv;
 #include "spawn/Prepared.hxx"
 #include "spawn/Interface.hxx"
 #include "net/EasyMessage.hxx"
-#include "net/MsgHdr.hxx"
 #include "net/RBindSocket.hxx"
 #include "net/SendMessage.hxx"
 #include "net/SocketProtocolError.hxx"
@@ -70,9 +69,7 @@ NsResolveBindTCPFunction(PreparedChildProcess &&)
 		MakeIovec(std::as_writable_bytes(std::span{host})),
 	};
 
-	auto msg = MakeMsgHdr(v);
-
-	auto nbytes = control.Receive(msg);
+	auto nbytes = control.Receive(v);
 	if (nbytes < 0)
 		throw MakeSocketError("recvmsg() failed");
 
