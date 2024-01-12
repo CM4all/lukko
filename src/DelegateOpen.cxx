@@ -7,13 +7,10 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
-#include "net/ReceiveMessage.hxx"
-#include "net/ScmRightsBuilder.hxx"
-#include "net/SendMessage.hxx"
+#include "net/EasyMessage.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketPair.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "io/Iovec.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/SpanCast.hxx"
@@ -37,18 +34,7 @@ OpenFunction(PreparedChildProcess &&)
 	path[nbytes] = 0;
 
 	auto fd = OpenReadOnly(path);
-
-	static constexpr std::byte dummy[1]{};
-	static constexpr struct iovec v[1] = {
-		MakeIovec(dummy),
-	};
-
-	MessageHeader msg{v};
-	ScmRightsBuilder<1> b{msg};
-	b.push_back(fd.Get());
-	b.Finish(msg);
-
-	SendMessage(control, msg, 0);
+	EasySendMessage(control, fd);
 
 	return 0;
 }
@@ -79,7 +65,6 @@ SpawnOpen(const Connection &ssh_connection)
 static void
 SendOpen(SocketDescriptor s, std::string_view path)
 {
-	// TODO handle send errors
 	const auto nbytes = s.Send(AsBytes(path));
 	if (nbytes < 0)
 		throw MakeSocketError("Failed to send");
@@ -92,10 +77,9 @@ DelegateOpen(const Connection &ssh_connection, std::string_view path)
 
 	SendOpen(control_socket, path);
 
-	ReceiveMessageBuffer<1, CMSG_SPACE(sizeof(int) * 1)> rbuf;
-	auto r = ReceiveMessage(control_socket, rbuf, 0);
-	if (r.fds.size() != 1)
+	auto fd = EasyReceiveMessageWithOneFD(control_socket);
+	if (!fd.IsDefined())
 		throw std::runtime_error{"Bad number of fds"};
 
-	return std::move(r.fds.front());
+	return fd;
 }
