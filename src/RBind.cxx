@@ -51,9 +51,7 @@ SshResolveBindStreamSocket(const char *host, unsigned port)
 		return BindLoopback(SOCK_STREAM, port);
 	else if (StringIsEmpty(host))
 		/* another special case in RFC 4254 7.1 */
-		/* in the SSH protocol, this is an empty string; the
-		   "*" is just a placeholder because our internal
-		   protocol can't handle empty strings */
+		/* in the SSH protocol, this is an empty string */
 		return BindPort(SOCK_STREAM, port);
 	else
 		return ResolveBindStreamSocket(host, port);
