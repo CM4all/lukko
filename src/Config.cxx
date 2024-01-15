@@ -7,6 +7,7 @@
 #include "spawn/ConfigParser.hxx"
 #include "net/IPv6Address.hxx"
 #include "net/Parser.hxx"
+#include "net/control/Protocol.hxx"
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "util/StringAPI.hxx"
@@ -176,7 +177,7 @@ LukkoConfigParser::Control::ParseLine(FileLineParser &line)
 
 	if (StringIsEqual(word, "bind")) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 5478, true);
+							 BengProxy::CONTROL_PORT, true);
 	} else if (StringIsEqual(word, "multicast_group")) {
 		config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
 							    0, false);
