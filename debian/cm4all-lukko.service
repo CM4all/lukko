@@ -10,6 +10,9 @@ After=cm4all-spawn-accessory.socket
 # the spawn-reaper cleans up empty cgroups
 Wants=cm4all-spawn-reaper.service
 
+# require at least Linux kernel 5.12
+AssertKernelVersion=>=5.12
+
 [Service]
 Type=notify
 ExecStart=/usr/sbin/cm4all-lukko
