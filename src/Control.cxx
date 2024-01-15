@@ -36,6 +36,8 @@ Instance::OnControlPacket([[maybe_unused]] ControlServer &control_server,
 	case ControlCommand::FADE_NODE:
 	case ControlCommand::NODE_STATUS:
 	case ControlCommand::STATS:
+		break;
+
 	case ControlCommand::VERBOSE:
 		if (is_privileged && payload.size() == 1)
 			SetLogLevel(*(const uint8_t *)payload.data());
