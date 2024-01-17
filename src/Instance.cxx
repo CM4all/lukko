@@ -51,7 +51,7 @@ Instance::Instance(const Config &config,
 
 #ifdef ENABLE_CONTROL
 	for (const auto &i : config.control_listeners) {
-		ControlHandler &handler = *this;
+		BengControl::Handler &handler = *this;
 		control_listeners.emplace_front(event_loop,
 						i.Create(SOCK_DGRAM),
 						handler);

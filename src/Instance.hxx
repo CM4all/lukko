@@ -28,7 +28,7 @@
 
 struct Config;
 struct ListenerConfig;
-class ControlServer;
+namespace BengControl { class Server; }
 class SecretKey;
 class UniqueSocketDescriptor;
 class Listener;
@@ -42,7 +42,7 @@ struct DummyBase {};
 class Instance final
 	:DummyBase
 #ifdef ENABLE_CONTROL
-	, ControlHandler
+	, BengControl::Handler
 #endif
 #ifdef HAVE_AVAHI
 	, Avahi::ErrorHandler
@@ -70,7 +70,7 @@ class Instance final
 	SignalEvent sighup_event{event_loop, SIGHUP, BIND_THIS_METHOD(OnReload)};
 
 #ifdef ENABLE_CONTROL
-	std::forward_list<ControlServer> control_listeners;
+	std::forward_list<BengControl::Server> control_listeners;
 #endif
 
 #ifdef HAVE_AVAHI
@@ -143,8 +143,8 @@ private:
 
 #ifdef ENABLE_CONTROL
 	/* virtual methods from class ControlHandler */
-	void OnControlPacket(ControlServer &control_server,
-			     BengProxy::ControlCommand command,
+	void OnControlPacket(BengControl::Server &control_server,
+			     BengControl::Command command,
 			     std::span<const std::byte> payload,
 			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;

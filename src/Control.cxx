@@ -13,63 +13,63 @@
 #include "lib/avahi/Publisher.hxx"
 #endif
 
-using namespace BengProxy;
-
 void
-Instance::OnControlPacket([[maybe_unused]] ControlServer &control_server,
-			  BengProxy::ControlCommand command,
+Instance::OnControlPacket([[maybe_unused]] BengControl::Server &control_server,
+			  BengControl::Command command,
 			  std::span<const std::byte> payload,
 			  [[maybe_unused]] std::span<UniqueFileDescriptor> fds,
 			  [[maybe_unused]] SocketAddress address, int uid)
 {
+	using namespace BengControl;
+
 	/* only local clients are allowed to use most commands */
 	const bool is_privileged = uid >= 0;
 
 	switch (command) {
-	case ControlCommand::NOP:
+	case Command::NOP:
 		/* duh! */
 		break;
 
-	case ControlCommand::TCACHE_INVALIDATE:
-	case ControlCommand::DUMP_POOLS:
-	case ControlCommand::ENABLE_NODE:
-	case ControlCommand::FADE_NODE:
-	case ControlCommand::NODE_STATUS:
-	case ControlCommand::STATS:
+	case Command::TCACHE_INVALIDATE:
+	case Command::DUMP_POOLS:
+	case Command::ENABLE_NODE:
+	case Command::FADE_NODE:
+	case Command::NODE_STATUS:
+	case Command::STATS:
 		break;
 
-	case ControlCommand::VERBOSE:
+	case Command::VERBOSE:
 		if (is_privileged && payload.size() == 1)
 			SetLogLevel(*(const uint8_t *)payload.data());
 		break;
 
-	case ControlCommand::FADE_CHILDREN:
+	case Command::FADE_CHILDREN:
 		break;
 
-	case ControlCommand::DISABLE_ZEROCONF:
+	case Command::DISABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && avahi_publisher)
 			avahi_publisher->HideServices();
 #endif
 		break;
 
-	case ControlCommand::ENABLE_ZEROCONF:
+	case Command::ENABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged && avahi_publisher)
 			avahi_publisher->ShowServices();
 #endif
 		break;
 
-	case ControlCommand::FLUSH_NFS_CACHE:
-	case ControlCommand::FLUSH_FILTER_CACHE:
-	case ControlCommand::STOPWATCH_PIPE:
-	case ControlCommand::DISCARD_SESSION:
-	case ControlCommand::FLUSH_HTTP_CACHE:
-	case ControlCommand::ENABLE_QUEUE:
-	case ControlCommand::DISABLE_QUEUE:
+	case Command::FLUSH_NFS_CACHE:
+	case Command::FLUSH_FILTER_CACHE:
+	case Command::STOPWATCH_PIPE:
+	case Command::DISCARD_SESSION:
+	case Command::FLUSH_HTTP_CACHE:
+	case Command::ENABLE_QUEUE:
+	case Command::DISABLE_QUEUE:
 		break;
 
-	case ControlCommand::TERMINATE_CHILDREN:
+	case Command::TERMINATE_CHILDREN:
 #ifdef ENABLE_TRANSLATION
 		if (payload.empty())
 			break;
