@@ -67,6 +67,7 @@ Instance::OnControlPacket([[maybe_unused]] BengControl::Server &control_server,
 	case Command::FLUSH_HTTP_CACHE:
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
+	case Command::RELOAD_STATE:
 		break;
 
 	case Command::TERMINATE_CHILDREN:
