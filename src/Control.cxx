@@ -65,6 +65,8 @@ Instance::OnControlPacket([[maybe_unused]] ControlServer &control_server,
 	case ControlCommand::STOPWATCH_PIPE:
 	case ControlCommand::DISCARD_SESSION:
 	case ControlCommand::FLUSH_HTTP_CACHE:
+	case ControlCommand::ENABLE_QUEUE:
+	case ControlCommand::DISABLE_QUEUE:
 		break;
 
 	case ControlCommand::TERMINATE_CHILDREN:
