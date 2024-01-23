@@ -8,7 +8,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/SocketPair.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "co/AwaitableHelper.hxx"
 #include "co/Task.hxx"
 #include "config.h"
 
