@@ -141,7 +141,7 @@ SpawnResolveBind(EventLoop &event_loop, SocketDescriptor socket,
 
 	auto fd = EasyReceiveMessageWithOneFD(socket);
 	if (!fd.IsDefined())
-		throw std::runtime_error{"Bad number of fds"};
+		throw SocketProtocolError{"Bad number of fds"};
 
 	co_return UniqueSocketDescriptor{fd.Release()};
 }
