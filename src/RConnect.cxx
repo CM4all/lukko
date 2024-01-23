@@ -28,6 +28,7 @@
 #include "spawn/ProcessHandle.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/Interface.hxx"
+#include "event/AwaitableSocketEvent.hxx"
 #include "net/EasyMessage.hxx"
 #include "net/RConnectSocket.hxx"
 #include "net/SendMessage.hxx"
@@ -97,77 +98,35 @@ SpawnNsResolveConnectTCPFunction(SpawnService &spawn_service,
 	};
 }
 
-class SpawnResolveConnectOperation final
+static void
+SendResolveConnectRequest(SocketDescriptor socket,
+			  std::string_view host, const unsigned &port)
 {
-	const std::unique_ptr<ChildProcessHandle> process;
+	const std::array v{
+		MakeIovec(ReferenceAsBytes(port)),
+		MakeIovec(AsBytes(host)),
+	};
 
-	SocketEvent socket;
+	const auto nbytes = SendMessage(socket, MessageHeader{v},
+					MSG_NOSIGNAL);
+	if (nbytes != sizeof(port) + host.size())
+		throw SocketBufferFullError{};
+}
 
-	std::coroutine_handle<> continuation;
+static Co::Task<UniqueSocketDescriptor>
+SpawnResolveConnect(EventLoop &event_loop, SocketDescriptor socket,
+		    std::string_view host, const unsigned &port)
+{
+	SendResolveConnectRequest(socket, host, port);
 
-	UniqueSocketDescriptor value;
+	co_await AwaitableSocketEvent(event_loop, socket, SocketEvent::READ);
 
-	std::exception_ptr error;
+	auto fd = EasyReceiveMessageWithOneFD(socket);
+	if (!fd.IsDefined())
+		throw std::runtime_error{"Bad number of fds"};
 
-	using Awaitable = Co::AwaitableHelper<SpawnResolveConnectOperation>;
-	friend Awaitable;
-
-public:
-	SpawnResolveConnectOperation(EventLoop &event_loop,
-				     UniqueSocketDescriptor _socket,
-				     std::unique_ptr<ChildProcessHandle> &&_process)
-		:process(std::move(_process)),
-		 socket(event_loop, BIND_THIS_METHOD(OnSocketReady),
-			_socket.Release())
-	{
-	}
-
-	~SpawnResolveConnectOperation() noexcept {
-		socket.Close();
-	}
-
-	void SendRequest(std::string_view host, const unsigned &port) {
-		const std::array v{
-			MakeIovec(ReferenceAsBytes(port)),
-			MakeIovec(AsBytes(host)),
-		};
-
-		const auto nbytes = SendMessage(socket.GetSocket(), MessageHeader{v},
-						MSG_NOSIGNAL);
-		if (nbytes != sizeof(port) + host.size())
-			throw SocketBufferFullError{};
-
-		socket.ScheduleRead();
-	}
-
-	Awaitable operator co_await() noexcept {
-		return *this;
-	}
-
-private:
-	bool IsReady() const noexcept {
-		return value.IsDefined() || error;
-	}
-
-	UniqueSocketDescriptor TakeValue() noexcept {
-		return std::move(value);
-	}
-
-	void OnSocketReady([[maybe_unused]] unsigned events) noexcept {
-		try {
-			auto fd = EasyReceiveMessageWithOneFD(socket.GetSocket());
-			if (!fd.IsDefined())
-				throw std::runtime_error{"Bad number of fds"};
-
-			value = UniqueSocketDescriptor{fd.Release()};
-		} catch (...) {
-			error = std::current_exception();
-		}
-
-		if (continuation)
-			continuation.resume();
-	}
-};
+	co_return UniqueSocketDescriptor{fd.Release()};
+}
 
 static Co::Task<UniqueSocketDescriptor>
 NsResolveConnectTCP(EventLoop &event_loop,
@@ -177,9 +136,7 @@ NsResolveConnectTCP(EventLoop &event_loop,
 	auto [control_socket, child_handle] =
 		SpawnNsResolveConnectTCPFunction(spawn_service, options);
 
-	SpawnResolveConnectOperation o{event_loop, std::move(control_socket), std::move(child_handle)};
-	o.SendRequest(host, port);
-	co_return co_await o;
+	co_return co_await SpawnResolveConnect(event_loop, control_socket, host, port);
 }
 
 #endif // ENABLE_TRANSLATION
