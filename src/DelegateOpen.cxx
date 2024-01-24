@@ -7,12 +7,14 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
+#include "event/AwaitableSocketEvent.hxx"
 #include "net/EasyMessage.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketPair.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "co/Task.hxx"
 #include "util/SpanCast.hxx"
 
 static int
@@ -70,16 +72,19 @@ SendOpen(SocketDescriptor s, std::string_view path)
 		throw MakeSocketError("Failed to send");
 }
 
-UniqueFileDescriptor
+Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path)
 {
 	auto [control_socket, child_handle] = SpawnOpen(ssh_connection);
 
 	SendOpen(control_socket, path);
 
+	co_await AwaitableSocketEvent(ssh_connection.GetEventLoop(),
+				      control_socket, SocketEvent::READ);
+
 	auto fd = EasyReceiveMessageWithOneFD(control_socket);
 	if (!fd.IsDefined())
 		throw std::runtime_error{"Bad number of fds"};
 
-	return fd;
+	co_return fd;
 }

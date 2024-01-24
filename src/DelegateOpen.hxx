@@ -6,11 +6,12 @@
 
 #include <string_view>
 
+namespace Co { template<typename T> class Task; }
 class UniqueFileDescriptor;
 class Connection;
 
 /**
  * Open a file with the uid of the given user.
  */
-UniqueFileDescriptor
+Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path);

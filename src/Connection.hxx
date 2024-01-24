@@ -18,6 +18,7 @@
 
 #include <sys/types.h> // for uid_t, gid_t
 
+namespace Co { template<typename T> class Task; }
 struct TranslateResponse;
 struct PreparedChildProcess;
 class Instance;
@@ -184,7 +185,7 @@ private:
 	 *
 	 * @param path a path relative to the home directory
 	 */
-	UniqueFileDescriptor OpenInHome(const char *path) const noexcept;
+	Co::Task<UniqueFileDescriptor> OpenInHome(const char *path) const noexcept;
 
 	[[gnu::pure]]
 	bool ShouldLoadHomeAuthorizedKeys() const noexcept;
@@ -193,7 +194,7 @@ private:
 	 * This method modifies the `authorized_key_options` field if
 	 * a matching key was found.
 	 */
-	bool IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
+	Co::Task<bool> IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
 	/**
 	 * This method modifies the `authorized_key_options` field if

@@ -191,27 +191,25 @@ Connection::OpenHome() const noexcept
 	return fd;
 }
 
-UniqueFileDescriptor
+Co::Task<UniqueFileDescriptor>
 Connection::OpenInHome(const char *path) const noexcept
 {
 	if (auto home = OpenHome(); home.IsDefined()) {
 		if (auto fd = TryOpenReadOnlyBeneath({home, path});
-		    fd.IsDefined())
-			return fd;
-		else if (errno != EACCES)
-			return {};
+		    fd.IsDefined() || errno != EACCES)
+			co_return fd;
 	}
 
 	/* the plain open failed with EACCES; try again while
 	   impersonating the target user */
 
 	try {
-		return DelegateOpen(*this, path);
+		co_return co_await DelegateOpen(*this, path);
 	} catch (...) {
 		// TODO log error?
 	}
 
-	return {};
+	co_return UniqueFileDescriptor{};
 }
 
 const char *
@@ -266,7 +264,7 @@ Connection::ShouldLoadHomeAuthorizedKeys() const noexcept
 	return true;
 }
 
-inline bool
+inline Co::Task<bool>
 Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
 #ifdef ENABLE_TRANSLATION
@@ -275,26 +273,26 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 		    PublicKeysTextFileContains(translation->response.authorized_keys,
 					       public_key_blob)) {
 			authorized_key_options = std::move(*options);
-			return true;
+			co_return true;
 		}
 	}
 #endif // ENABLE_TRANSLATION
 
 	if (const auto *options = instance.GetGlobalAuthorizedKeys().Find(public_key_blob)) {
 		authorized_key_options = *options;
-		return true;
+		co_return true;
 	}
 
 	if (ShouldLoadHomeAuthorizedKeys()) {
-		if (auto fd = OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
+		if (auto fd = co_await OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
 			if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
 				authorized_key_options = std::move(*options);
-				return true;
+				co_return true;
 			}
 		}
 	}
 
-	return false;
+	co_return false;
 }
 
 inline bool
@@ -533,7 +531,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		logger.Fmt(1, "  public_key_algorithm='{}'"sv,
 			   public_key_algorithm);
 
-		if (!IsAcceptedPublicKey(public_key_blob)) {
+		if (!co_await IsAcceptedPublicKey(public_key_blob)) {
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
