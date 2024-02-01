@@ -12,11 +12,7 @@ TEST(WriteBignum2, Empty)
 	s.WriteBignum2({});
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 4U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{0});
+	EXPECT_TRUE(result.empty());
 }
 
 TEST(WriteBignum2, Zero)
@@ -26,11 +22,7 @@ TEST(WriteBignum2, Zero)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 4U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{0});
+	EXPECT_TRUE(result.empty());
 }
 
 TEST(WriteBignum2, One)
@@ -40,12 +32,8 @@ TEST(WriteBignum2, One)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 5U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{1});
-	EXPECT_EQ(result[4], std::byte{42});
+	ASSERT_EQ(result.size(), 1U);
+	EXPECT_EQ(result[0], std::byte{42});
 }
 
 TEST(WriteBignum2, LeadingZeroes)
@@ -55,12 +43,8 @@ TEST(WriteBignum2, LeadingZeroes)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 5U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{1});
-	EXPECT_EQ(result[4], std::byte{42});
+	ASSERT_EQ(result.size(), 1U);
+	EXPECT_EQ(result[0], std::byte{42});
 }
 
 TEST(WriteBignum2, NotNegative)
@@ -70,13 +54,9 @@ TEST(WriteBignum2, NotNegative)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 6U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{2});
-	EXPECT_EQ(result[4], std::byte{42});
-	EXPECT_EQ(result[5], std::byte{0xff});
+	ASSERT_EQ(result.size(), 2);
+	EXPECT_EQ(result[0], std::byte{42});
+	EXPECT_EQ(result[1], std::byte{0xff});
 }
 
 TEST(WriteBignum2, Negative)
@@ -86,14 +66,10 @@ TEST(WriteBignum2, Negative)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 7U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{3});
-	EXPECT_EQ(result[4], std::byte{});
-	EXPECT_EQ(result[5], std::byte{0x80});
-	EXPECT_EQ(result[6], std::byte{42});
+	ASSERT_EQ(result.size(), 3U);
+	EXPECT_EQ(result[0], std::byte{});
+	EXPECT_EQ(result[1], std::byte{0x80});
+	EXPECT_EQ(result[2], std::byte{42});
 }
 
 TEST(WriteBignum2, NegativeWithLeadingZeroes)
@@ -103,12 +79,8 @@ TEST(WriteBignum2, NegativeWithLeadingZeroes)
 	s.WriteBignum2(data);
 
 	const auto result = s.Finish();
-	ASSERT_EQ(result.size(), 7U);
-	EXPECT_EQ(result[0], std::byte{0});
-	EXPECT_EQ(result[1], std::byte{0});
-	EXPECT_EQ(result[2], std::byte{0});
-	EXPECT_EQ(result[3], std::byte{3});
-	EXPECT_EQ(result[4], std::byte{});
-	EXPECT_EQ(result[5], std::byte{0x80});
-	EXPECT_EQ(result[6], std::byte{42});
+	ASSERT_EQ(result.size(), 3U);
+	EXPECT_EQ(result[0], std::byte{});
+	EXPECT_EQ(result[1], std::byte{0x80});
+	EXPECT_EQ(result[2], std::byte{42});
 }

@@ -56,8 +56,11 @@ KexCurve25519CalcSharedKey(std::span<const std::byte, crypto_scalarmult_curve255
 
 	if (raw)
 		out.WriteN(shared_key);
-	else
+	else {
+		const auto length = out.PrepareLength();
 		out.WriteBignum2(shared_key);
+		out.CommitLength(length);
+	}
 }
 
 void

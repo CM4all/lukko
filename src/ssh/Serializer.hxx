@@ -117,8 +117,6 @@ public:
 		const bool leading_msb = !src.empty() &&
 			(src.front() & std::byte{0x80}) != std::byte{};
 
-		WriteU32(src.size() + leading_msb);
-
 		if (leading_msb)
 			// prepend zero, it's not negative
 			WriteU8(0);
