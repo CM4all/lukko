@@ -4,12 +4,20 @@ gtest = declare_dependency(
   #compile_args: gtest_compile_args,
 )
 
+test_sources = []
+
+if crypto_dep.found()
+  test_sources += 'TestBignumSerializer.cxx'
+endif
+
 test(
   'TestLukko',
   executable(
     'TestLukko',
+    test_sources,
     'TestKeys.cxx',
     'TestAuthorizedKeys.cxx',
+    'TestWriteBignum2.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
