@@ -35,7 +35,7 @@ EVP_PKEY_derive(Serializer &s, EVP_PKEY_CTX &ctx)
 
 	s.CommitWriteN(size);
 
-	if ((dest.front() & std::byte{0x80}) != std::byte{})
+	if (size > 0 && (dest.front() & std::byte{0x80}) != std::byte{})
 		/* prepend null byte to avoid interpretation as
 		   negative number */
 		s.InsertNullByte(size);
