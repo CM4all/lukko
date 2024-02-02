@@ -30,6 +30,8 @@ protected:
 
 public:
 	constexpr std::span<std::byte> BeginWriteN(std::size_t size) {
+		assert(position <= buffer.size());
+
 		std::size_t max_size = buffer.size() - position;
 		if (size > max_size)
 			throw PacketTooLarge{};
@@ -38,6 +40,9 @@ public:
 	}
 
 	constexpr void CommitWriteN(std::size_t size) noexcept {
+		assert(position <= buffer.size());
+		assert(size <= buffer.size() - position);
+
 		position += size;
 	}
 
