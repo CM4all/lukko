@@ -2,7 +2,7 @@ cm4all-lukko (0.14) unstable; urgency=low
 
   * fix bignum padding in ECDH reply ("incorrect signature" error)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Feb 2024 13:00:26 +0100
 
 cm4all-lukko (0.13) unstable; urgency=low
 
