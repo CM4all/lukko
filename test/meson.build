@@ -18,6 +18,7 @@ test(
     'TestKeys.cxx',
     'TestAuthorizedKeys.cxx',
     'TestWriteBignum2.cxx',
+    'TestCommitBignum2.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
