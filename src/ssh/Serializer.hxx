@@ -190,6 +190,23 @@ public:
 		CommitWriteN(1);
 	}
 
+	/**
+	 * Wrapper for CommitWriteN() which applies fixups to convert
+	 * the bignum to SSH2 format.  This method can be used instead
+	 * of WriteBignum2() if some library shall write direectly
+	 * into this buffer without copying through a temporary
+	 * buffer.
+	 */
+	void CommitBignum2(std::size_t size) {
+		CommitWriteN(size);
+
+		if (size > 0 &&
+		    (buffer[position - size] & std::byte{0x80}) != std::byte{})
+			/* prepend null byte to avoid interpretation as
+			   negative number */
+			InsertNullByte(size);
+	}
+
 	constexpr void Skip(std::size_t nbytes) noexcept {
 		skip += nbytes;
 	}

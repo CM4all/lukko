@@ -21,10 +21,5 @@ Serialize(SSH::Serializer &s, const BIGNUM &bn)
 	if (BN_bn2bin(&bn, reinterpret_cast<unsigned char *>(dest.data())) != length)
 		throw SslError{};
 
-	s.CommitWriteN(length);
-
-	if ((dest.front() & std::byte{0x80}) != std::byte{})
-		/* prepend null byte to avoid interpretation as
-		   negative number */
-		s.InsertNullByte(dest.size());
+	s.CommitBignum2(length);
 }
