@@ -200,6 +200,10 @@ public:
 	void CommitBignum2(std::size_t size) {
 		CommitWriteN(size);
 
+		const auto stripped = StripLeadingNullBytes(Last(size));
+		position -= stripped;
+		size -= stripped;
+
 		if (size > 0 &&
 		    (buffer[position - size] & std::byte{0x80}) != std::byte{})
 			/* prepend null byte to avoid interpretation as
@@ -222,6 +226,14 @@ private:
 	 */
 	std::span<std::byte> Last(std::size_t n) noexcept {
 		return std::span{buffer}.first(position).last(n);
+	}
+
+	static std::size_t StripLeadingNullBytes(std::span<std::byte> s) noexcept {
+		auto i = std::find_if(s.begin(), s.end(), [](std::byte b){ return b != std::byte{}; });
+		if (i != s.begin())
+			std::copy(i, s.end(), s.begin());
+
+		return std::distance(s.begin(), i);
 	}
 };
 
