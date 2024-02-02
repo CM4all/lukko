@@ -109,6 +109,11 @@ public:
 		WriteN(src);
 	}
 
+	/**
+	 * Copy a bignum in SSH2 format: strip leading zeroes, but
+	 * insert a leading zero byte if the most significant bit is
+	 * set (to mark it unambiguously as unsigned, not negative).
+	 */
 	constexpr void WriteBignum2(std::span<const std::byte> src) {
 		// skip leading zeroes
 		while (!src.empty() && src.front() == std::byte{})
@@ -165,6 +170,10 @@ public:
 		dest[3] = value;
 	}
 
+	/**
+	 * Insert a zero byte at the given offset relative to the tail
+	 * of the buffer.
+	 */
 	void InsertNullByte(std::size_t backwards_offset) {
 		assert(backwards_offset <= size());
 
