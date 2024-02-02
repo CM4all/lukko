@@ -185,7 +185,7 @@ public:
 		if (position >= buffer.size())
 			throw PacketTooLarge{};
 
-		auto r = std::span{buffer}.first(position).last(backwards_offset);
+		auto r = Last(backwards_offset);
 		*std::prev(std::copy_backward(r.begin(), r.end(), std::next(r.end()))) = std::byte{};
 		CommitWriteN(1);
 	}
@@ -213,6 +213,15 @@ public:
 
 	constexpr std::span<const std::byte> Finish() noexcept {
 		return std::span{buffer}.first(position).subspan(skip);
+	}
+
+private:
+	/**
+	 * Returns a std::span covering the most recently added #n
+	 * bytes.
+	 */
+	std::span<std::byte> Last(std::size_t n) noexcept {
+		return std::span{buffer}.first(position).last(n);
 	}
 };
 
