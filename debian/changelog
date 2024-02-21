@@ -2,7 +2,7 @@ cm4all-lukko (0.15) unstable; urgency=low
 
   * spawn: don't kill on syscall get_mempolicy(), fail with ENOSYS
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 Feb 2024 11:10:36 +0100
 
 cm4all-lukko (0.14) unstable; urgency=low
 
