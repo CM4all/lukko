@@ -150,6 +150,16 @@ else
   event_systemd_dep = dependency('', required: false)
 endif
 
+alloc = static_library(
+  'alloc',
+  'src/AllocatorPtr.cxx',
+  include_directories: inc,
+)
+
+alloc_dep = declare_dependency(
+  link_with: alloc,
+)
+
 subdir('libcommon/src/adata')
 subdir('libcommon/src/spawn')
 
@@ -219,7 +229,6 @@ executable(
   'src/RBind.cxx',
   'src/DelegateOpen.cxx',
   'src/OutgoingConnection.cxx',
-  'src/AllocatorPtr.cxx',
   'src/system/SetupProcess.cxx',
   include_directories: inc,
   dependencies: [
