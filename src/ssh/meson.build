@@ -21,6 +21,7 @@ libssh = static_library(
   'KexHash.cxx',
   'KexProposal.cxx',
   'KexState.cxx',
+  'Serializer.cxx',
   'TerminalMode.cxx',
   include_directories: inc,
   dependencies: [

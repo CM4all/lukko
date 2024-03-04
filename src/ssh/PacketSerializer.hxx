@@ -11,9 +11,9 @@ namespace SSH {
 
 class PacketSerializer : public Serializer {
 public:
-	constexpr PacketSerializer() noexcept = default;
+	PacketSerializer() noexcept = default;
 
-	explicit constexpr PacketSerializer(MessageNumber msg) noexcept {
+	explicit PacketSerializer(MessageNumber msg) noexcept {
 		CommitWriteN(sizeof(PacketHeader) + 1);
 		WriteU8(static_cast<uint8_t>(msg));
 	}

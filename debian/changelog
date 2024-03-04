@@ -1,5 +1,6 @@
 cm4all-lukko (0.16) unstable; urgency=low
 
+  * ssh: don't allocate packet buffers on the stack
   * spawn: don't write internal errors to session's stderr
 
  --   

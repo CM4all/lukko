@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "ssh/Serializer.hxx"
+#include "memory/fb_pool.hxx"
 
 #include <gtest/gtest.h>
 
@@ -14,7 +15,11 @@ WriteBignum2(SSH::Serializer &s, std::span<const std::byte> src)
 	s.CommitBignum2(dest.size());
 }
 
-TEST(CommitBignum2, Empty)
+class CommitBignum2 : public testing::Test {
+	const ScopeFbPoolInit fb_pool_init;
+};
+
+TEST_F(CommitBignum2, Empty)
 {
 	SSH::Serializer s;
 	WriteBignum2(s, {});
@@ -23,7 +28,7 @@ TEST(CommitBignum2, Empty)
 	EXPECT_TRUE(result.empty());
 }
 
-TEST(CommitBignum2, Zero)
+TEST_F(CommitBignum2, Zero)
 {
 	static constexpr std::array data{std::byte{}};
 	SSH::Serializer s;
@@ -33,7 +38,7 @@ TEST(CommitBignum2, Zero)
 	EXPECT_TRUE(result.empty());
 }
 
-TEST(CommitBignum2, One)
+TEST_F(CommitBignum2, One)
 {
 	static constexpr std::array data{std::byte{42}};
 	SSH::Serializer s;
@@ -44,7 +49,7 @@ TEST(CommitBignum2, One)
 	EXPECT_EQ(result[0], std::byte{42});
 }
 
-TEST(CommitBignum2, LeadingZeroes)
+TEST_F(CommitBignum2, LeadingZeroes)
 {
 	static constexpr std::array data{std::byte{}, std::byte{}, std::byte{42}};
 	SSH::Serializer s;
@@ -55,7 +60,7 @@ TEST(CommitBignum2, LeadingZeroes)
 	EXPECT_EQ(result[0], std::byte{42});
 }
 
-TEST(CommitBignum2, NotNegative)
+TEST_F(CommitBignum2, NotNegative)
 {
 	static constexpr std::array data{std::byte{42}, std::byte{0xff}};
 	SSH::Serializer s;
@@ -67,7 +72,7 @@ TEST(CommitBignum2, NotNegative)
 	EXPECT_EQ(result[1], std::byte{0xff});
 }
 
-TEST(CommitBignum2, Negative)
+TEST_F(CommitBignum2, Negative)
 {
 	static constexpr std::array data{std::byte{0x80}, std::byte{42}};
 	SSH::Serializer s;
@@ -80,7 +85,7 @@ TEST(CommitBignum2, Negative)
 	EXPECT_EQ(result[2], std::byte{42});
 }
 
-TEST(CommitBignum2, NegativeWithLeadingZeroes)
+TEST_F(CommitBignum2, NegativeWithLeadingZeroes)
 {
 	static constexpr std::array data{std::byte{}, std::byte{}, std::byte{0x80}, std::byte{42}};
 	SSH::Serializer s;

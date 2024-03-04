@@ -9,6 +9,7 @@
 #include "util/AllocatedArray.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
+#include "memory/fb_pool.hxx"
 #include "../config.h"
 
 #ifdef HAVE_OPENSSL
@@ -60,6 +61,7 @@ TestKey(const SecretKey &key)
 
 TEST(Ed25519Key, TestKey)
 {
+	const ScopeFbPoolInit fb_pool_init;
 	const Ed25519Key key{Ed25519Key::Generate{}};
 	TestKey(key);
 }
@@ -68,12 +70,14 @@ TEST(Ed25519Key, TestKey)
 
 TEST(RSAKey, TestKey)
 {
+	const ScopeFbPoolInit fb_pool_init;
 	const RSAKey key{RSAKey::Generate{}};
 	TestKey(key);
 }
 
 TEST(ECDSAKey, TestKey)
 {
+	const ScopeFbPoolInit fb_pool_init;
 	const ECDSAKey key{ECDSAKey::Generate{}};
 	TestKey(key);
 }
@@ -82,6 +86,7 @@ TEST(ECDSAKey, TestKey)
 
 TEST(PublicKeySet, Basic)
 {
+	const ScopeFbPoolInit fb_pool_init;
 	const Ed25519Key key1{Ed25519Key::Generate{}}, key2{Ed25519Key::Generate{}};
 
 	PublicKeySet s;

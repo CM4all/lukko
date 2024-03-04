@@ -6,6 +6,7 @@
 #include "openssl/SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
+#include "memory/fb_pool.hxx"
 
 #include <gtest/gtest.h>
 
@@ -23,7 +24,11 @@ BN_hex2bn(const char *str)
 	return UniqueBIGNUM<false>{bn};
 }
 
-TEST(SerializeBignum, One)
+class SerializeBignum : public testing::Test {
+	const ScopeFbPoolInit fb_pool_init;
+};
+
+TEST_F(SerializeBignum, One)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("42"));
@@ -33,7 +38,7 @@ TEST(SerializeBignum, One)
 	EXPECT_EQ(result[0], std::byte{0x42});
 }
 
-TEST(SerializeBignum, Two)
+TEST_F(SerializeBignum, Two)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("1234"));
@@ -44,7 +49,7 @@ TEST(SerializeBignum, Two)
 	EXPECT_EQ(result[1], std::byte{0x34});
 }
 
-TEST(SerializeBignum, Odd)
+TEST_F(SerializeBignum, Odd)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("123"));
@@ -55,7 +60,7 @@ TEST(SerializeBignum, Odd)
 	EXPECT_EQ(result[1], std::byte{0x23});
 }
 
-TEST(SerializeBignum, Negative)
+TEST_F(SerializeBignum, Negative)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("8042"));
@@ -68,7 +73,7 @@ TEST(SerializeBignum, Negative)
 	EXPECT_EQ(result[2], std::byte{0x42});
 }
 
-TEST(SerializeBignum, LeadingZero)
+TEST_F(SerializeBignum, LeadingZero)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("001234"));
@@ -79,7 +84,7 @@ TEST(SerializeBignum, LeadingZero)
 	EXPECT_EQ(result[1], std::byte{0x34});
 }
 
-TEST(SerializeBignum, SetLeadingZero)
+TEST_F(SerializeBignum, SetLeadingZero)
 {
 	const auto bn = BN_hex2bn("ff123456");
 
@@ -98,7 +103,7 @@ TEST(SerializeBignum, SetLeadingZero)
 	EXPECT_EQ(result[2], std::byte{0x56});
 }
 
-TEST(SerializeBignum, Long)
+TEST_F(SerializeBignum, Long)
 {
 	SSH::Serializer s;
 	Serialize(s, *BN_hex2bn("2fd887b60bc3b6790ae974473df38114b91381c641d7023655002d7083a512"));

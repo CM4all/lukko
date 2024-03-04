@@ -5,10 +5,10 @@
 #pragma once
 
 #include "Sizes.hxx"
+#include "memory/SliceAllocation.hxx"
 #include "util/SpanCast.hxx"
 
 #include <algorithm> // for std::copy()
-#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -21,14 +21,26 @@ struct PacketTooLarge {};
 class Serializer {
 	std::size_t position = 0;
 
+	SliceArea *area = nullptr;
+
 protected:
-	std::array<std::byte, MAX_PACKET_SIZE> buffer;
+	std::span<std::byte, MAX_PACKET_SIZE> buffer;
 
 	constexpr std::size_t size() const noexcept {
 		return position;
 	}
 
 public:
+	Serializer() noexcept;
+	~Serializer() noexcept;
+
+	Serializer(Serializer &&src) noexcept
+		:position(src.position),
+		 area(std::exchange(src.area, nullptr)),
+		 buffer(src.buffer) {}
+
+	Serializer &operator=(const Serializer &) = delete;
+
 	constexpr std::span<std::byte> BeginWriteN(std::size_t size) {
 		assert(position <= buffer.size());
 
