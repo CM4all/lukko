@@ -5,7 +5,7 @@ cm4all-lukko (0.16) unstable; urgency=low
   * spawn: don't write internal errors to session's stderr
   * debian: recommend openssh-sftp-server
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Mar 2024 00:19:13 +0100
 
 cm4all-lukko (0.15) unstable; urgency=low
 
