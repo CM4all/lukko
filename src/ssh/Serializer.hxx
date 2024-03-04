@@ -19,13 +19,13 @@ namespace SSH {
 struct PacketTooLarge {};
 
 class Serializer {
-	std::size_t skip = 0, position = 0;
+	std::size_t position = 0;
 
 protected:
 	std::array<std::byte, MAX_PACKET_SIZE> buffer;
 
 	constexpr std::size_t size() const noexcept {
-		return position - skip;
+		return position;
 	}
 
 public:
@@ -211,12 +211,8 @@ public:
 			InsertNullByte(size);
 	}
 
-	constexpr void Skip(std::size_t nbytes) noexcept {
-		skip += nbytes;
-	}
-
 	constexpr std::span<const std::byte> Finish() noexcept {
-		return std::span{buffer}.first(position).subspan(skip);
+		return std::span{buffer}.first(position);
 	}
 
 private:
