@@ -1,6 +1,6 @@
 cm4all-lukko (0.16) unstable; urgency=low
 
-  * 
+  * spawn: don't write internal errors to session's stderr
 
  --   
 
