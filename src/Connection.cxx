@@ -62,10 +62,22 @@ struct Connection::Translation {
 	Allocator alloc;
 	TranslateResponse response;
 
+	/**
+	 * Because SessionChannel::OnRequest() is not a coroutine, we
+	 * must always query the translation for "sftp" from within
+	 * Connection::CoHandleUserauthRequest().  This is where we
+	 * store it.
+	 *
+	 * TODO query #sftp_response only when needed.
+	 */
+	TranslateResponse sftp_response;
+
 	Translation(Allocator &&_alloc,
-		    TranslateResponse &&_response) noexcept
+		    TranslateResponse &&_response,
+		    TranslateResponse &&_sftp_response) noexcept
 		:alloc(std::move(_alloc)),
-		 response(std::move(_response)) {}
+		 response(std::move(_response)),
+		 sftp_response(std::move(_sftp_response)) {}
 };
 
 #endif // ENABLE_TRANSLATION
@@ -227,11 +239,13 @@ Connection::GetShell() const noexcept
 }
 
 void
-Connection::PrepareChildProcess(PreparedChildProcess &p) const noexcept
+Connection::PrepareChildProcess(PreparedChildProcess &p,
+				[[maybe_unused]] bool sftp) const noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		translation->response.child_options.CopyTo(p);
+		(sftp ? translation->sftp_response : translation->response)
+			.child_options.CopyTo(p);
 
 		if (p.cgroup != nullptr && p.cgroup->name != nullptr &&
 		    p.cgroup_session == nullptr) {
@@ -467,13 +481,18 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		Allocator alloc;
-		TranslateResponse response;
+		TranslateResponse response, sftp_response;
 
 		try {
 			response = co_await
 				TranslateLogin(GetEventLoop(), alloc, translation_server,
 					       "ssh"sv, listener.GetTag(),
 					       new_username, password);
+
+			sftp_response = co_await
+				TranslateLogin(GetEventLoop(), alloc, translation_server,
+					       "sftp"sv, listener.GetTag(),
+					       new_username, {});
 		} catch (...) {
 			logger(1, "Translation server error: ", std::current_exception());
 			throw Disconnect{
@@ -500,7 +519,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		translation = std::make_unique<Translation>(std::move(alloc),
-							    std::move(response));
+							    std::move(response),
+							    std::move(sftp_response));
 		password_accepted = !password.empty();
 
 		if (translation->response.no_password != nullptr)

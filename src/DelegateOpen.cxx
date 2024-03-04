@@ -51,7 +51,9 @@ SpawnOpen(const Connection &ssh_connection)
 	p.exec_function = OpenFunction;
 	p.args.push_back("dummy");
 
-	ssh_connection.PrepareChildProcess(p);
+	/* using SFTP mode because this (usually) mounts an empty
+	   rootfs; minimalism! */
+	ssh_connection.PrepareChildProcess(p, true);
 
 	if (const char *home = p.ns.mount.GetJailedHome())
 		p.chdir = home;

@@ -66,7 +66,7 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
-	void PrepareChildProcess(PreparedChildProcess &p);
+	void PrepareChildProcess(PreparedChildProcess &p, bool sftp);
 	void SpawnChildProcess(PreparedChildProcess &&p);
 	bool Exec(const char *cmd);
 

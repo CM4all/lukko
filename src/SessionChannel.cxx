@@ -138,7 +138,7 @@ LoginShellName(const char *shell) noexcept
 }
 
 void
-SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
+SessionChannel::PrepareChildProcess(PreparedChildProcess &p, bool sftp)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
@@ -146,7 +146,7 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 	p.SetEnv("USER", username);
 	p.SetEnv("LOGNAME", username);
 
-	{
+	if (!sftp) {
 		const auto peer_address = c.GetPeerAddress();
 		const auto local_address = c.GetLocalAddress();
 		const auto peer_host = HostToString(peer_address);
@@ -163,9 +163,11 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p)
 				     local_host, local_address.GetPort()));
 	}
 
-	c.PrepareChildProcess(p);
+	c.PrepareChildProcess(p, sftp);
 
 	if (tty.IsDefined()) {
+		assert(!sftp);
+
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
@@ -224,7 +226,7 @@ SessionChannel::Exec(const char *cmd)
 
 	PreparedChildProcess p;
 
-	PrepareChildProcess(p);
+	PrepareChildProcess(p, false);
 
 	const char *const shell = c.GetShell();
 
@@ -303,11 +305,18 @@ SessionChannel::OnRequest(std::string_view request_type,
 				/* refuse to run sftp with a pty */
 				return false;
 
+			FileDescriptor sftp_server;
+			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
+
 			PreparedChildProcess p;
 
-			PrepareChildProcess(p);
+			PrepareChildProcess(p, sftp_server.IsDefined());
 
-			p.Append("/usr/lib/openssh/sftp-server");
+			if (sftp_server.IsDefined()) {
+				p.exec_fd = sftp_server;
+				p.Append("sftp-server");
+			} else
+				p.Append("/usr/lib/openssh/sftp-server");
 
 			SpawnChildProcess(std::move(p));
 			return true;

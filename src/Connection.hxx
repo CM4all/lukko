@@ -160,8 +160,12 @@ public:
 	/**
 	 * Do some preparations for spawning a child process for the
 	 * currently user.
+	 *
+	 * @param sftp is this for an SFTP process with an empty
+	 * rootfs?
 	 */
-	void PrepareChildProcess(PreparedChildProcess &p) const noexcept;
+	void PrepareChildProcess(PreparedChildProcess &p,
+				 bool sftp) const noexcept;
 
 	using SSH::Connection::DoDisconnect;
 

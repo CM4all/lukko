@@ -25,7 +25,7 @@ Depends: ${misc:Depends}, ${shlibs:Depends}, systemd-sysv,
  cm4all-slice (>= 0.6),
  polkitd (>= 121)
 Recommends: cm4all-spawn-reaper,
- openssh-sftp-server
+ cm4all-thirdparty-openssh-sftp-server | openssh-sftp-server
 Suggests: cm4all-spawn-accessory
 Description: SSH server
  Lukko is a SSH server.
