@@ -12,7 +12,6 @@
 #include <mutex>
 #include <span>
 
-class DefaultFifoBuffer;
 class BufferedSocket;
 class ThreadQueue;
 
