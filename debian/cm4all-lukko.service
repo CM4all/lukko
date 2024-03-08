@@ -34,6 +34,11 @@ TimerSlackNSec=10ms
 
 LimitNOFILE=65536
 
+# Limit memory usage to avoid the global oomkiller when this service
+# leaks
+LimitRSS=2G
+MemoryMax=2G
+
 # 1 MB is more than enough; the default is 8 MB, which is excessive
 LimitSTACK=1M
 
