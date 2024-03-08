@@ -4,7 +4,7 @@ cm4all-lukko (0.17) unstable; urgency=low
   * systemd: raise LimitNOFILE to 65536
   * systemd: configure a memory limit
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 08 Mar 2024 18:13:20 +0100
 
 cm4all-lukko (0.16) unstable; urgency=low
 
