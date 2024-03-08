@@ -305,7 +305,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 				/* refuse to run sftp with a pty */
 				return false;
 
-			FileDescriptor sftp_server;
+			UniqueFileDescriptor sftp_server;
 			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
 
 			PreparedChildProcess p;
