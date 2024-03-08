@@ -32,6 +32,8 @@ AmbientCapabilities=~
 # too fine.
 TimerSlackNSec=10ms
 
+LimitNOFILE=65536
+
 # 1 MB is more than enough; the default is 8 MB, which is excessive
 LimitSTACK=1M
 

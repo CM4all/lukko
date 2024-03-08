@@ -1,6 +1,7 @@
 cm4all-lukko (0.17) unstable; urgency=low
 
   * fix file descriptor leak bug
+  * systemd: raise LimitNOFILE to 65536
 
  --   
 
