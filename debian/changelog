@@ -5,7 +5,7 @@ cm4all-lukko (0.18) unstable; urgency=low
   * session channel: send EOF only if both stdout and stderr have ended
   * translation: add packet ANALYTICS_ID
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 22 Mar 2024 09:59:43 +0100
 
 cm4all-lukko (0.17) unstable; urgency=low
 
