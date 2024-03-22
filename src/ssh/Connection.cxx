@@ -591,6 +591,7 @@ Connection::OnBufferedWrite()
 		break;
 
 	case Output::FlushResult::MORE:
+		socket.ScheduleWrite();
 		OnWriteBlocked();
 		break;
 
