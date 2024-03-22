@@ -388,7 +388,7 @@ SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 try {
 	if (events == PipeEvent::HANGUP) {
 		tty.Close();
-		SendEof();
+		MaybeSendEof();
 		CloseIfInactive();
 		return;
 	}
@@ -417,7 +417,7 @@ try {
 			CancelRead();
 	} else {
 		tty.Close();
-		SendEof();
+		MaybeSendEof();
 		CloseIfInactive();
 	}
 } catch (...) {
@@ -452,7 +452,7 @@ try {
 			CancelRead();
 	} else {
 		stdout_pipe.Close();
-		SendEof();
+		MaybeSendEof();
 		CloseIfInactive();
 	}
 } catch (...) {
@@ -477,6 +477,7 @@ try {
 			CancelRead();
 	} else {
 		stderr_pipe.Close();
+		MaybeSendEof();
 		CloseIfInactive();
 	}
 } catch (...) {

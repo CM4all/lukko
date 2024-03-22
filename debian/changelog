@@ -1,6 +1,7 @@
 cm4all-lukko (0.18) unstable; urgency=low
 
   * session channel: fix assertion failure after send window exhaustion
+  * session channel: send EOF only if both stdout and stderr have ended
   * translation: add packet ANALYTICS_ID
 
  --   

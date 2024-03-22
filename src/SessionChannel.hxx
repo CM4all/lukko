@@ -62,6 +62,21 @@ private:
 			child;
 	}
 
+	/**
+	 * Call SSH::Channel::SendEof() if all data sources have ended.
+	 *
+	 * Throws on error.
+	 *
+	 * @return true if SendEof() was called
+	 */
+	bool MaybeSendEof() {
+		if (stdout_pipe.IsDefined() || stderr_pipe.IsDefined() || tty.IsDefined())
+			return false;
+
+		SendEof();
+		return true;
+	}
+
 	void CloseIfInactive();
 
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
