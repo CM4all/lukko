@@ -71,8 +71,15 @@ private:
 	bool Exec(const char *cmd);
 
 	void CancelRead() noexcept {
-		stdout_pipe.CancelRead();
-		stderr_pipe.CancelRead();
+		/* stdout/stderr must be canceled completely to avoid
+		   getting HANGUP events which we can't handle; but
+		   only cancel reading on a tty because a tty is
+		   bidirectional and we may still want to get WRITE
+		   events */
+
+		stdout_pipe.Cancel();
+		stderr_pipe.Cancel();
+
 		tty.CancelRead();
 	}
 
