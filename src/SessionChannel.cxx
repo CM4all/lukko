@@ -388,8 +388,7 @@ SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 try {
 	if (events == PipeEvent::HANGUP) {
 		tty.Close();
-		MaybeSendEof();
-		CloseIfInactive();
+		MaybeSendEofAndClose();
 		return;
 	}
 
@@ -417,8 +416,7 @@ try {
 			CancelRead();
 	} else {
 		tty.Close();
-		MaybeSendEof();
-		CloseIfInactive();
+		MaybeSendEofAndClose();
 	}
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());
@@ -452,8 +450,7 @@ try {
 			CancelRead();
 	} else {
 		stdout_pipe.Close();
-		MaybeSendEof();
-		CloseIfInactive();
+		MaybeSendEofAndClose();
 	}
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());
@@ -477,8 +474,7 @@ try {
 			CancelRead();
 	} else {
 		stderr_pipe.Close();
-		MaybeSendEof();
-		CloseIfInactive();
+		MaybeSendEofAndClose();
 	}
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());

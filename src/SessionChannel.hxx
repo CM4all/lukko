@@ -79,6 +79,14 @@ private:
 
 	void CloseIfInactive();
 
+	/**
+	 * Combination of MaybeSendEof() and CloseIfInactive().
+	 */
+	void MaybeSendEofAndClose() {
+		if (MaybeSendEof())
+			CloseIfInactive();
+	}
+
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
 	void PrepareChildProcess(PreparedChildProcess &p, bool sftp);
