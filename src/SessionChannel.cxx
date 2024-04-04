@@ -13,6 +13,7 @@
 #include "ssh/TerminalMode.hxx"
 #include "system/Error.hxx"
 #include "net/ToString.hxx"
+#include "io/FdHolder.hxx"
 #include "io/Pipe.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -138,7 +139,9 @@ LoginShellName(const char *shell) noexcept
 }
 
 void
-SessionChannel::PrepareChildProcess(PreparedChildProcess &p, bool sftp)
+SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
+				    FdHolder &close_fds,
+				    bool sftp)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
@@ -163,12 +166,12 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p, bool sftp)
 				     local_host, local_address.GetPort()));
 	}
 
-	c.PrepareChildProcess(p, sftp);
+	c.PrepareChildProcess(p, close_fds, sftp);
 
 	if (tty.IsDefined()) {
 		assert(!sftp);
 
-		p.stdin_fd = p.stdout_fd = p.stderr_fd = slave_tty.Release();
+		p.stdin_fd = p.stdout_fd = p.stderr_fd = close_fds.Insert(std::move(slave_tty));
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
 	} else {
@@ -182,9 +185,9 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p, bool sftp)
 		fcntl(stdout_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 		fcntl(stdin_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
-		p.SetStdin(std::move(stdin_r));
-		p.SetStdout(std::move(stdout_w));
-		p.SetStderr(std::move(stderr_w));
+		p.stdin_fd = close_fds.Insert(std::move(stdin_r));
+		p.stdout_fd = close_fds.Insert(std::move(stdout_w));
+		p.stderr_fd = close_fds.Insert(std::move(stderr_w));
 
 		stdin_w.SetNonBlocking();
 		stdin_pipe.Open(stdin_w.Release());
@@ -224,9 +227,10 @@ SessionChannel::Exec(const char *cmd)
 	if (!c.IsExecAllowed())
 		return false;
 
+	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	PrepareChildProcess(p, false);
+	PrepareChildProcess(p, close_fds, false);
 
 	const char *const shell = c.GetShell();
 
@@ -308,9 +312,11 @@ SessionChannel::OnRequest(std::string_view request_type,
 			UniqueFileDescriptor sftp_server;
 			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
 
+			FdHolder close_fds;
 			PreparedChildProcess p;
 
-			PrepareChildProcess(p, sftp_server.IsDefined());
+			PrepareChildProcess(p, close_fds,
+					    sftp_server.IsDefined());
 
 			if (sftp_server.IsDefined()) {
 				p.exec_fd = sftp_server;

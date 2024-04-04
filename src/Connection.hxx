@@ -21,6 +21,7 @@
 namespace Co { template<typename T> class Task; }
 struct TranslateResponse;
 struct PreparedChildProcess;
+class FdHolder;
 class Instance;
 class Listener;
 class SocketForwardListener;
@@ -165,6 +166,7 @@ public:
 	 * rootfs?
 	 */
 	void PrepareChildProcess(PreparedChildProcess &p,
+				 FdHolder &close_fds,
 				 bool sftp) const noexcept;
 
 	using SSH::Connection::DoDisconnect;

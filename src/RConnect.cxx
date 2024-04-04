@@ -89,7 +89,7 @@ SpawnNsResolveConnectTCPFunction(SpawnService &spawn_service,
 	p.forbid_multicast = options.forbid_multicast;
 	p.forbid_bind = options.forbid_bind;
 #endif // HAVE_LIBSECCOMP
-	p.SetControl(std::move(control_socket_for_child));
+	p.control_fd = control_socket_for_child.ToFileDescriptor();
 
 	return {
 		std::move(control_socket),

@@ -240,12 +240,13 @@ Connection::GetShell() const noexcept
 
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
+				[[maybe_unused]] FdHolder &close_fds,
 				[[maybe_unused]] bool sftp) const noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
 		(sftp ? translation->sftp_response : translation->response)
-			.child_options.CopyTo(p);
+			.child_options.CopyTo(p, close_fds);
 
 		if (p.cgroup != nullptr && p.cgroup->name != nullptr &&
 		    p.cgroup_session == nullptr) {

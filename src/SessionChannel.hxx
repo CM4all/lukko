@@ -14,6 +14,7 @@
 
 struct PreparedChildProcess;
 class ChildProcessHandle;
+class FdHolder;
 class Logger;
 
 class SessionChannel final : public SSH::BufferedChannel, ExitListener
@@ -89,7 +90,9 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value) noexcept;
 
-	void PrepareChildProcess(PreparedChildProcess &p, bool sftp);
+	void PrepareChildProcess(PreparedChildProcess &p,
+				 FdHolder &close_fds,
+				 bool sftp);
 	void SpawnChildProcess(PreparedChildProcess &&p);
 	bool Exec(const char *cmd);
 

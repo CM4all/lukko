@@ -12,6 +12,7 @@
 #include "net/SocketError.hxx"
 #include "net/SocketPair.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "io/FdHolder.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/Task.hxx"
@@ -47,18 +48,20 @@ SpawnOpen(const Connection &ssh_connection)
 	// TODO this is a horrible and inefficient kludge
 	auto [control_socket, control_socket_for_child] = CreateSocketPair(SOCK_SEQPACKET);
 
+	FdHolder close_fds;
+
 	PreparedChildProcess p;
 	p.exec_function = OpenFunction;
 	p.args.push_back("dummy");
 
 	/* using SFTP mode because this (usually) mounts an empty
 	   rootfs; minimalism! */
-	ssh_connection.PrepareChildProcess(p, true);
+	ssh_connection.PrepareChildProcess(p, close_fds, true);
 
 	if (const char *home = p.ns.mount.GetJailedHome())
 		p.chdir = home;
 
-	p.SetControl(std::move(control_socket_for_child));
+	p.control_fd = control_socket_for_child.ToFileDescriptor();
 
 	return {
 		std::move(control_socket),
