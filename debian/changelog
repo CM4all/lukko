@@ -1,6 +1,6 @@
 cm4all-lukko (0.19) unstable; urgency=low
 
-  * 
+  * quote client-specified strings for logging
 
  --   
 

@@ -370,7 +370,7 @@ Connection::CreateChannel(std::string_view channel_type,
 			  std::span<const std::byte> payload,
 			  CancellablePointer &cancel_ptr)
 {
-	logger.Fmt(1, "ChannelOpen type={} local_channel={} peer_channel={}"sv,
+	logger.Fmt(1, "ChannelOpen type={:?} local_channel={} peer_channel={}"sv,
 		   channel_type, init.local_channel, init.peer_channel);
 
 	if (channel_type == "session"sv) {
@@ -440,7 +440,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	const auto service_name = d.ReadString();
 	const auto method_name = d.ReadString();
 
-	logger.Fmt(1, "Userauth '{}' service='{}' method='{}'"sv,
+	logger.Fmt(1, "Userauth {:?} service={:?} method={:?}"sv,
 		   new_username, service_name, method_name);
 
 	if (service_name != "ssh-connection"sv) {
@@ -503,12 +503,12 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		if (response.status != HttpStatus{}) {
 			if (password.empty())
-				logger.Fmt(1, "Rejected auth for user {}{}{}"sv,
+				logger.Fmt(1, "Rejected auth for user {:?}{}{:?}"sv,
 					   new_username,
 					   response.message != nullptr ? ": "sv : ""sv,
 					   response.message != nullptr ? response.message : "");
 			else
-				logger.Fmt(1, "Failed password for user {}{}{}"sv,
+				logger.Fmt(1, "Failed password for user {:?}{}{:?}"sv,
 					   new_username,
 					   response.message != nullptr ? ": "sv : ""sv,
 					   response.message != nullptr ? response.message : "");
@@ -548,7 +548,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto public_key_algorithm = d.ReadString();
 		const auto public_key_blob = d.ReadLengthEncoded();
 
-		logger.Fmt(1, "  public_key_algorithm='{}'"sv,
+		logger.Fmt(1, "  public_key_algorithm={:?}"sv,
 			   public_key_algorithm);
 
 		if (!co_await IsAcceptedPublicKey(public_key_blob)) {
@@ -600,7 +600,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			}
 		}
 
-		logger.Fmt(1, "Accepted publickey for {}: {} {}"sv,
+		logger.Fmt(1, "Accepted publickey for {:?}: {} {}"sv,
 			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
 	} else if (method_name == "hostbased"sv) {
@@ -614,7 +614,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto signature = d.ReadLengthEncoded();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  hostbased public_key_algorithm='{}' client_host_name='{}' client_user_name='{}'"sv,
+		logger.Fmt(1, "  hostbased public_key_algorithm={:?} client_host_name={:?} client_user_name={:?}"sv,
 			   public_key_algorithm, client_host_name, client_user_name);
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
@@ -653,14 +653,14 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			co_return;
 		}
 
-		logger.Fmt(1, "Accepted hostkey for {}: {} {}"sv,
+		logger.Fmt(1, "Accepted hostkey for {:?}: {} {}"sv,
 			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {
 		/* the password was successfully verified by the
 		   translation server */
-		logger.Fmt(1, "Accepted password for {}"sv,
+		logger.Fmt(1, "Accepted password for {:?}"sv,
 			   new_username);
 #endif // ENABLE_TRANSLATION
 	} else {
@@ -742,7 +742,7 @@ Co::EagerTask<bool>
 Connection::HandleGlobalRequest(std::string_view request_name,
 				std::span<const std::byte> request_specific_data)
 {
-	logger.Fmt(1, "GlobalRequest name={}"sv, request_name);
+	logger.Fmt(1, "GlobalRequest name={:?}"sv, request_name);
 
 	if (request_name == "tcpip-forward"sv) {
 		if (!IsBindingAllowed())

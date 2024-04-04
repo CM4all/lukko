@@ -271,7 +271,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
-	logger.Fmt(1, "ChannelRequest '{}'"sv, request_type);
+	logger.Fmt(1, "ChannelRequest {:?}"sv, request_type);
 
 	if (WasStarted())
 		/* the program was already started, and there's no
@@ -283,7 +283,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string command{d.ReadString()};
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  exec '{}'"sv, command);
+		logger.Fmt(1, "  exec {:?}"sv, command);
 
 		return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
@@ -296,7 +296,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string_view subsystem_name{d.ReadString()};
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  subsystem '{}'"sv, subsystem_name);
+		logger.Fmt(1, "  subsystem {:?}"sv, subsystem_name);
 
 		if (subsystem_name == "sftp"sv) {
 			// TODO repeat translation request with service="sftp"
