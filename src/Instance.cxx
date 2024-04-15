@@ -9,7 +9,6 @@
 #include "key/Key.hxx"
 #include "spawn/Client.hxx"
 #include "thread/Pool.hxx"
-#include "event/net/MultiUdpListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/ByteOrder.hxx"
