@@ -291,9 +291,6 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
-		if (!c.GetAuthorizedKeyOptions().command.empty())
-			return false;
-
 		return Exec(nullptr);
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};

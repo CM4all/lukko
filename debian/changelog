@@ -1,6 +1,7 @@
 cm4all-lukko (0.19) unstable; urgency=low
 
   * ssh: pad with random data
+  * session channel: allow shell request with forced command
   * authorized_keys: accept option "no-user-rc"
   * quote client-specified strings for logging
 
