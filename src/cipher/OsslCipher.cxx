@@ -40,7 +40,7 @@ OsslCipher::OsslCipher(const EVP_CIPHER &cipher,
 		       std::size_t _block_size,
 		       std::size_t _auth_size,
 		       std::span<const std::byte> key,
-		       [[maybe_unused]] std::span<const std::byte> iv,
+		       std::span<const std::byte> iv,
 		       bool do_encrypt)
 	:Cipher(_block_size, _auth_size, _auth_size > 0),
 	 ctx(EVP_CIPHER_CTX_new())
