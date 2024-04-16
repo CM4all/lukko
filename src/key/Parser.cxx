@@ -51,7 +51,6 @@ SkipPrefix(std::span<const std::byte> &s, std::string_view prefix) noexcept
 static std::unique_ptr<SecretKey>
 ParseSSHAgentKey(SSH::Deserializer &d)
 {
-	//SSH::Deserializer d{src};
 	const auto key_type = d.ReadString();
 
 	if (key_type == "ssh-ed25519"sv) {
