@@ -9,6 +9,7 @@
 
 #include <algorithm> // for std::copy_n()
 #include <stdexcept>
+#include <utility> // for std::cmp_less()
 
 namespace SSH {
 
@@ -48,7 +49,9 @@ OsslCipher::OsslCipher(const EVP_CIPHER &cipher,
 	if (ctx == nullptr)
 		throw SslError{};
 
-	// TODO iv size check?
+	if (std::cmp_less(iv.size(), EVP_CIPHER_get_iv_length(&cipher)))
+	    throw std::invalid_argument{"Bad IV"};
+
 	if (!EVP_CipherInit(ctx.get(), &cipher, nullptr,
 			    reinterpret_cast<const unsigned char *>(iv.data()),
 			    do_encrypt))
