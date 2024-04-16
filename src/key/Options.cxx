@@ -15,6 +15,18 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 
 		command = std::move(value);
 		return true;
+	} else if (name == "port-forwarding"sv) {
+		if (!value.empty())
+			return false;
+
+		no_port_forwarding = false;
+		return true;
+	} else if (name == "no-port-forwarding"sv) {
+		if (!value.empty())
+			return false;
+
+		no_port_forwarding = true;
+		return true;
 	} else if (name == "pty"sv) {
 		if (!value.empty())
 			return false;
@@ -31,6 +43,7 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 		if (!value.empty())
 			return false;
 
+		no_port_forwarding = true;
 		no_pty = true;
 		return true;
 	} else if (name == "no-user-rc"sv) {

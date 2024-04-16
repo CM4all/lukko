@@ -12,6 +12,8 @@
 struct AuthorizedKeyOptions {
 	std::string command;
 
+	bool no_port_forwarding = false;
+
 	bool no_pty = false;
 
 	/**

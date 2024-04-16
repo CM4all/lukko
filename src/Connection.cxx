@@ -163,6 +163,9 @@ Connection::IsSftpOnly() const noexcept
 bool
 Connection::IsForwardingAllowed() const noexcept
 {
+	if (authorized_key_options.no_port_forwarding)
+		return false;
+
 	if (IsSftpOnly())
 		return false;
 
