@@ -28,6 +28,9 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 		no_pty = true;
 		return true;
 	} else if (name == "restrict"sv) {
+		if (!value.empty())
+			return false;
+
 		no_pty = true;
 		return true;
 	} else if (name == "no-user-rc"sv) {
