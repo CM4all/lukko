@@ -49,6 +49,12 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 	} else if (name == "user-rc"sv || name == "no-user-rc"sv) {
 		// not applicable, ignore silently
 		return true;
+	} else if (name == "agent-forwarding"sv ||
+		   name == "no-agent-forwarding"sv ||
+		   name == "X11-forwarding"sv ||
+		   name == "no-X11-forwarding"sv) {
+		// not implemented, ignore silently
+		return true;
 	} else
 		return false;
 }
