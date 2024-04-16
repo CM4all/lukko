@@ -28,11 +28,6 @@ jobs:
         with:
           submodules: recursive
 
-      - id: cache-ccache
-        uses: hendrikmuhs/ccache-action@v1
-        with:
-          key: ${{github.job}}
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -42,6 +37,7 @@ jobs:
             python3-paramiko \
             ruby-net-ssh \
             meson \
+            ccache \
             libgtest-dev \
             libcap-dev \
             libseccomp-dev \
@@ -49,6 +45,11 @@ jobs:
             libavahi-client-dev \
             libmd-dev \
             libsodium-dev
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{github.job}}
 
       - name: Configure
         run: |
