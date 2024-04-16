@@ -18,10 +18,10 @@ public:
 		WriteU8(static_cast<uint8_t>(msg));
 	}
 
-	constexpr std::size_t Pad(std::size_t block_size, std::size_t exclude) {
+	std::size_t Pad(std::size_t block_size, std::size_t exclude) {
 		const std::size_t padding_length = Padding(size() - exclude, block_size);
 		// TODO more padding?
-		WriteZero(padding_length); // TODO should be random
+		WriteRandom(padding_length);
 		return padding_length;
 	}
 

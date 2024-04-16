@@ -79,6 +79,8 @@ public:
 		std::fill(s.begin(), s.end(), std::byte{});
 	}
 
+	void WriteRandom(std::size_t size);
+
 	constexpr void WriteN(std::span<const std::byte> src) {
 		auto dest = WriteN(src.size());
 		std::copy(src.begin(), src.end(), dest.begin());

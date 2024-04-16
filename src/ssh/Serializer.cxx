@@ -6,6 +6,8 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
 
+#include <sodium/randombytes.h>
+
 namespace SSH {
 
 Serializer::Serializer() noexcept
@@ -20,6 +22,17 @@ Serializer::~Serializer() noexcept
 {
 	if (area != nullptr)
 		fb_pool_get().Free(*area, buffer.data());
+}
+
+void
+Serializer::WriteRandom(std::size_t size)
+{
+	const auto s = WriteN(size);
+
+	/* this invokes the getrandom() system call; TODO: switch to a
+	   cheaper random source (this is only for padding, not for
+	   generating keys) */
+	randombytes_buf(s.data(), s.size());
 }
 
 } // namespace SSH

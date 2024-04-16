@@ -1,5 +1,6 @@
 cm4all-lukko (0.19) unstable; urgency=low
 
+  * ssh: pad with random data
   * quote client-specified strings for logging
 
  --   
