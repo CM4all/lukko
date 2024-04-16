@@ -77,7 +77,7 @@ ParseSSHAgentKey(SSH::Deserializer &d)
 		if (ecdsa_curve_name != "nistp256"sv)
 			throw std::invalid_argument{"Unsupported ECDSA curve"};
 
-		constexpr std::string_view curve_name = "P-256";
+		constexpr std::string_view curve_name = "P-256"sv;
 
 		const auto q = d.ReadLengthEncoded();
 		const auto d_ = d.ReadLengthEncoded();
@@ -167,7 +167,7 @@ try {
 		if (ecdsa_curve_name != "nistp256"sv)
 			throw std::invalid_argument{"Unsupported ECDSA curve"};
 
-		constexpr std::string_view curve_name = "P-256";
+		constexpr std::string_view curve_name = "P-256"sv;
 
 		const auto q = d.ReadLengthEncoded();
 
