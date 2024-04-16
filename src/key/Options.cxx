@@ -46,7 +46,7 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 		no_port_forwarding = true;
 		no_pty = true;
 		return true;
-	} else if (name == "no-user-rc"sv) {
+	} else if (name == "user-rc"sv || name == "no-user-rc"sv) {
 		// not applicable, ignore silently
 		return true;
 	} else
