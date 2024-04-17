@@ -88,6 +88,11 @@ try {
 		return;
 	}
 
+	if (events & SocketEvent::WRITE) {
+		socket.CancelWrite();
+		ReadBuffer();
+	}
+
 	/* is the kernel's receive buffer empty? */
 	bool empty = false;
 
