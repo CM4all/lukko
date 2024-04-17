@@ -5,14 +5,12 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "Listener.hxx"
-#include "Connection.hxx"
 #include "key/Key.hxx"
 #include "spawn/Client.hxx"
 #include "thread/Pool.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/DeleteDisposer.hxx"
 
 #ifdef ENABLE_CONTROL
 #include "event/net/control/Server.hxx"
@@ -137,18 +135,6 @@ Instance::AddListener(const ListenerConfig &config)
 }
 
 void
-Instance::AddConnection(Listener &listener, UniqueSocketDescriptor fd,
-			SocketAddress peer_address) noexcept
-{
-	try {
-		auto *c = new Connection(*this, listener, std::move(fd), peer_address);
-		connections.push_front(*c);
-	} catch (...) {
-		logger(1, std::current_exception());
-	}
-}
-
-void
 Instance::OnExit() noexcept
 {
 	if (should_exit)
@@ -171,8 +157,6 @@ Instance::OnExit() noexcept
 	DisableZeroconf();
 	avahi_client.reset();
 #endif // HAVE_AVAHI
-
-	connections.clear_and_dispose(DeleteDisposer{});
 
 	listeners.clear();
 

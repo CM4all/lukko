@@ -6,10 +6,14 @@
 
 #include "event/net/ServerSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/IntrusiveList.hxx"
 #include "config.h"
+
+#include <string_view>
 
 struct ListenerConfig;
 class Instance;
+class Connection;
 class RootLogger;
 
 class Listener final : ServerSocket {
@@ -23,8 +27,11 @@ class Listener final : ServerSocket {
 
 	const RootLogger &logger;
 
+	IntrusiveList<Connection> connections;
+
 public:
 	Listener(Instance &_instance, const ListenerConfig &_config);
+	~Listener() noexcept;
 
 #ifdef ENABLE_TRANSLATION
 	std::string_view GetTag() const noexcept {
@@ -37,6 +44,8 @@ public:
 	}
 
 	using ServerSocket::GetLocalAddress;
+
+	void TerminateChildren(std::string_view child_tag) noexcept;
 
 private:
 	/* virtual methods from class ServerSocket */

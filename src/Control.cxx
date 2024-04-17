@@ -3,7 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Instance.hxx"
-#include "Connection.hxx"
+#include "Listener.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/SpanCast.hxx"
@@ -74,11 +74,8 @@ Instance::OnControlPacket([[maybe_unused]] BengControl::Server &control_server,
 		if (payload.empty())
 			break;
 
-		connections.remove_and_dispose_if([tag = ToStringView(payload)](const Connection &c){
-			return c.HasTag(tag);
-		}, [](Connection *c){
-			c->Terminate();
-		});
+		for (auto &i : listeners)
+			i.TerminateChildren(ToStringView(payload));
 #endif // ENABLE_TRANSLATION
 		break;
 	}

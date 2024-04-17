@@ -10,7 +10,6 @@
 #include "event/ShutdownListener.hxx"
 #include "event/SignalEvent.hxx"
 #include "io/Logger.hxx"
-#include "util/IntrusiveList.hxx"
 #include "config.h"
 
 #ifdef HAVE_AVAHI
@@ -32,7 +31,6 @@ namespace BengControl { class Server; }
 class SecretKey;
 class UniqueSocketDescriptor;
 class Listener;
-class Connection;
 class SpawnService;
 class SpawnServerClient;
 namespace Avahi { class Client; class Publisher; struct Service; }
@@ -81,8 +79,6 @@ class Instance final
 
 	std::forward_list<Listener> listeners;
 
-	IntrusiveList<Connection> connections;
-
 	std::unique_ptr<SpawnServerClient> spawn_service;
 
 public:
@@ -130,8 +126,6 @@ public:
 #endif // HAVE_AVAHI
 
 	void AddListener(const ListenerConfig &config);
-	void AddConnection(Listener &listener, UniqueSocketDescriptor s,
-			   SocketAddress peer_address) noexcept;
 
 	void Run() noexcept {
 		event_loop.Run();
