@@ -3,6 +3,7 @@
 // author: Max Kellermann <mk@cm4all.com>
 
 #include "Connection.hxx"
+#include "IdentificationString.hxx"
 #include "Input.hxx"
 #include "Output.hxx"
 #include "KexInterface.hxx"
@@ -26,13 +27,10 @@
 #include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
-#include "version.h"
 
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
-
-static constexpr auto g_server_version = "SSH-2.0-CM4all_" VERSION " CM4all\r\n"sv;
 
 static void
 SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
@@ -56,7 +54,7 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
 		    *this);
 	socket.ScheduleRead();
 
-	if (socket.DirectWrite(AsBytes(g_server_version)) < 0)
+	if (socket.DirectWrite(AsBytes(IDENTIFICATION_STRING)) < 0)
 		throw MakeSocketError("Failed to send VersionExchange");
 }
 
@@ -194,7 +192,7 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
 
 	const std::string_view client_version = peer_version;
-	auto server_version = g_server_version;
+	auto server_version = IDENTIFICATION_STRING;
 	server_version.remove_suffix(2); // remove CR LF
 
 	const std::span<const std::byte> client_kexinit = peer_kexinit;
@@ -419,7 +417,7 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
 
-	auto client_version = g_server_version;
+	auto client_version = IDENTIFICATION_STRING;
 	client_version.remove_suffix(2); // remove CR LF
 
 	const std::span<const std::byte> client_kexinit = my_kexinit;
