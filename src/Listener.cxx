@@ -8,6 +8,7 @@
 #include "Connection.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "config.h"
 
 #include <sys/socket.h>
 
@@ -44,6 +45,8 @@ Listener::OnAcceptError(std::exception_ptr ep) noexcept
 	logger(1, "TCP accept error: ", ep);
 }
 
+#ifdef ENABLE_TRANSLATION
+
 void
 Listener::TerminateChildren(std::string_view child_tag) noexcept
 {
@@ -53,3 +56,5 @@ Listener::TerminateChildren(std::string_view child_tag) noexcept
 		c->Terminate();
 	});
 }
+
+#endif

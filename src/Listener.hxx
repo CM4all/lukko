@@ -45,7 +45,9 @@ public:
 
 	using ServerSocket::GetLocalAddress;
 
+#ifdef ENABLE_TRANSLATION
 	void TerminateChildren(std::string_view child_tag) noexcept;
+#endif
 
 private:
 	/* virtual methods from class ServerSocket */
