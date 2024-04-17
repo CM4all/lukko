@@ -64,7 +64,7 @@ class LukkoConfigParser final : public NestedConfigParser {
 		ListenerConfig config;
 
 	public:
-		explicit Listener(Config &_parent):parent(_parent) {}
+		explicit Listener(Config &_parent) noexcept:parent(_parent) {}
 
 	protected:
 		/* virtual methods from class ConfigParser */

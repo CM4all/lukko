@@ -21,7 +21,7 @@ struct ListenerConfig : SocketConfig {
 
 	AllocatedSocketAddress proxy_to;
 
-	ListenerConfig() {
+	ListenerConfig() noexcept {
 		listen = 256;
 		tcp_no_delay = true;
 	}
@@ -34,11 +34,11 @@ struct Config {
 
 #ifdef ENABLE_CONTROL
 	struct ControlListener : SocketConfig {
-		ControlListener() {
+		ControlListener() noexcept {
 			pass_cred = true;
 		}
 
-		explicit ControlListener(SocketAddress _bind_address)
+		explicit ControlListener(SocketAddress _bind_address) noexcept
 			:SocketConfig(_bind_address) {
 			pass_cred = true;
 		}
