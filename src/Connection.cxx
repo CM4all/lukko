@@ -34,6 +34,7 @@
 #include "co/InvokeTask.hxx"
 #include "co/Task.hxx"
 #include "co/Sleep.hxx"
+#include "time/Cast.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
@@ -451,16 +452,23 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	logger.Fmt(1, "Userauth {:?} service={:?} method={:?}"sv,
 		   new_username, service_name, method_name);
 
+	if (const auto delay = accounting.GetDelay(); delay.count() > 0) {
+		logger.Fmt(1, "Userauth tarpit {}s", ToFloatSeconds(delay));
+		co_await Co::Sleep{GetEventLoop(), delay};
+	}
+
 	if (service_name != "ssh-connection"sv) {
 		SendPacket(SSH::MakeUserauthFailure({}, false));
 		co_return;
 	}
 
-	if (!IsValidUsername(new_username))
+	if (!IsValidUsername(new_username)) {
+		accounting.UpdateTokenBucket(10);
 		throw Disconnect{
 			SSH::DisconnectReasonCode::ILLEGAL_USER_NAME,
 			"Illegal user name"sv,
 		};
+	}
 
 	std::string_view auth_methods = "publickey,hostbased"sv;
 
@@ -483,9 +491,12 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			}
 
 			if (password.empty()) {
+				accounting.UpdateTokenBucket(10);
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
+
+			accounting.UpdateTokenBucket(1);
 		}
 
 		Allocator alloc;
@@ -503,6 +514,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 					       new_username, {});
 		} catch (...) {
 			logger(1, "Translation server error: ", std::current_exception());
+			accounting.UpdateTokenBucket(2);
 			throw Disconnect{
 				SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
 				"Configuration server failed"sv,
@@ -510,6 +522,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		if (response.status != HttpStatus{}) {
+			accounting.UpdateTokenBucket(8);
+
 			if (password.empty())
 				logger.Fmt(1, "Rejected auth for user {:?}{}{:?}"sv,
 					   new_username,
@@ -558,6 +572,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		logger.Fmt(1, "  public_key_algorithm={:?}"sv,
 			   public_key_algorithm);
+
+		accounting.UpdateTokenBucket(0.2);
 
 		if (!co_await IsAcceptedPublicKey(public_key_blob)) {
 			co_await fail_sleep;
@@ -626,6 +642,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			   public_key_algorithm, client_host_name, client_user_name);
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
+			accounting.UpdateTokenBucket(10);
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -672,6 +689,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			   new_username);
 #endif // ENABLE_TRANSLATION
 	} else {
+		accounting.UpdateTokenBucket(method_name == "none"sv ? 0.1 : 5.0);
 		co_await fail_sleep;
 		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 		co_return;

@@ -7,6 +7,7 @@
 #include "event/FarTimerEvent.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
+#include "util/TokenBucket.hxx"
 
 #include <cstdint>
 
@@ -32,6 +33,15 @@ public:
 
 	AccountedClientConnection(const AccountedClientConnection &) = delete;
 	AccountedClientConnection &operator=(const AccountedClientConnection &) = delete;
+
+	PerClientAccounting *GetPerClient() const noexcept {
+		return per_client;
+	}
+
+	void UpdateTokenBucket(double size) noexcept;
+
+	[[gnu::pure]]
+	Event::Duration GetDelay() const noexcept;
 };
 
 class PerClientAccounting final
@@ -55,6 +65,19 @@ class PerClientAccounting final
 
 	Event::TimePoint expires;
 
+	/**
+	 * After this time point, the delay can be cleared.
+	 */
+	Event::TimePoint tarpit_until;
+
+	/**
+	 * The current delay (for the server greeting and
+	 * authentication).
+	 */
+	Event::Duration delay;
+
+	TokenBucket token_bucket;
+
 public:
 	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
 
@@ -64,6 +87,12 @@ public:
 	void AddConnection(AccountedClientConnection &c) noexcept;
 	void RemoveConnection(AccountedClientConnection &c) noexcept;
 
+	void UpdateTokenBucket(double size) noexcept;
+
+	Event::Duration GetDelay() const noexcept {
+		return delay;
+	}
+
 private:
 	[[gnu::pure]]
 	Event::TimePoint Now() const noexcept;
@@ -71,6 +100,8 @@ private:
 
 class ClientAccountingMap {
 	const std::size_t max_connections;
+
+	const bool tarpit;
 
 	using Map = IntrusiveHashSet<PerClientAccounting, 16384,
 				     IntrusiveHashSetOperators<PerClientAccounting,
@@ -82,8 +113,10 @@ class ClientAccountingMap {
 	FarTimerEvent cleanup_timer;
 
 public:
-	ClientAccountingMap(EventLoop &event_loop, std::size_t _max_connections) noexcept
+	ClientAccountingMap(EventLoop &event_loop, std::size_t _max_connections,
+			    bool _tarpit) noexcept
 		:max_connections(_max_connections),
+		 tarpit(_tarpit),
 		 cleanup_timer(event_loop, BIND_THIS_METHOD(OnCleanupTimer)) {}
 
 	auto &GetEventLoop() const noexcept {

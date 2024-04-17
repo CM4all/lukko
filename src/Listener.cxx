@@ -5,12 +5,13 @@
 #include "Listener.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
+#include "DelayedConnection.hxx"
 #include "Connection.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
+#include "time/Cast.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "config.h"
 
 #include <sys/socket.h>
 
@@ -23,9 +24,10 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 proxy_to(config.proxy_to),
 	 logger(instance.GetLogger())
 {
-	if (config.max_connections_per_ip > 0)
+	if (config.max_connections_per_ip > 0 || config.tarpit)
 		client_accounting = std::make_unique<ClientAccountingMap>(_instance.GetEventLoop(),
-									  config.max_connections_per_ip);
+									  config.max_connections_per_ip,
+									  config.tarpit);
 }
 
 Listener::~Listener() noexcept
@@ -41,11 +43,22 @@ Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		? client_accounting->Get(peer_address)
 		: nullptr;
 	if (per_client != nullptr) {
+		per_client->UpdateTokenBucket(1);
+
 		if (!per_client->Check()) {
 			/* too many connections from this IP address -
 			   reject the new connection */
 			// TODO send SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS
 			logger.Fmt(1, "Too many connections from {}", peer_address);
+			return;
+		}
+
+		if (const auto delay = per_client->GetDelay(); delay.count() > 0) {
+			logger.Fmt(1, "Connect from {} tarpit {}s", peer_address, ToFloatSeconds(delay));
+			auto *c = new DelayedConnection(instance, *this,
+							*per_client, delay,
+							std::move(connection_fd), peer_address);
+			delayed_connections.push_back(*c);
 			return;
 		}
 	}

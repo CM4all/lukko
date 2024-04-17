@@ -223,6 +223,7 @@ executable(
   'src/Config.cxx',
   'src/Instance.cxx',
   'src/Listener.cxx',
+  'src/DelayedConnection.cxx',
   'src/Connection.cxx',
   'src/SessionChannel.cxx',
   'src/SocketChannel.cxx',

@@ -154,6 +154,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "max_connections_per_ip")) {
 		config.max_connections_per_ip = line.NextPositiveInteger();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "tarpit")) {
+		config.tarpit = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error("Unknown option");
 }

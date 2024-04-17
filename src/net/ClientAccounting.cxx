@@ -7,12 +7,28 @@
 #include "net/SocketAddress.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
+#include "time/Cast.hxx"
 #include "util/DeleteDisposer.hxx"
 
 AccountedClientConnection::~AccountedClientConnection() noexcept
 {
 	if (per_client != nullptr)
 		per_client->RemoveConnection(*this);
+}
+
+void
+AccountedClientConnection::UpdateTokenBucket(double size) noexcept
+{
+	if (per_client != nullptr)
+		per_client->UpdateTokenBucket(size);
+}
+
+Event::Duration
+AccountedClientConnection::GetDelay() const noexcept
+{
+	return per_client != nullptr
+		? per_client->GetDelay()
+		: Event::Duration{};
 }
 
 static constexpr uint_least64_t
@@ -91,6 +107,28 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 
 	if (connections.empty())
 		map.ScheduleCleanup();
+}
+
+void
+PerClientAccounting::UpdateTokenBucket(double size) noexcept
+{
+	constexpr double RATE = 1, BURST = 10;
+	constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{1};
+	constexpr Event::Duration MAX_DELAY = std::chrono::minutes{1};
+	constexpr Event::Duration DELAY_STEP = std::chrono::milliseconds{100};
+
+	const auto now = map.GetEventLoop().SteadyNow();
+	double available = token_bucket.Update(ToFloatSeconds(now.time_since_epoch()), RATE, BURST, size);
+	if (available < 0) {
+		tarpit_until = now + TARPIT_FOR;
+
+		if (delay < MAX_DELAY)
+			delay += DELAY_STEP;
+	} else if (now < tarpit_until) {
+		if (delay > DELAY_STEP)
+			delay -= DELAY_STEP;
+	} else
+		delay = {};
 }
 
 PerClientAccounting *

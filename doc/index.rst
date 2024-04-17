@@ -75,6 +75,11 @@ Known attributes:
 - ``max_connections_per_ip``: specifies the maximum number of
   connections from each IP address.
 
+- ``tarpit``: ``yes`` enables a naive denial-of-service protection:
+  clients that connect too often or fail authentication get delayed
+  responses.  The exact conditions and the delay is currently
+  hard-coded.  The default is ``no``.
+
 
 Control Listener
 ----------------

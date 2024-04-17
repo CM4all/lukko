@@ -14,11 +14,14 @@
 
 struct ListenerConfig;
 class Instance;
+class DelayedConnection;
 class Connection;
 class RootLogger;
 class ClientAccountingMap;
 
 class Listener final : ServerSocket {
+	friend class DelayedConnection;
+
 	Instance &instance;
 
 #ifdef ENABLE_TRANSLATION
@@ -32,6 +35,7 @@ class Listener final : ServerSocket {
 	std::unique_ptr<ClientAccountingMap> client_accounting;
 
 	IntrusiveList<Connection> connections;
+	IntrusiveList<DelayedConnection> delayed_connections;
 
 public:
 	Listener(Instance &_instance, const ListenerConfig &_config);

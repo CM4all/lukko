@@ -24,6 +24,8 @@ struct ListenerConfig : SocketConfig {
 
 	std::size_t max_connections_per_ip = 0;
 
+	bool tarpit = false;
+
 	ListenerConfig() noexcept {
 		listen = 256;
 		tcp_no_delay = true;
