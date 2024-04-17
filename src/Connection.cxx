@@ -525,12 +525,12 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			accounting.UpdateTokenBucket(8);
 
 			if (password.empty())
-				logger.Fmt(1, "Rejected auth for user {:?}{}{:?}"sv,
+				logger.Fmt(1, "Rejected auth for user {:?}{}{}"sv,
 					   new_username,
 					   response.message != nullptr ? ": "sv : ""sv,
 					   response.message != nullptr ? response.message : "");
 			else
-				logger.Fmt(1, "Failed password for user {:?}{}{:?}"sv,
+				logger.Fmt(1, "Failed password for user {:?}{}{}"sv,
 					   new_username,
 					   response.message != nullptr ? ": "sv : ""sv,
 					   response.message != nullptr ? response.message : "");
