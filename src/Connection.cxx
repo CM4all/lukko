@@ -83,6 +83,7 @@ struct Connection::Translation {
 #endif // ENABLE_TRANSLATION
 
 Connection::Connection(Instance &_instance, Listener &_listener,
+		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
 			  SSH::Role::SERVER),
@@ -93,6 +94,9 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 auth_timeout(_instance.GetEventLoop(), BIND_THIS_METHOD(OnAuthTimeout))
 {
 	auth_timeout.Schedule(std::chrono::seconds{10});
+
+	if (per_client != nullptr)
+		per_client->AddConnection(accounting);
 }
 
 Connection::~Connection() noexcept

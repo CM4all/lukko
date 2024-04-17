@@ -6,6 +6,8 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "Connection.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
+#include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "config.h"
@@ -19,7 +21,12 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
 	 proxy_to(config.proxy_to),
-	 logger(instance.GetLogger()) {}
+	 logger(instance.GetLogger())
+{
+	if (config.max_connections_per_ip > 0)
+		client_accounting = std::make_unique<ClientAccountingMap>(_instance.GetEventLoop(),
+									  config.max_connections_per_ip);
+}
 
 Listener::~Listener() noexcept
 {
@@ -30,8 +37,22 @@ void
 Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		   SocketAddress peer_address) noexcept
 {
+	PerClientAccounting *const per_client = client_accounting
+		? client_accounting->Get(peer_address)
+		: nullptr;
+	if (per_client != nullptr) {
+		if (!per_client->Check()) {
+			/* too many connections from this IP address -
+			   reject the new connection */
+			// TODO send SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS
+			logger.Fmt(1, "Too many connections from {}", peer_address);
+			return;
+		}
+	}
+
 	try {
 		auto *c = new Connection(instance, *this,
+					 per_client,
 					 std::move(connection_fd), peer_address);
 		connections.push_front(*c);
 	} catch (...) {

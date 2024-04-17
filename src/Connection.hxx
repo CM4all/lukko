@@ -9,6 +9,7 @@
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/ClientAccounting.hxx"
 #include "io/Logger.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
@@ -24,6 +25,7 @@ struct PreparedChildProcess;
 class FdHolder;
 class Instance;
 class Listener;
+class PerClientAccounting;
 class SocketForwardListener;
 class UniqueFileDescriptor;
 class SpawnService;
@@ -43,6 +45,8 @@ class Connection final
 
 	const AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
+
+	AccountedClientConnection accounting;
 
 	const Logger logger;
 
@@ -95,6 +99,7 @@ class Connection final
 
 public:
 	Connection(Instance &_instance, Listener &_listener,
+		   PerClientAccounting *per_client,
 		   UniqueSocketDescriptor fd, SocketAddress _peer_address);
 	~Connection() noexcept;
 

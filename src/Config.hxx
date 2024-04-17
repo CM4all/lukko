@@ -8,6 +8,7 @@
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
+#include <cstddef>
 #include <forward_list>
 
 struct ListenerConfig : SocketConfig {
@@ -20,6 +21,8 @@ struct ListenerConfig : SocketConfig {
 #endif
 
 	AllocatedSocketAddress proxy_to;
+
+	std::size_t max_connections_per_ip = 0;
 
 	ListenerConfig() noexcept {
 		listen = 256;

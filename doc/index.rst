@@ -72,6 +72,9 @@ Known attributes:
 - ``tag``: a string sent to the :ref:`translation server <ts>` in a
   ``LISTENER_TAG`` packet.
 
+- ``max_connections_per_ip``: specifies the maximum number of
+  connections from each IP address.
+
 
 Control Listener
 ----------------

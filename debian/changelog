@@ -8,6 +8,7 @@ cm4all-lukko (0.19) unstable; urgency=low
   * authorized_keys: ignore options "no-user-rc", "no-agent-forwarding",
     "no-X11-forwarding"
   * quote client-specified strings for logging
+  * add configuration setting "max_connections_per_ip"
 
  --   
 

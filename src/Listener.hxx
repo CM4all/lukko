@@ -9,12 +9,14 @@
 #include "util/IntrusiveList.hxx"
 #include "config.h"
 
+#include <memory>
 #include <string_view>
 
 struct ListenerConfig;
 class Instance;
 class Connection;
 class RootLogger;
+class ClientAccountingMap;
 
 class Listener final : ServerSocket {
 	Instance &instance;
@@ -26,6 +28,8 @@ class Listener final : ServerSocket {
 	const SocketAddress proxy_to;
 
 	const RootLogger &logger;
+
+	std::unique_ptr<ClientAccountingMap> client_accounting;
 
 	IntrusiveList<Connection> connections;
 

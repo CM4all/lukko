@@ -151,6 +151,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 		// TODO experimental feature
 		config.proxy_to = ParseSocketAddress(line.ExpectValueAndEnd(),
 						     22, false);
+	} else if (StringIsEqual(word, "max_connections_per_ip")) {
+		config.max_connections_per_ip = line.NextPositiveInteger();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error("Unknown option");
 }
