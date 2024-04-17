@@ -13,7 +13,6 @@
 #include "net/StaticSocketAddress.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/PrintException.hxx"
 
 #ifdef ENABLE_CONTROL
 #include "event/net/control/Server.hxx"
@@ -190,7 +189,7 @@ Instance::OnReload(int) noexcept
 bool
 Instance::OnAvahiError(std::exception_ptr e) noexcept
 {
-	PrintException(e);
+	logger(1, e);
 	return true;
 }
 

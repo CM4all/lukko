@@ -6,7 +6,6 @@
 #include "Connection.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/PrintException.hxx"
 #include "util/SpanCast.hxx"
 
 #ifdef HAVE_AVAHI
@@ -88,5 +87,5 @@ Instance::OnControlPacket([[maybe_unused]] BengControl::Server &control_server,
 void
 Instance::OnControlError(std::exception_ptr error) noexcept
 {
-	PrintException(error);
+	logger(1, error);
 }
