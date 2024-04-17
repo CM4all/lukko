@@ -10,7 +10,7 @@ cm4all-lukko (0.19) unstable; urgency=low
   * quote client-specified strings for logging
   * add configuration settings "max_connections_per_ip", "tarpit"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 17 Apr 2024 22:12:19 +0200
 
 cm4all-lukko (0.18) unstable; urgency=low
 
