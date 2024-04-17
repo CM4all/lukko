@@ -3,6 +3,7 @@ cm4all-lukko (0.19) unstable; urgency=low
   * ssh: pad with random data
   * session channel: allow shell request with forced command
   * socket channel: resume transfer after socket becomes writable again
+  * socket channel: fix busy loop on hangup while send window is exhausted
   * authorized_keys: implement option "no-port-forwarding"
   * authorized_keys: ignore options "no-user-rc", "no-agent-forwarding",
     "no-X11-forwarding"
