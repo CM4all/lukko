@@ -1,6 +1,6 @@
 cm4all-lukko (0.20) unstable; urgency=low
 
-  * 
+  * fix regression with opening ~/.ssh/authorized_keys as target user
 
  --   
 
