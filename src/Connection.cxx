@@ -94,6 +94,8 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 logger(StringLoggerDomain{fmt::format("{}", peer_address)}),
 	 auth_timeout(_instance.GetEventLoop(), BIND_THIS_METHOD(OnAuthTimeout))
 {
+	SetMetrics(instance.ssh_metrics);
+
 	auth_timeout.Schedule(std::chrono::seconds{10});
 
 	if (per_client != nullptr)

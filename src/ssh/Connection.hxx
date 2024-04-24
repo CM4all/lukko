@@ -17,6 +17,7 @@ class SecretKey;
 
 namespace SSH {
 
+struct Metrics;
 class PacketSerializer;
 class Input;
 class Output;
@@ -47,6 +48,8 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	Input &input;
 	Output &output;
+
+	Metrics *metrics = nullptr;
 
 	const Role role;
 
@@ -94,6 +97,10 @@ public:
 
 	auto &GetEventLoop() const noexcept {
 		return socket.GetEventLoop();
+	}
+
+	void SetMetrics(Metrics &_metrics) noexcept {
+		metrics = &_metrics;
 	}
 
 	[[gnu::pure]]

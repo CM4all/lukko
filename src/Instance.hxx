@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ssh/Metrics.hxx"
 #include "key/List.hxx"
 #include "key/Set.hxx"
 #include "event/Loop.hxx"
@@ -155,6 +156,8 @@ public:
 		uint_least64_t n_userauth_timeouts = 0;
 		uint_least64_t n_translation_errors = 0;
 	} counters;
+
+	SSH::Metrics ssh_metrics{};
 
 private:
 	void OnExit() noexcept;

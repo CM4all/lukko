@@ -223,6 +223,16 @@ Instance::OnPrometheusExporterRequest()
 # HELP lukko_tarpit Number of times a tarpit delay was applied
 # TYPE lukko_tarpit counter
 
+# HELP lukko_bytes_received Number of bytes sent
+# TYPE lukko_bytes_received counter
+# HELP lukko_bytes_sent Number of bytes sent
+# TYPE lukko_bytes_sent counter
+
+# HELP lukko_packets_received Number of packets sent
+# TYPE lukko_packets_received counter
+# HELP lukko_packets_sent Number of packets sent
+# TYPE lukko_packets_sent counter
+
 # HELP lukko_connections_active Number of active SSH connections
 # TYPE lukko_connections_active gauge
 
@@ -242,6 +252,10 @@ lukko_userauth_failed{{method="unsupported"}} {}
 lukko_userauth_failed{{method="unknown"}} {}
 lukko_translation_errors {}
 lukko_tarpit {}
+lukko_bytes_received {}
+lukko_bytes_sent {}
+lukko_packets_received {}
+lukko_packets_sent {}
 lukko_connections_active {}
 )",
 			   counters.n_accepted_connections,
@@ -260,6 +274,10 @@ lukko_connections_active {}
 			   counters.n_userauth_unknown_failed,
 			   counters.n_translation_errors,
 			   counters.n_tarpit,
+			   ssh_metrics.bytes_received,
+			   ssh_metrics.bytes_sent,
+			   ssh_metrics.packets_received,
+			   ssh_metrics.packets_sent,
 			   listener_stats.n_connections);
 }
 

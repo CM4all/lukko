@@ -6,6 +6,7 @@
 #include "IdentificationString.hxx"
 #include "Input.hxx"
 #include "Output.hxx"
+#include "Metrics.hxx"
 #include "KexInterface.hxx"
 #include "KexFactory.hxx"
 #include "KexHash.hxx"
@@ -73,6 +74,13 @@ Connection::IsEncrypted() const noexcept
 inline void
 Connection::SendPacket(std::span<const std::byte> src)
 {
+	if (metrics != nullptr) {
+		++metrics->packets_sent;
+
+		// TODO count the number of raw bytes actually sent on the wire
+		metrics->bytes_sent += src.size();
+	}
+
 	output.Push(src);
 	socket.DeferWrite();
 }
@@ -621,6 +629,13 @@ try {
 		const auto payload = input.ReadPacket();
 		if (payload.data() == nullptr)
 			break;
+
+		if (metrics != nullptr) {
+			++metrics->packets_received;
+
+			// TODO count the number of raw bytes actually received on the wire
+			metrics->bytes_received += payload.size();
+		}
 
 		HandleRawPacket(payload);
 		input.ConsumePacket();
