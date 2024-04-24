@@ -71,6 +71,19 @@ class LukkoConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+	class PrometheusExporter final : public ConfigParser {
+		Config &parent;
+		PrometheusExporterConfig config;
+
+	public:
+		explicit PrometheusExporter(Config &_parent) noexcept:parent(_parent) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+
 #ifdef ENABLE_CONTROL
 	class Control final : public ConfigParser {
 		Config &parent;
@@ -173,6 +186,54 @@ LukkoConfigParser::Listener::Finish()
 	ConfigParser::Finish();
 }
 
+void
+LukkoConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (StringIsEqual(word, "bind")) {
+		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
+							 LUKKO_DEFAULT_PORT, true);
+	} else if (StringIsEqual(word, "interface")) {
+		config.interface = line.ExpectValueAndEnd();
+	} else if (StringIsEqual(word, "mode")) {
+		if (config.bind_address.IsNull() ||
+		    config.bind_address.GetFamily() != AF_LOCAL)
+			throw LineParser::Error("'mode' works only with local sockets");
+
+		const char *s = line.ExpectValueAndEnd();
+		char *endptr;
+		const unsigned long value = strtoul(s, &endptr, 8);
+		if (endptr == s || *endptr != 0)
+			throw LineParser::Error("Not a valid octal value");
+
+		if (value & ~0777ULL)
+			throw LineParser::Error("Not a valid mode");
+
+		config.mode = value;
+	} else if (StringIsEqual(word, "v6only")) {
+		config.v6only = line.NextBool();
+		line.ExpectEnd();
+	} else if (StringIsEqual(word, "reuse_port")) {
+		config.reuse_port = line.NextBool();
+		line.ExpectEnd();
+	} else
+		throw LineParser::Error("Unknown option");
+}
+
+void
+LukkoConfigParser::PrometheusExporter::Finish()
+{
+	if (config.bind_address.IsNull())
+		throw LineParser::Error("PrometheusExporter has no bind address");
+
+	config.Fixup();
+
+	parent.prometheus_exporters.emplace_front(std::move(config));
+
+	ConfigParser::Finish();
+}
+
 #ifdef ENABLE_CONTROL
 
 void
@@ -218,6 +279,9 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 	} else if (StringIsEqual(word, "spawn")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
+	} else if (StringIsEqual(word, "prometheus_exporter")) {
+		line.ExpectSymbolAndEol('{');
+		SetChild(std::make_unique<PrometheusExporter>(config));
 #ifdef ENABLE_TRANSLATION
 	} else if (StringIsEqual(word, "translation_server")) {
 		config.translation_server = line.ExpectValueAndEnd();

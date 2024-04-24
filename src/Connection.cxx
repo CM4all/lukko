@@ -116,6 +116,8 @@ Connection::Terminate() noexcept
 		logger(1, "Terminating connection");
 	}
 
+	++instance.counters.n_terminated_connections;
+
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Account disabled"sv);
 }
@@ -420,9 +422,11 @@ Connection::HandleServiceRequest(std::span<const std::byte> payload)
 	if (p.service_name == "ssh-userauth"sv) {
 		have_service_userauth = true;
 		SendPacket(SSH::MakeServiceAccept(p.service_name));
-	} else
+	} else {
+		++instance.counters.n_unsupported_service;
 		throw Disconnect{SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
 			"Unsupported service"sv};
+	}
 }
 
 static bool
@@ -449,10 +453,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	const auto service_name = d.ReadString();
 	const auto method_name = d.ReadString();
 
+	++instance.counters.n_userauth_received;
+
 	logger.Fmt(1, "Userauth {:?} service={:?} method={:?}"sv,
 		   new_username, service_name, method_name);
 
 	if (const auto delay = accounting.GetDelay(); delay.count() > 0) {
+		++instance.counters.n_tarpit;
 		logger.Fmt(1, "Userauth tarpit {}s", ToFloatSeconds(delay));
 		co_await Co::Sleep{GetEventLoop(), delay};
 	}
@@ -486,12 +493,14 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 			if (change_password) {
 				/* password change not implemented */
+				++instance.counters.n_userauth_unsupported;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
 
 			if (password.empty()) {
 				accounting.UpdateTokenBucket(10);
+				++instance.counters.n_userauth_password_failed;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
@@ -513,6 +522,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 					       "sftp"sv, listener.GetTag(),
 					       new_username, {});
 		} catch (...) {
+			++instance.counters.n_translation_errors;
 			logger(1, "Translation server error: ", std::current_exception());
 			accounting.UpdateTokenBucket(2);
 			throw Disconnect{
@@ -523,6 +533,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		if (response.status != HttpStatus{}) {
 			accounting.UpdateTokenBucket(8);
+
+			if (password.empty())
+				++instance.counters.n_userauth_unknown_failed;
+			else
+				++instance.counters.n_userauth_password_failed;
 
 			if (password.empty())
 				logger.Fmt(1, "Rejected auth for user {:?}{}{}"sv,
@@ -548,11 +563,15 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		if (translation->response.no_password != nullptr)
 			// TODO check the "no_password" payload
 			password_accepted = true;
+
+		if (password_accepted)
+			++instance.counters.n_userauth_password_accepted;
 	} else
 #endif // ENABLE_TRANSLATION
 	{
 		const auto *pw = getpwnam(std::string{new_username}.c_str());
 		if (pw == nullptr) {
+			++instance.counters.n_userauth_unknown_failed;
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -576,6 +595,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		accounting.UpdateTokenBucket(0.2);
 
 		if (!co_await IsAcceptedPublicKey(public_key_blob)) {
+			++instance.counters.n_userauth_publickey_failed;
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -586,6 +606,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		try {
 			public_key = ParsePublicKeyBlob(public_key_blob);
 		} catch (...) {
+			++instance.counters.n_userauth_publickey_failed;
+			++instance.counters.n_protocol_errors;
 			logger.Fmt(1, "Failed to parse the client's public key: {}",
 				   std::current_exception());
 			// TODO co_await fail_sleep;
@@ -611,11 +633,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				s.WriteN(to_be_signed);
 
 				if (!public_key->Verify(s.Finish(), signature)) {
+					++instance.counters.n_userauth_publickey_failed;
 					co_await fail_sleep;
 					SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 					co_return;
 				}
 			} catch (...) {
+				++instance.counters.n_userauth_publickey_failed;
 				logger.Fmt(1, "Failed to verify the client's public key: {}",
 					   std::current_exception());
 				// TODO co_await fail_sleep;
@@ -623,6 +647,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				co_return;
 			}
 		}
+
+		++instance.counters.n_userauth_publickey_accepted;
 
 		logger.Fmt(1, "Accepted publickey for {:?}: {} {}"sv,
 			   new_username,
@@ -643,6 +669,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
 			accounting.UpdateTokenBucket(10);
+			++instance.counters.n_userauth_hostbased_failed;
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -653,6 +680,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		try {
 			public_key = ParsePublicKeyBlob(public_key_blob);
 		} catch (...) {
+			++instance.counters.n_userauth_hostbased_failed;
+			++instance.counters.n_protocol_errors;
 			logger.Fmt(1, "Failed to parse the client's host public key: {}",
 				   std::current_exception());
 			// TODO co_await fail_sleep;
@@ -667,10 +696,12 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			s.WriteN(to_be_signed);
 
 			if (!public_key->Verify(s.Finish(), signature)) {
+				++instance.counters.n_userauth_hostbased_failed;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
 			}
 		} catch (...) {
+			++instance.counters.n_userauth_hostbased_failed;
 			logger.Fmt(1, "Failed to verify the client's public key: {}",
 				   std::current_exception());
 			// TODO co_await fail_sleep;
@@ -678,6 +709,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			co_return;
 		}
 
+		++instance.counters.n_userauth_hostbased_accepted;
 		logger.Fmt(1, "Accepted hostkey for {:?}: {} {}"sv,
 			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
@@ -689,7 +721,10 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			   new_username);
 #endif // ENABLE_TRANSLATION
 	} else {
-		accounting.UpdateTokenBucket(method_name == "none"sv ? 0.1 : 5.0);
+		const bool is_none = method_name == "none"sv;
+		if (!is_none)
+			++instance.counters.n_userauth_unsupported_failed;
+		accounting.UpdateTokenBucket(is_none ? 0.1 : 5.0);
 		co_await fail_sleep;
 		SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 		co_return;
@@ -737,11 +772,12 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 		   be silently ignored" */
 		return;
 
-	if (!have_service_userauth)
+	if (!have_service_userauth) {
 		throw Disconnect{
 			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
 			"Service ssh-userauth not requested"sv
 		};
+	}
 
 	if (!got_userauth_request) {
 		/* this is the first USERAUTH_REQUEST - reschedule the
@@ -895,12 +931,38 @@ Connection::ChooseHostKey(std::string_view algorithms) const noexcept
 }
 
 void
-Connection::OnDisconnecting([[maybe_unused]] SSH::DisconnectReasonCode reason_code,
+Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept
 {
 	if (log_disconnect) {
 		log_disconnect = false;
 		logger.Fmt(1, "Disconnecting: {}", msg);
+	}
+
+	using C = SSH::DisconnectReasonCode;
+	switch (reason_code) {
+	case C::PROTOCOL_ERROR:
+	case C::KEY_EXCHANGE_FAILED:
+	case C::MAC_ERROR:
+	case C::COMPRESSION_ERROR:
+	case C::ILLEGAL_USER_NAME:
+	case C::PROTOCOL_VERSION_NOT_SUPPORTED:
+		++instance.counters.n_protocol_errors;
+		break;
+
+	case C::TOO_MANY_CONNECTIONS:
+	case C::HOST_NOT_ALLOWED_TO_CONNECT:
+		++instance.counters.n_rejected_connections;
+		break;
+
+	case C::RESERVED:
+	case C::SERVICE_NOT_AVAILABLE:
+	case C::HOST_KEY_NOT_VERIFIABLE:
+	case C::CONNECTION_LOST:
+	case C::BY_APPLICATION:
+	case C::AUTH_CANCELLED_BY_USER:
+	case C::NO_MORE_AUTH_METHODS_AVAILABLE:
+		break;
 	}
 }
 
@@ -929,6 +991,7 @@ Connection::OnAuthTimeout() noexcept
 		logger(1, "Authentication timeout");
 	}
 
+	++instance.counters.n_userauth_timeouts;
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Timeout"sv);
 }

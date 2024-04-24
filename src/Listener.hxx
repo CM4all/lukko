@@ -57,6 +57,21 @@ public:
 	void TerminateChildren(std::string_view child_tag) noexcept;
 #endif
 
+	struct Stats {
+		std::size_t n_connections = 0;
+
+		constexpr Stats &operator+=(const Stats &other) noexcept {
+			n_connections += other.n_connections;
+			return *this;
+		}
+	};
+
+	Stats GetStats() const noexcept {
+		return {
+			.n_connections = connections.size(),
+		};
+	}
+
 private:
 	/* virtual methods from class ServerSocket */
 	void OnAccept(UniqueSocketDescriptor fd,

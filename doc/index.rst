@@ -123,6 +123,33 @@ Lukko implements only a subset of the commands:
 - ``TERMINATE_CHILDREN``
 
 
+Prometheus Exporter
+-------------------
+
+The ``prometheus_exporter`` section is optional and can describe a
+simple HTTP listener which exposes statistics in the `Prometheus
+format
+<https://prometheus.io/docs/instrumenting/writing_exporters/>`__.
+Example::
+
+  prometheus_exporter {
+    bind "*:8022"
+    interface "eth1"
+  }
+
+  prometheus_exporter {
+    bind "/run/cm4all/lukko/prometheus_exporter.socket"
+  }
+
+Known attributes (same meaning as in a ``listener`` block):
+
+- ``bind``
+- ``interface``
+- ``mode``
+- ``v6only``
+- ``reuse_port``
+
+
 .. _ts:
 
 Translation Server

@@ -8,6 +8,7 @@
 #include "key/Key.hxx"
 #include "spawn/Client.hxx"
 #include "thread/Pool.hxx"
+#include "event/net/PrometheusExporterListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/ByteOrder.hxx"
@@ -21,6 +22,8 @@
 #include "lib/avahi/Publisher.hxx"
 #include "lib/avahi/Service.hxx"
 #endif
+
+#include <fmt/core.h>
 
 #include <cassert>
 
@@ -53,6 +56,13 @@ Instance::Instance(const Config &config,
 						handler);
 	}
 #endif
+
+	for (const auto &i : config.prometheus_exporters) {
+		PrometheusExporterHandler &handler = *this;
+		prometheus_exporters.emplace_front(event_loop,
+						   i.Create(SOCK_STREAM),
+						   handler);
+	}
 }
 
 Instance::~Instance() noexcept = default;
@@ -159,6 +169,7 @@ Instance::OnExit() noexcept
 #endif // HAVE_AVAHI
 
 	listeners.clear();
+	prometheus_exporters.clear();
 
 	thread_pool_join();
 }
@@ -178,3 +189,82 @@ Instance::OnAvahiError(std::exception_ptr e) noexcept
 }
 
 #endif // HAVE_AVAHI
+
+std::string
+Instance::OnPrometheusExporterRequest()
+{
+
+	Listener::Stats listener_stats;
+	for (const auto &i : listeners)
+		listener_stats += i.GetStats();
+
+	return fmt::format(R"(
+# HELP lukko_connections_accepted Number of accepted SSH connections (including those that were rejected later)
+# TYPE lukko_connections_accepted counter
+
+# HELP lukko_connections_rejected Number of rejected SSH connections
+# TYPE lukko_connections_rejected counter
+
+# HELP lukko_connections_closed Number of times a SSH connection was closed
+# TYPE lukko_connections_closed counter
+
+# HELP lukko_userauth_received Number of userauth requests that were received
+# TYPE lukko_userauth_received counter
+
+# HELP lukko_userauth_accepted Number of userauth requests that were accepted
+# TYPE lukko_userauth_accepted counter
+
+# HELP lukko_userauth_failed Number of userauth requests that have failed
+# TYPE lukko_userauth_failed counter
+
+# HELP lukko_translation_errors Number of translation server failures
+# TYPE lukko_translation_errors counter
+
+# HELP lukko_tarpit Number of times a tarpit delay was applied
+# TYPE lukko_tarpit counter
+
+# HELP lukko_connections_active Number of active SSH connections
+# TYPE lukko_connections_active gauge
+
+lukko_connections_accepted {}
+lukko_connections_rejected {}
+lukko_connections_closed{{reason="terminated"}} {}
+lukko_connections_closed{{reason="unsupported_service"}} {}
+lukko_connections_closed{{reason="protocol"}} {}
+lukko_userauth_received {}
+lukko_userauth_accepted{{method="password"}} {}
+lukko_userauth_accepted{{method="publickey"}} {}
+lukko_userauth_accepted{{method="hostbased"}} {}
+lukko_userauth_failed{{method="password"}} {}
+lukko_userauth_failed{{method="publickey"}} {}
+lukko_userauth_failed{{method="hostbased"}} {}
+lukko_userauth_failed{{method="unsupported"}} {}
+lukko_userauth_failed{{method="unknown"}} {}
+lukko_translation_errors {}
+lukko_tarpit {}
+lukko_connections_active {}
+)",
+			   counters.n_accepted_connections,
+			   counters.n_rejected_connections,
+			   counters.n_terminated_connections,
+			   counters.n_unsupported_service,
+			   counters.n_protocol_errors,
+			   counters.n_userauth_received,
+			   counters.n_userauth_password_accepted,
+			   counters.n_userauth_publickey_accepted,
+			   counters.n_userauth_hostbased_accepted,
+			   counters.n_userauth_password_failed,
+			   counters.n_userauth_publickey_failed,
+			   counters.n_userauth_hostbased_failed,
+			   counters.n_userauth_unsupported_failed,
+			   counters.n_userauth_unknown_failed,
+			   counters.n_translation_errors,
+			   counters.n_tarpit,
+			   listener_stats.n_connections);
+}
+
+void
+Instance::OnPrometheusExporterError(std::exception_ptr error) noexcept
+{
+	logger(1, error);
+}

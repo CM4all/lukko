@@ -9,6 +9,7 @@
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/SignalEvent.hxx"
+#include "event/net/PrometheusExporterHandler.hxx"
 #include "io/Logger.hxx"
 #include "config.h"
 
@@ -20,10 +21,9 @@
 #include "event/net/control/Handler.hxx"
 #endif
 
+#include <cstdint>
 #include <forward_list>
 #include <memory>
-
-#include <stdint.h>
 
 struct Config;
 struct ListenerConfig;
@@ -31,6 +31,7 @@ namespace BengControl { class Server; }
 class SecretKey;
 class UniqueSocketDescriptor;
 class Listener;
+class PrometheusExporterListener;
 class SpawnService;
 class SpawnServerClient;
 namespace Avahi { class Client; class Publisher; struct Service; }
@@ -38,13 +39,14 @@ namespace Avahi { class Client; class Publisher; struct Service; }
 struct DummyBase {};
 
 class Instance final
-	:DummyBase
+	:DummyBase,
 #ifdef ENABLE_CONTROL
-	, BengControl::Handler
+	 BengControl::Handler,
 #endif
 #ifdef HAVE_AVAHI
-	, Avahi::ErrorHandler
+	 Avahi::ErrorHandler,
 #endif
+	 PrometheusExporterHandler
 {
 	static constexpr size_t MAX_DATAGRAM_SIZE = 4096;
 
@@ -78,6 +80,8 @@ class Instance final
 #endif // HAVE_AVAHI
 
 	std::forward_list<Listener> listeners;
+
+	std::forward_list<PrometheusExporterListener> prometheus_exporters;
 
 	std::unique_ptr<SpawnServerClient> spawn_service;
 
@@ -131,6 +135,27 @@ public:
 		event_loop.Run();
 	}
 
+	struct Counters {
+		uint_least64_t n_accepted_connections = 0;
+		uint_least64_t n_rejected_connections = 0;
+		uint_least64_t n_tarpit = 0;
+		uint_least64_t n_terminated_connections = 0;
+		uint_least64_t n_unsupported_service = 0;
+		uint_least64_t n_userauth_received = 0;
+		uint_least64_t n_userauth_unsupported = 0;
+		uint_least64_t n_protocol_errors = 0;
+		uint_least64_t n_userauth_password_accepted = 0;
+		uint_least64_t n_userauth_publickey_accepted = 0;
+		uint_least64_t n_userauth_hostbased_accepted = 0;
+		uint_least64_t n_userauth_password_failed = 0;
+		uint_least64_t n_userauth_publickey_failed = 0;
+		uint_least64_t n_userauth_hostbased_failed = 0;
+		uint_least64_t n_userauth_unsupported_failed = 0;
+		uint_least64_t n_userauth_unknown_failed = 0;
+		uint_least64_t n_userauth_timeouts = 0;
+		uint_least64_t n_translation_errors = 0;
+	} counters;
+
 private:
 	void OnExit() noexcept;
 	void OnReload(int) noexcept;
@@ -150,4 +175,8 @@ private:
 	/* virtual methods from class Avahi::ErrorHandler */
 	bool OnAvahiError(std::exception_ptr e) noexcept override;
 #endif // HAVE_AVAHI
+
+	/* virtual methods from class PrometheusExporterHandler */
+	std::string OnPrometheusExporterRequest() override;
+	void OnPrometheusExporterError(std::exception_ptr error) noexcept override;
 };

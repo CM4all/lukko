@@ -13,6 +13,8 @@
 #include "time/Cast.hxx"
 #include "util/DeleteDisposer.hxx"
 
+#include <fmt/core.h>
+
 #include <sys/socket.h>
 
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
@@ -39,6 +41,8 @@ void
 Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		   SocketAddress peer_address) noexcept
 {
+	++instance.counters.n_accepted_connections;
+
 	PerClientAccounting *const per_client = client_accounting
 		? client_accounting->Get(peer_address)
 		: nullptr;
@@ -49,11 +53,13 @@ Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 			/* too many connections from this IP address -
 			   reject the new connection */
 			// TODO send SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS
+			++instance.counters.n_rejected_connections;
 			logger.Fmt(1, "Too many connections from {}", peer_address);
 			return;
 		}
 
 		if (const auto delay = per_client->GetDelay(); delay.count() > 0) {
+			++instance.counters.n_tarpit;
 			logger.Fmt(1, "Connect from {} tarpit {}s", peer_address, ToFloatSeconds(delay));
 			auto *c = new DelayedConnection(instance, *this,
 							*per_client, delay,

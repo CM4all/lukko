@@ -32,6 +32,14 @@ struct ListenerConfig : SocketConfig {
 	}
 };
 
+struct PrometheusExporterConfig : SocketConfig {
+	PrometheusExporterConfig() noexcept {
+		listen = 16;
+		tcp_defer_accept = 10;
+		tcp_no_delay = true;
+	}
+};
+
 struct Config {
 #ifdef ENABLE_TRANSLATION
 	std::string translation_server;
@@ -53,6 +61,8 @@ struct Config {
 #endif // ENABLE_CONTROL
 
 	std::forward_list<ListenerConfig> listeners;
+
+	std::forward_list<PrometheusExporterConfig> prometheus_exporters;
 
 	SpawnConfig spawn;
 
