@@ -2,7 +2,7 @@ cm4all-lukko (0.21) unstable; urgency=low
 
   * export Promtheus metrics
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Apr 2024 20:16:29 +0200
 
 cm4all-lukko (0.20) unstable; urgency=low
 
