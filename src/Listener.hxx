@@ -51,7 +51,7 @@ public:
 		return proxy_to;
 	}
 
-	using ServerSocket::GetLocalAddress;
+	using ServerSocket::GetSocket;
 
 #ifdef ENABLE_TRANSLATION
 	void TerminateChildren(std::string_view child_tag) noexcept;
