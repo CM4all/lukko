@@ -46,7 +46,6 @@ Config::Check()
 		l.bind_address = IPv6Address{LUKKO_DEFAULT_PORT};
 		l.listen = 256;
 		l.tcp_user_timeout = 60000;
-		l.tcp_no_delay = true;
 		l.keepalive = true;
 	}
 
