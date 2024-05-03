@@ -6,8 +6,8 @@
 #include "LoginClient.hxx"
 #include "translation/Response.hxx"
 #include "AllocatorPtr.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/LocalSocketAddress.hxx"
-#include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "co/Task.hxx"
 
@@ -19,13 +19,7 @@ TranslateLogin(EventLoop &event_loop,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password)
 {
-	UniqueSocketDescriptor fd;
-	if (!fd.Create(AF_LOCAL, SOCK_STREAM, 0))
-		throw MakeSocketError("Failed to create translation socket");
-
-	if (!fd.Connect(LocalSocketAddress{socket_path}))
-		throw MakeSocketError("Failed to connect to translation server");
-
+	auto fd = CreateConnectSocket(LocalSocketAddress{socket_path}, SOCK_STREAM);
 	return TranslateLogin(event_loop, alloc, std::move(fd),
 			      service, listener_tag,
 			      user, password);
