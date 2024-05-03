@@ -193,7 +193,7 @@ LukkoConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
 
 	if (StringIsEqual(word, "bind")) {
 		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 LUKKO_DEFAULT_PORT, true);
+							 9100, true);
 	} else if (StringIsEqual(word, "interface")) {
 		config.interface = line.ExpectValueAndEnd();
 	} else if (StringIsEqual(word, "mode")) {

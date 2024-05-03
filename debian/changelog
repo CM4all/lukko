@@ -1,6 +1,6 @@
 cm4all-lukko (0.22) unstable; urgency=low
 
-  * 
+  * prometheus_exporter defaults to port 9100
 
  --   
 
