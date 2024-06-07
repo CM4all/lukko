@@ -1,6 +1,7 @@
 cm4all-lukko (0.22) unstable; urgency=low
 
   * zeroconf: append the host name to the service name
+  * control: fix socket deregistration bug after malformed packet
   * prometheus_exporter defaults to port 9100
 
  --   
