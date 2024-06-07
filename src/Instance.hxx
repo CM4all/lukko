@@ -92,7 +92,7 @@ public:
 		 PublicKeySet &&_global_authorized_keys,
 		 PublicKeySet &&_authorized_host_keys,
 		 UniqueSocketDescriptor spawner_socket,
-		 FileDescriptor cgroup);
+		 bool cgroups);
 	~Instance() noexcept;
 
 	const RootLogger &GetLogger() const noexcept {
