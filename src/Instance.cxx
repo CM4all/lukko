@@ -34,7 +34,8 @@ Instance::Instance(const Config &config,
 		   SecretKeyList &&_host_keys,
 		   PublicKeySet &&_global_authorized_keys,
 		   PublicKeySet &&_authorized_host_keys,
-		   UniqueSocketDescriptor spawner_socket)
+		   UniqueSocketDescriptor spawner_socket,
+		   FileDescriptor cgroups)
 	:host_keys(std::move(_host_keys)),
 	 global_authorized_keys(std::move(_global_authorized_keys)),
 	 authorized_host_keys(std::move(_authorized_host_keys)),
@@ -43,7 +44,8 @@ Instance::Instance(const Config &config,
 #endif
 	 spawn_service(new SpawnServerClient(event_loop,
 					     config.spawn,
-					     std::move(spawner_socket)))
+					     std::move(spawner_socket),
+					     cgroups))
 {
 	shutdown_listener.Enable();
 	sighup_event.Enable();

@@ -91,7 +91,8 @@ public:
 		 SecretKeyList &&_host_key,
 		 PublicKeySet &&_global_authorized_keys,
 		 PublicKeySet &&_authorized_host_keys,
-		 UniqueSocketDescriptor spawner_socket);
+		 UniqueSocketDescriptor spawner_socket,
+		 FileDescriptor cgroup);
 	~Instance() noexcept;
 
 	const RootLogger &GetLogger() const noexcept {

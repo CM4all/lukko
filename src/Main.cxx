@@ -146,6 +146,7 @@ try {
 		LoadGlobalAuthorizedKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		LoadAuthorizedHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		std::move(spawner.socket),
+		spawner.cgroup,
 	};
 
 	spawner = {}; // close the pidfd
