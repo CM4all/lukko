@@ -136,7 +136,7 @@ try {
 
 	SetupProcess();
 
-	auto spawner_socket = LaunchSpawnServer(config.spawn, nullptr);
+	auto spawner = LaunchSpawnServer(config.spawn, nullptr);
 
 	const ScopeFbPoolInit fb_pool_init;
 
@@ -145,8 +145,10 @@ try {
 		LoadHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		LoadGlobalAuthorizedKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
 		LoadAuthorizedHostKeys(std::filesystem::path{cmdline.config_path}.parent_path()),
-		std::move(spawner_socket),
+		std::move(spawner.socket),
 	};
+
+	spawner = {}; // close the pidfd
 
 	for (const auto &i : config.listeners)
 		instance.AddListener(i);
