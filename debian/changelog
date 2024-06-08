@@ -4,7 +4,7 @@ cm4all-lukko (0.22) unstable; urgency=low
   * control: fix socket deregistration bug after malformed packet
   * prometheus_exporter defaults to port 9100
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 08 Jun 2024 09:24:26 +0200
 
 cm4all-lukko (0.21) unstable; urgency=low
 
