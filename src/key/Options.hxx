@@ -17,6 +17,13 @@ struct AuthorizedKeyOptions {
 	bool no_pty = false;
 
 	/**
+	 * Mount the home directory read-only?
+	 *
+	 * (This is a proprietary Lukko option.)
+	 */
+	bool home_read_only = false;
+
+	/**
 	 * @return true if the option was applied, false if the option
 	 * is not supported
 	 */

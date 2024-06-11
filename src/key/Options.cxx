@@ -55,6 +55,9 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 		   name == "no-X11-forwarding"sv) {
 		// not implemented, ignore silently
 		return true;
+	} else if (name == "home-read-only"sv) {
+		home_read_only = true;
+		return true;
 	} else
 		return false;
 }

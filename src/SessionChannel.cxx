@@ -6,6 +6,7 @@
 #include "Connection.hxx"
 #include "DebugMode.hxx"
 #include "spawn/Interface.hxx"
+#include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "ssh/Deserializer.hxx"
@@ -15,6 +16,8 @@
 #include "net/ToString.hxx"
 #include "io/FdHolder.hxx"
 #include "io/Pipe.hxx"
+#include "util/StringAPI.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
 #include "translation/Response.hxx"
@@ -214,6 +217,19 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 
 	for (const auto &i : env)
 		p.PutEnv(i.c_str());
+
+	Allocator alloc;
+	if (c.GetAuthorizedKeyOptions().home_read_only &&
+	    p.ns.mount.HasMountHome()) {
+		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
+
+		const char *const home = p.ns.mount.home;
+
+		for (auto &i : p.ns.mount.mounts) {
+			if (i.type == Mount::Type::BIND && i.IsSourcePath(home))
+				i.writable = false;
+		}
+	}
 
 	// TODO use a proper process name
 	child = spawn_service.SpawnChildProcess("foo", std::move(p));

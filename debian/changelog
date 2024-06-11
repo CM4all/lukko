@@ -1,6 +1,7 @@
 cm4all-lukko (0.23) unstable; urgency=low
 
   * ssh: use PRNG instead of getrandom() for padding
+  * authorized_keys: add option "home-read-only"
   * add option to log auth messages to Pond server
 
  --   
