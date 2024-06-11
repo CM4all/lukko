@@ -22,11 +22,11 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
-#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/CoConnectSocket.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Beneath.hxx"
 #include "io/FileAt.hxx"
@@ -53,7 +53,6 @@
 #ifdef ENABLE_POND
 #include "net/log/Datagram.hxx"
 #include "net/log/Send.hxx"
-#include "net/ToString.hxx"
 #endif
 
 #include <fmt/core.h>
@@ -97,7 +96,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
-	 logger(StringLoggerDomain{fmt::format("{}", peer_address)}),
+	 logger(StringLoggerDomain{ToString(peer_address)}),
 	 auth_timeout(_instance.GetEventLoop(), BIND_THIS_METHOD(OnAuthTimeout))
 {
 	SetMetrics(instance.ssh_metrics);
