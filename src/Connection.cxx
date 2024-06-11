@@ -116,7 +116,7 @@ Connection::~Connection() noexcept
 	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
 
 	if (log_disconnect)
-		logger(1, "Disconnected");
+		LogFmt("Disconnected");
 }
 
 void
@@ -124,7 +124,7 @@ Connection::Terminate() noexcept
 {
 	if (log_disconnect) {
 		log_disconnect = false;
-		logger(1, "Terminating connection");
+		LogFmt("Terminating connection");
 	}
 
 	++instance.counters.n_terminated_connections;
@@ -594,15 +594,15 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				++instance.counters.n_userauth_password_failed;
 
 			if (password.empty())
-				logger.Fmt(1, "Rejected auth for user {:?}{}{}"sv,
-					   new_username,
-					   response.message != nullptr ? ": "sv : ""sv,
-					   response.message != nullptr ? response.message : "");
+				LogFmt("Rejected auth for user {:?}{}{}"sv,
+				       new_username,
+				       response.message != nullptr ? ": "sv : ""sv,
+				       response.message != nullptr ? response.message : "");
 			else
-				logger.Fmt(1, "Failed password for user {:?}{}{}"sv,
-					   new_username,
-					   response.message != nullptr ? ": "sv : ""sv,
-					   response.message != nullptr ? response.message : "");
+				LogFmt("Failed password for user {:?}{}{}"sv,
+				       new_username,
+				       response.message != nullptr ? ": "sv : ""sv,
+				       response.message != nullptr ? response.message : "");
 
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure({}, false));
@@ -662,8 +662,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		} catch (...) {
 			++instance.counters.n_userauth_publickey_failed;
 			++instance.counters.n_protocol_errors;
-			logger.Fmt(1, "Failed to parse the client's public key: {}",
-				   std::current_exception());
+			LogFmt("Failed to parse the client's public key: {}",
+			       std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -694,8 +694,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				}
 			} catch (...) {
 				++instance.counters.n_userauth_publickey_failed;
-				logger.Fmt(1, "Failed to verify the client's public key: {}",
-					   std::current_exception());
+				LogFmt("Failed to verify the client's public key: {}",
+				       std::current_exception());
 				// TODO co_await fail_sleep;
 				SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 				co_return;
@@ -736,8 +736,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		} catch (...) {
 			++instance.counters.n_userauth_hostbased_failed;
 			++instance.counters.n_protocol_errors;
-			logger.Fmt(1, "Failed to parse the client's host public key: {}",
-				   std::current_exception());
+			LogFmt("Failed to parse the client's host public key: {}",
+			       std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
@@ -756,23 +756,23 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			}
 		} catch (...) {
 			++instance.counters.n_userauth_hostbased_failed;
-			logger.Fmt(1, "Failed to verify the client's public key: {}",
-				   std::current_exception());
+			LogFmt("Failed to verify the client's public key: {}",
+			       std::current_exception());
 			// TODO co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
 
 		++instance.counters.n_userauth_hostbased_accepted;
-		logger.Fmt(1, "Accepted hostkey for {:?}: {} {}"sv,
-			   new_username,
-			   public_key->GetType(), GetFingerprint(*public_key));
+		LogFmt("Accepted hostkey for {:?}: {} {}"sv,
+		       new_username,
+		       public_key->GetType(), GetFingerprint(*public_key));
 #ifdef ENABLE_TRANSLATION
 	} else if (password_accepted) {
 		/* the password was successfully verified by the
 		   translation server */
-		logger.Fmt(1, "Accepted password for {:?}"sv,
-			   new_username);
+		LogFmt("Accepted password for {:?}"sv,
+		       new_username);
 #endif // ENABLE_TRANSLATION
 	} else {
 		const bool is_none = method_name == "none"sv;
@@ -990,7 +990,7 @@ Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 {
 	if (log_disconnect) {
 		log_disconnect = false;
-		logger.Fmt(1, "Disconnecting: {}", msg);
+		LogFmt("Disconnecting: {}", msg);
 	}
 
 	using C = SSH::DisconnectReasonCode;
@@ -1026,7 +1026,7 @@ Connection::OnDisconnected([[maybe_unused]] SSH::DisconnectReasonCode reason_cod
 {
 	if (log_disconnect) {
 		log_disconnect = false;
-		logger.Fmt(1, "Client disconnected: {}", msg);
+		LogFmt("Client disconnected: {}", msg);
 	}
 }
 
