@@ -117,6 +117,16 @@ public:
 		return logger;
 	}
 
+	/**
+	 * Log to both stderr (log level 1) and to Pond (if enabled).
+	 */
+	void LogVFmt(fmt::string_view format_str, fmt::format_args args) noexcept;
+
+	template<typename S, typename... Args>
+	void LogFmt(const S &format_str, Args&&... args) noexcept {
+		LogVFmt(format_str, fmt::make_format_args(args...));
+	}
+
 	[[gnu::const]]
 	SpawnService &GetSpawnService() const noexcept;
 

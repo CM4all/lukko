@@ -22,6 +22,7 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
+#include "lib/fmt/ToBuffer.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/CoConnectSocket.hxx"
 #include "net/SocketError.hxx"
@@ -130,6 +131,49 @@ Connection::Terminate() noexcept
 
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Account disabled"sv);
+}
+
+void
+Connection::LogVFmt(fmt::string_view format_str, fmt::format_args args) noexcept
+{
+	constexpr unsigned level = 1;
+	bool enabled = CheckLogLevel(level);
+
+#ifdef ENABLE_POND
+	const auto pond_socket = listener.GetPondSocket();
+	if (pond_socket.IsDefined())
+		enabled = true;
+#endif
+
+	if (!enabled)
+		return;
+
+	const auto message_buffer = VFmtBuffer<2048>(format_str, args);
+	const std::string_view message{message_buffer};
+	logger(1, message);
+
+#ifdef ENABLE_POND
+	if (!pond_socket.IsDefined())
+		return;
+
+	Net::Log::Datagram log_datagram{
+		.timestamp = Net::Log::FromSystem(GetEventLoop().SystemNow()),
+		.remote_host = peer_host.c_str(),
+		.message = message,
+		.type = Net::Log::Type::SSH,
+	};
+
+#ifdef ENABLE_TRANSLATION
+	if (translation)
+		log_datagram.site = translation->response.site;
+#endif
+
+	try {
+		Net::Log::Send(pond_socket, log_datagram);
+	} catch (...) {
+		logger(1, std::current_exception());
+	}
+#endif // ENABLE_POND
 }
 
 SpawnService &
@@ -660,35 +704,9 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		++instance.counters.n_userauth_publickey_accepted;
 
-		logger.Fmt(1, "Accepted publickey for {:?}: {} {}"sv,
-			   new_username,
-			   public_key->GetType(), GetFingerprint(*public_key));
-
-#ifdef ENABLE_POND
-		if (const auto pond_socket = listener.GetPondSocket(); pond_socket.IsDefined()) {
-			const auto message = fmt::format("Accepted publickey for {:?}: {} {}"sv,
-							 new_username,
-							 public_key->GetType(), GetFingerprint(*public_key));
-
-			Net::Log::Datagram log_datagram{
-				.timestamp = Net::Log::FromSystem(GetEventLoop().SystemNow()),
-				.remote_host = peer_host.c_str(),
-				.message = message,
-				.type = Net::Log::Type::SSH,
-			};
-
-#ifdef ENABLE_TRANSLATION
-			if (translation)
-				log_datagram.site = translation->response.site;
-#endif
-
-			try {
-				Net::Log::Send(pond_socket, log_datagram);
-			} catch (...) {
-				logger(1, std::current_exception());
-			}
-		}
-#endif // ENABLE_POND
+		LogFmt("Accepted publickey for {:?}: {} {}"sv,
+		       new_username,
+		       public_key->GetType(), GetFingerprint(*public_key));
 	} else if (method_name == "hostbased"sv) {
 		// TODO only allow if explicitly enabled
 
