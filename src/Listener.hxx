@@ -9,6 +9,10 @@
 #include "util/IntrusiveList.hxx"
 #include "config.h"
 
+#ifdef ENABLE_POND
+#include "net/UniqueSocketDescriptor.hxx"
+#endif
+
 #include <memory>
 #include <string_view>
 
@@ -30,6 +34,10 @@ class Listener final : ServerSocket {
 
 	const SocketAddress proxy_to;
 
+#ifdef ENABLE_POND
+	const UniqueSocketDescriptor pond_socket;
+#endif
+
 	const RootLogger &logger;
 
 	std::unique_ptr<ClientAccountingMap> client_accounting;
@@ -50,6 +58,12 @@ public:
 	SocketAddress GetProxyTo() const noexcept {
 		return proxy_to;
 	}
+
+#ifdef ENABLE_POND
+	SocketDescriptor GetPondSocket() const noexcept {
+		return pond_socket;
+	}
+#endif
 
 	using ServerSocket::GetSocket;
 

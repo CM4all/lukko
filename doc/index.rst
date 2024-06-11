@@ -80,6 +80,8 @@ Known attributes:
   responses.  The exact conditions and the delay is currently
   hard-coded.  The default is ``no``.
 
+- ``pond_server``: send log messages to this Pond server.
+
 
 Control Listener
 ----------------

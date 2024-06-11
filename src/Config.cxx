@@ -8,6 +8,7 @@
 #include "net/IPv6Address.hxx"
 #include "net/Parser.hxx"
 #include "net/control/Protocol.hxx"
+#include "net/log/Protocol.hxx"
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "util/StringAPI.hxx"
@@ -169,6 +170,11 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "tarpit")) {
 		config.tarpit = line.NextBool();
 		line.ExpectEnd();
+#ifdef ENABLE_POND
+	} else if (StringIsEqual(word, "pond_server")) {
+		config.pond_server = ParseSocketAddress(line.ExpectValueAndEnd(),
+							Net::Log::DEFAULT_PORT, false);
+#endif
 	} else
 		throw LineParser::Error("Unknown option");
 }

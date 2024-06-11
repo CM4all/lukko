@@ -104,6 +104,7 @@ jobs:
             -Dtest=true \
             -Dtranslation=false \
             -Dcontrol=false \
+            -Dpond=false \
              --force-fallback-for=fmt \
             -Dwrap_mode=nofallback \
             output

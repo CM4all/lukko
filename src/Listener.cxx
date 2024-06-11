@@ -13,6 +13,10 @@
 #include "time/Cast.hxx"
 #include "util/DeleteDisposer.hxx"
 
+#ifdef ENABLE_POND
+#include "net/ConnectSocket.hxx"
+#endif
+
 #include <fmt/core.h>
 
 #include <sys/socket.h>
@@ -24,6 +28,11 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
 	 proxy_to(config.proxy_to),
+#ifdef ENABLE_POND
+	 pond_socket(!config.pond_server.IsNull()
+		     ? CreateConnectDatagramSocket(config.pond_server)
+		     : UniqueSocketDescriptor{}),
+#endif
 	 logger(instance.GetLogger())
 {
 	if (config.max_connections_per_ip > 0 || config.tarpit)

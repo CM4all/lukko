@@ -8,6 +8,7 @@ option('cap', type: 'feature', description: 'Linux capability support (using lib
 
 option('translation', type: 'boolean', value: true, description: 'Support process configuration with a translation server')
 option('control', type: 'boolean', value: true, description: 'Support the beng-proxy control protocol')
+option('pond', type: 'boolean', value: true, description: 'Support the Pond logging protocol')
 
 option('test', type: 'boolean', value: false, description: 'Build the unit tests and debug programs')
 

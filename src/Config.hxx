@@ -5,6 +5,7 @@
 #pragma once
 
 #include "spawn/Config.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
@@ -21,6 +22,10 @@ struct ListenerConfig : SocketConfig {
 #endif
 
 	AllocatedSocketAddress proxy_to;
+
+#ifdef ENABLE_POND
+	AllocatedSocketAddress pond_server;
+#endif
 
 	std::size_t max_connections_per_ip = 0;
 

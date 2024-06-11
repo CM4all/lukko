@@ -186,6 +186,13 @@ else
   control_server_dep = dependency('', required: false)
 endif
 
+if get_option('pond')
+  subdir('libcommon/src/http')
+  subdir('libcommon/src/net/log')
+else
+  net_log_dep = dependency('', required: false)
+endif
+
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 conf.set('HAVE_LIBCAP', cap_dep.found())
 conf.set('HAVE_AVAHI', avahi_dep.found())
@@ -194,6 +201,7 @@ conf.set('HAVE_LIBMD', libmd.found())
 conf.set('HAVE_NLOHMANN_JSON', nlohmann_json_dep.found())
 conf.set('ENABLE_TRANSLATION', get_option('translation'))
 conf.set('ENABLE_CONTROL', get_option('control'))
+conf.set('ENABLE_POND', get_option('pond'))
 configure_file(output: 'config.h', configuration: conf)
 
 libdigest = static_library(
@@ -248,6 +256,7 @@ executable(
     spawn_dep,
     translation_dep,
     control_server_dep,
+    net_log_dep,
     key_dep,
     cap_dep,
     coroutines_dep,

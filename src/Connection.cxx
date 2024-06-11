@@ -50,6 +50,12 @@
 #include "AllocatorPtr.hxx"
 #endif // ENABLE_TRANSLATION
 
+#ifdef ENABLE_POND
+#include "net/log/Datagram.hxx"
+#include "net/log/Send.hxx"
+#include "net/ToString.hxx"
+#endif
+
 #include <fmt/core.h>
 
 #include <fcntl.h> // for O_*
@@ -655,6 +661,33 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		logger.Fmt(1, "Accepted publickey for {:?}: {} {}"sv,
 			   new_username,
 			   public_key->GetType(), GetFingerprint(*public_key));
+
+#ifdef ENABLE_POND
+		if (const auto pond_socket = listener.GetPondSocket(); pond_socket.IsDefined()) {
+			const auto remote_host = HostToString(peer_address);
+			const auto message = fmt::format("Accepted publickey for {:?}: {} {}"sv,
+							 new_username,
+							 public_key->GetType(), GetFingerprint(*public_key));
+
+			Net::Log::Datagram log_datagram{
+				.timestamp = Net::Log::FromSystem(GetEventLoop().SystemNow()),
+				.remote_host = remote_host.c_str(),
+				.message = message,
+				.type = Net::Log::Type::SSH,
+			};
+
+#ifdef ENABLE_TRANSLATION
+			if (translation)
+				log_datagram.site = translation->response.site;
+#endif
+
+			try {
+				Net::Log::Send(pond_socket, log_datagram);
+			} catch (...) {
+				logger(1, std::current_exception());
+			}
+		}
+#endif // ENABLE_POND
 	} else if (method_name == "hostbased"sv) {
 		// TODO only allow if explicitly enabled
 
