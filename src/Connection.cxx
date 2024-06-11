@@ -96,6 +96,9 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
+#ifdef ENABLE_POND
+	 peer_host(listener.GetPondSocket().IsDefined() ? HostToString(peer_address) : std::string{}),
+#endif
 	 logger(StringLoggerDomain{ToString(peer_address)}),
 	 auth_timeout(_instance.GetEventLoop(), BIND_THIS_METHOD(OnAuthTimeout))
 {
@@ -663,14 +666,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 #ifdef ENABLE_POND
 		if (const auto pond_socket = listener.GetPondSocket(); pond_socket.IsDefined()) {
-			const auto remote_host = HostToString(peer_address);
 			const auto message = fmt::format("Accepted publickey for {:?}: {} {}"sv,
 							 new_username,
 							 public_key->GetType(), GetFingerprint(*public_key));
 
 			Net::Log::Datagram log_datagram{
 				.timestamp = Net::Log::FromSystem(GetEventLoop().SystemNow()),
-				.remote_host = remote_host.c_str(),
+				.remote_host = peer_host.c_str(),
 				.message = message,
 				.type = Net::Log::Type::SSH,
 			};

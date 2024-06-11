@@ -46,6 +46,10 @@ class Connection final
 	const AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
 
+#ifdef ENABLE_POND
+	const std::string peer_host;
+#endif
+
 	AccountedClientConnection accounting;
 
 	const Logger logger;
