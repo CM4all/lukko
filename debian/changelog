@@ -1,6 +1,6 @@
 cm4all-lukko (0.23) unstable; urgency=low
 
-  * 
+  * ssh: use PRNG instead of getrandom() for padding
 
  --   
 

@@ -6,7 +6,7 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
 
-#include <sodium/randombytes.h>
+#include <random>
 
 namespace SSH {
 
@@ -29,10 +29,10 @@ Serializer::WriteRandom(std::size_t size)
 {
 	const auto s = WriteN(size);
 
-	/* this invokes the getrandom() system call; TODO: switch to a
-	   cheaper random source (this is only for padding, not for
-	   generating keys) */
-	randombytes_buf(s.data(), s.size());
+	static std::independent_bits_engine<std::default_random_engine, 8, uint8_t> r;
+	std::generate(s.begin(), s.end(), [](){
+		return static_cast<std::byte>(r());
+	});
 }
 
 } // namespace SSH
