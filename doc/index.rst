@@ -174,3 +174,48 @@ Information about the translation protocol can be found here:
 
 - `asynchronous framework for C++
   <https://github.com/CM4all/libcommon/tree/master/src/translation/server>`__
+
+
+Authentication
+==============
+
+Public Key Authentication
+-------------------------
+
+Public keys in :file:`~/.ssh/authorized_keys` and
+:file:`/etc/cm4all/lukko/authorized_keys` are allowed to log in.
+Lukko supports the OpenSSH file format and implements the following
+options:
+
+- ``command``: Forced command.
+
+- ``port-forwarding``, ``no-port-forwarding``: Allow or disallow port
+  forwarding.
+
+- ``pty``, ``no-pty``: Allow or disallow tty allocation.
+
+- ``restrict``: Enable all restrictions, i.e. is an alias for
+  ``no-port-forwarding`` and ``no-pty``.
+
+The following OpenSSH options are not implemented and are ignored
+silently:
+
+- ``user-rc``, ``no-user-rc``
+- ``agent-forwarding``, ``no-agent-forwarding``
+- ``X11-forwarding``, ``no-X11-forwarding``
+
+
+Password Authentication
+-----------------------
+
+Passwords are verified by the :ref:`translation server <ts>`,
+therefore this authentication method is only available if a
+translation server is configured.
+
+
+Host-Based Authentication
+-------------------------
+
+Public keys in :file:`/etc/cm4all/lukko/authorized_host_keys` are
+allowed to log in.  This authentication method is only implemented to
+allow a proxying/load-balancing feature that is planned for Lukko.
