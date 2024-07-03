@@ -56,8 +56,6 @@ class Input final : ThreadJob {
 	 */
 	std::mutex mutex;
 
-	std::exception_ptr error;
-
 	/**
 	 * Raw input from the socket.  It may need to be decrypted.
 	 */
@@ -74,6 +72,12 @@ class Input final : ThreadJob {
 	 * there is a cipher.
 	 */
 	BufferList decrypted_list;
+
+	/**
+	 * An error caught inside of Run() which will be rethrown to
+         * the main thread by ReadPacket().
+	 */
+	std::exception_ptr error;
 
 	bool encrypted = false;
 
