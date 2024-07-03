@@ -135,13 +135,10 @@ protected:
 		authenticated = true;
 	}
 
-	void SendPacket(std::span<const std::byte> src);
+	void SendPacket(std::span<const std::byte> src) noexcept;
 
 public:
-	/**
-	 * Throws on error.
-	 */
-	void SendPacket(PacketSerializer &&s);
+	void SendPacket(PacketSerializer &&s) noexcept;
 
 	void SendPacket(MessageNumber msg, std::span<const std::byte> src);
 

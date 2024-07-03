@@ -68,18 +68,15 @@ public:
 		return send_window;
 	}
 
-	/**
-	 * Throws on error.
-	 */
-	void Close();
+	void Close() noexcept;
 
-	void SendWindowAdjust(uint_least32_t nbytes);
+	void SendWindowAdjust(uint_least32_t nbytes) noexcept;
 	void SendData(std::span<const std::byte> src);
 	void SendExtendedData(ChannelExtendedDataType data_type,
 			      std::span<const std::byte> src);
 	void SendStderr(std::span<const std::byte> src);
-	void SendEof();
-	void SendExitStatus(uint_least32_t exit_status);
+	void SendEof() noexcept;
+	void SendExitStatus(uint_least32_t exit_status) noexcept;
 	void SendExitSignal(std::string_view signal_name, bool core_dumped,
 			    std::string_view error_message);
 

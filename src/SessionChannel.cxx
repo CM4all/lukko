@@ -56,7 +56,7 @@ SessionChannel::~SessionChannel() noexcept
 }
 
 void
-SessionChannel::CloseIfInactive()
+SessionChannel::CloseIfInactive() noexcept
 {
 	if (!IsActive())
 		Close();

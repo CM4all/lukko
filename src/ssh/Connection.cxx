@@ -72,7 +72,7 @@ Connection::IsEncrypted() const noexcept
 }
 
 inline void
-Connection::SendPacket(std::span<const std::byte> src)
+Connection::SendPacket(std::span<const std::byte> src) noexcept
 {
 	if (metrics != nullptr) {
 		++metrics->packets_sent;
@@ -86,7 +86,7 @@ Connection::SendPacket(std::span<const std::byte> src)
 }
 
 void
-Connection::SendPacket(PacketSerializer &&s)
+Connection::SendPacket(PacketSerializer &&s) noexcept
 {
 	const auto *send_cipher = output.GetCipher();
 	SendPacket(s.Finish(send_cipher
@@ -108,9 +108,9 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 {
 	OnDisconnecting(reason_code, msg);
 
-	try {
-		SendPacket(MakeDisconnect(reason_code, msg));
+	SendPacket(MakeDisconnect(reason_code, msg));
 
+	try {
 		/* attempt to flush the DISCONNECT packet immediately
                    before we close the socket */
 		switch (output.Flush()) {

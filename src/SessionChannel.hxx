@@ -66,11 +66,9 @@ private:
 	/**
 	 * Call SSH::Channel::SendEof() if all data sources have ended.
 	 *
-	 * Throws on error.
-	 *
 	 * @return true if SendEof() was called
 	 */
-	bool MaybeSendEof() {
+	bool MaybeSendEof() noexcept {
 		if (stdout_pipe.IsDefined() || stderr_pipe.IsDefined() || tty.IsDefined())
 			return false;
 
@@ -78,12 +76,12 @@ private:
 		return true;
 	}
 
-	void CloseIfInactive();
+	void CloseIfInactive() noexcept;
 
 	/**
 	 * Combination of MaybeSendEof() and CloseIfInactive().
 	 */
-	void MaybeSendEofAndClose() {
+	void MaybeSendEofAndClose() noexcept {
 		if (MaybeSendEof())
 			CloseIfInactive();
 	}

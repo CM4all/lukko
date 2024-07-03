@@ -64,10 +64,7 @@ public:
 			 ChannelFactory &factory,
 			 CancellablePointer &cancel_ptr);
 
-	/**
-	 * Throws on error.
-	 */
-	void CloseChannel(Channel &channel);
+	void CloseChannel(Channel &channel) noexcept;
 
 	/**
 	 * Exception class to be thrown from inside CreateChannel(),

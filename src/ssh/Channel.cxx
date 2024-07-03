@@ -22,7 +22,7 @@ Channel::Channel(CConnection &_connection, ChannelInit init,
 Channel::~Channel() noexcept = default;
 
 void
-Channel::Close()
+Channel::Close() noexcept
 {
 	connection.CloseChannel(*this);
 }
@@ -36,7 +36,7 @@ Channel::ConsumeReceiveWindow(std::size_t nbytes) noexcept
 }
 
 void
-Channel::SendWindowAdjust(uint_least32_t nbytes)
+Channel::SendWindowAdjust(uint_least32_t nbytes) noexcept
 {
 	assert(nbytes > 0);
 	assert(nbytes <= SIZE_MAX - receive_window);
@@ -81,7 +81,7 @@ Channel::SendStderr(std::span<const std::byte> src)
 }
 
 void
-Channel::SendEof()
+Channel::SendEof() noexcept
 {
 	PacketSerializer s{MessageNumber::CHANNEL_EOF};
 	s.WriteU32(GetPeerChannel());
@@ -89,7 +89,7 @@ Channel::SendEof()
 }
 
 void
-Channel::SendExitStatus(uint_least32_t exit_status)
+Channel::SendExitStatus(uint_least32_t exit_status) noexcept
 {
 	auto s = MakeChannelReqest(GetPeerChannel(), "exit-status"sv, false);
 	s.WriteU32(exit_status);

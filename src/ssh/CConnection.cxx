@@ -154,7 +154,7 @@ IsOpeningChannel(const Channel &channel) noexcept
 }
 
 void
-CConnection::CloseChannel(Channel &channel)
+CConnection::CloseChannel(Channel &channel) noexcept
 {
 	assert(!IsTombstoneChannel(channel));
 	assert(!IsOpeningChannel(channel));
@@ -276,15 +276,10 @@ CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
 	opening.cancel_ptr = {};
 	delete &opening;
 
-	try {
-		SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
-						       local_channel,
-						       MAXIMUM_PACKET_SIZE,
-						       channel));
-	} catch (...) {
-		OnBufferedError(std::current_exception());
-		return;
-	}
+	SendPacket(MakeChannelOpenConfirmation(channel.GetPeerChannel(),
+					       local_channel,
+					       MAXIMUM_PACKET_SIZE,
+					       channel));
 
 	channels[local_channel] = &channel;
 }
@@ -303,11 +298,7 @@ CConnection::AsyncChannelOpenFailure(ChannelInit init,
 	opening.cancel_ptr = {};
 	delete &opening;
 
-	try {
-		SendPacket(MakeChannelOpenFailure(init.peer_channel, reason_code, description));
-	} catch (...) {
-		OnBufferedError(std::current_exception());
-	}
+	SendPacket(MakeChannelOpenFailure(init.peer_channel, reason_code, description));
 }
 
 inline void
