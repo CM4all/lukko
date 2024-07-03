@@ -44,14 +44,9 @@ class Channel {
 
 public:
 	Channel(CConnection &_connection, ChannelInit init,
-		std::size_t _receive_window) noexcept
-		:connection(_connection),
-		 local_channel(init.local_channel),
-		 peer_channel(init.peer_channel),
-		 receive_window(_receive_window),
-		 send_window(init.send_window) {}
+		std::size_t _receive_window) noexcept;
 
-	virtual ~Channel() noexcept = default;
+	virtual ~Channel() noexcept;
 
 	CConnection &GetConnection() noexcept {
 		return connection;
