@@ -103,7 +103,7 @@ public:
 		auto_reset_seq = true;
 	}
 
-	void Push(std::span<const std::byte> src);
+	void Push(std::span<const std::byte> src) noexcept;
 
 	enum class FlushResult {
 		DONE,

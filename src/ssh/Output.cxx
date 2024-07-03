@@ -43,7 +43,7 @@ Output::EncryptPacket(std::span<const std::byte> src)
 }
 
 void
-Output::Push(std::span<const std::byte> src)
+Output::Push(std::span<const std::byte> src) noexcept
 {
 	AllocatedArray<std::byte> copy{src};
 
