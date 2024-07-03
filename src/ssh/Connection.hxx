@@ -53,6 +53,12 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	const Role role;
 
+	/**
+	 * If true, then the connection is about to be closed, only
+         * waiting for the DISCONNECT to be encrypted and sent.
+	 */
+	bool dead = false;
+
 	bool version_exchanged = false;
 
 	bool authenticated = false;
@@ -101,6 +107,10 @@ public:
 
 	void SetMetrics(Metrics &_metrics) noexcept {
 		metrics = &_metrics;
+	}
+
+	bool IsDead() const noexcept {
+		return dead;
 	}
 
 	[[gnu::pure]]

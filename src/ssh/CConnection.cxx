@@ -526,5 +526,18 @@ CConnection::OnWriteUnblocked() noexcept
 		if (i != nullptr)
 			i->OnWriteUnblocked();
 }
+void
+CConnection::OnDisconnecting(DisconnectReasonCode reason_code,
+			     std::string_view msg) noexcept
+{
+	GConnection::OnDisconnecting(reason_code, msg);
+
+	/* delete all channels so they don't try to do any I/O while
+           we're waiting for the DISCONNECT to be flushed */
+	for (auto &i : channels) {
+		delete i;
+		i = nullptr;
+	}
+}
 
 } // namespace SSH

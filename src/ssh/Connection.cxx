@@ -106,9 +106,28 @@ Connection::SendPacket(MessageNumber msg, std::span<const std::byte> payload)
 void
 Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept
 {
+	if (IsDead())
+		return;
+
 	OnDisconnecting(reason_code, msg);
 
 	SendPacket(MakeDisconnect(reason_code, msg));
+
+	if (output.IsEncrypted()) {
+		/* we have to wait for the worker thread to encrypt
+                   the the DISCONNECT packet before we can actually
+                   send it to the socket; therefore postpone the
+                   Destroy() call */
+		dead = true;
+
+		/* we now have very little patience with this
+                   client */
+		socket.SetWriteTimeout(std::chrono::seconds{1});
+
+		/* we don't want to receive anything from it */
+		socket.UnscheduleRead();
+		return;
+	}
 
 	try {
 		/* attempt to flush the DISCONNECT packet immediately
@@ -598,6 +617,11 @@ Connection::OnBufferedWrite()
 
 	switch (output.Flush()) {
 	case Output::FlushResult::DONE:
+		if (IsDead() && output.IsEmpty()) {
+			Destroy();
+			return false;
+		}
+
 		socket.UnscheduleWrite();
 		break;
 
@@ -629,6 +653,9 @@ Connection::OnBufferedError([[maybe_unused]] std::exception_ptr e) noexcept
 bool
 Connection::OnInputReady() noexcept
 try {
+	if (IsDead())
+		return false;
+
 	while (true) {
 		const auto payload = input.ReadPacket();
 		if (payload.data() == nullptr)

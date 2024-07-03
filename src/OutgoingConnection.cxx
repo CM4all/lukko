@@ -162,6 +162,8 @@ void
 OutgoingConnection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 				    std::string_view msg) noexcept
 {
+	SSH::Connection::OnDisconnecting(reason_code, msg);
+
 	handler.OnOutgoingDisconnecting(reason_code, msg);
 }
 

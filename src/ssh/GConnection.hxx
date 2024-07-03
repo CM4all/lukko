@@ -55,6 +55,8 @@ protected:
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload) override;
+	void OnDisconnecting(DisconnectReasonCode reason_code,
+			     std::string_view msg) noexcept;
 };
 
 } // namespace SSH

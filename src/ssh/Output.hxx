@@ -95,6 +95,13 @@ public:
 		return push_cipher != nullptr;
 	}
 
+	[[gnu::pure]]
+	bool IsEmpty() noexcept {
+		const std::scoped_lock lock{mutex};
+		return pending_queue.empty() && plain_queue.empty() &&
+		       next_plain_queue.empty() && encrypted_queue.empty();
+	}
+
 	const Cipher *GetCipher() const noexcept {
 		return push_cipher;
 	}

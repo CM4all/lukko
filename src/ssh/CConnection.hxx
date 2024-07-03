@@ -144,6 +144,8 @@ protected:
 			  std::span<const std::byte> payload) override;
 	void OnWriteBlocked() noexcept override;
 	void OnWriteUnblocked() noexcept override;
+	void OnDisconnecting(DisconnectReasonCode reason_code,
+			     std::string_view msg) noexcept;
 };
 
 } // namespace SSH

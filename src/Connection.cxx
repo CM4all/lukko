@@ -988,6 +988,14 @@ void
 Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept
 {
+	CConnection::OnDisconnecting(reason_code, msg);
+
+	/* some manual shutdown just in case the Destroy() is
+           postponed */
+	auth_timeout.Cancel();
+	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
+	occupied_task = {};
+
 	if (log_disconnect) {
 		log_disconnect = false;
 		LogFmt("Disconnecting: {}", msg);

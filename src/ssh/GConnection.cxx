@@ -166,4 +166,15 @@ GConnection::HandlePacket(MessageNumber msg,
 	}
 }
 
+void
+GConnection::OnDisconnecting(DisconnectReasonCode reason_code,
+			     std::string_view msg) noexcept
+{
+	Connection::OnDisconnecting(reason_code, msg);
+
+	/* cancel all pending requests so they don't try to do any I/O
+           while we're waiting for the DISCONNECT to be flushed */
+	pending_global_requests.clear_and_dispose(DeleteDisposer{});
+}
+
 } // namespace SSH
