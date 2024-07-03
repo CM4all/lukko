@@ -1,6 +1,6 @@
 cm4all-lukko (0.24) unstable; urgency=low
 
-  * 
+  * ssh: allow the '.' and '@' character in user names
 
  --   
 

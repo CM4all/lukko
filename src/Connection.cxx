@@ -487,7 +487,7 @@ static bool
 IsValidUsername(std::string_view username) noexcept
 {
 	return username.size() <= 255 && CheckCharsNonEmpty(username, [](char ch){
-		return IsAlphaNumericASCII(ch) || ch == '-' || ch == '_';
+		return IsAlphaNumericASCII(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '@';
 	});
 }
 
