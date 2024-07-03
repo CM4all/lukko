@@ -183,10 +183,10 @@ Input::ReadUnencryptedPacket()
 inline std::span<const std::byte>
 Input::ReadDecryptedPacket()
 {
+	const std::scoped_lock lock{mutex};
+
 	if (error)
 		std::rethrow_exception(error);
-
-	const std::scoped_lock lock{mutex};
 
 	if (decrypted_list.empty()) {
 		/* if there was a NEWKEYS packet, it must have been
