@@ -1,5 +1,6 @@
 cm4all-lukko (0.25) unstable; urgency=low
 
+  * ssh: flush the DISCONNECT packet before closing the socket
   * cipher: handle OpenSSL encryption errors
 
  --   

@@ -110,6 +110,17 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 
 	try {
 		SendPacket(MakeDisconnect(reason_code, msg));
+
+		/* attempt to flush the DISCONNECT packet immediately
+                   before we close the socket */
+		switch (output.Flush()) {
+		case Output::FlushResult::DONE:
+		case Output::FlushResult::MORE:
+			break;
+
+		case Output::FlushResult::DESTROYED:
+			return;
+		}
 	} catch (...) {
 		/* ignore errors, we're going to disconnect anyway */
 	}
