@@ -4,10 +4,14 @@
 
 #pragma once
 
+#include "util/IntrusiveList.hxx"
+
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <string_view>
+
+namespace Co { template<typename T> class EagerTask; }
 
 namespace SSH {
 
@@ -41,6 +45,16 @@ class Channel {
 	 * zero, then we need to wait for CHANNEL_WINDOW_ADJUST.
 	 */
 	std::size_t send_window;
+
+	class PendingRequest;
+
+	/**
+	 * The list of requests that are still running asynchronously
+	 * or have finished but their replies cannot yet be delivered
+	 * because they need to be in-order and an older request
+	 * hasn't yet finished.
+	 */
+	IntrusiveList<PendingRequest> pending_requests;
 
 public:
 	Channel(CConnection &_connection, ChannelInit init,
@@ -84,6 +98,15 @@ public:
 			   std::span<const std::byte> type_specific,
 			   bool want_reply);
 
+private:
+	void SubmitRequestResponses() noexcept;
+
+	/**
+	 * Called by PendingRequest after the coroutine completes.
+	 */
+	void OnRequestDone(PendingRequest &request,
+			   std::exception_ptr error) noexcept;
+
 protected:
 	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept;
 
@@ -96,8 +119,8 @@ public:
 	virtual void OnEof() {}
 
 	[[nodiscard]]
-	virtual bool OnRequest(std::string_view request_type,
-			       std::span<const std::byte> type_specific);
+	virtual Co::EagerTask<bool> OnRequest(std::string_view request_type,
+					      std::span<const std::byte> type_specific);
 
 	virtual void OnWriteBlocked() noexcept {}
 	virtual void OnWriteUnblocked() noexcept {}

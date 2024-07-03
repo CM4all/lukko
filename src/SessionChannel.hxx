@@ -43,8 +43,8 @@ public:
 
 	/* virtual methods from class SSH::Channel */
 	void OnWindowAdjust(std::size_t nbytes) override;
-	bool OnRequest(std::string_view request_type,
-		       std::span<const std::byte> type_specific) override;
+	Co::EagerTask<bool> OnRequest(std::string_view request_type,
+				      std::span<const std::byte> type_specific) override;
 	void OnWriteBlocked() noexcept override;
 	void OnWriteUnblocked() noexcept override;
 

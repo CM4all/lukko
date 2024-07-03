@@ -6,10 +6,66 @@
 #include "CConnection.hxx"
 #include "Serializer.hxx"
 #include "MakePacket.hxx"
+#include "co/InvokeTask.hxx"
+#include "co/Task.hxx"
+#include "util/DeleteDisposer.hxx"
 
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
+
+/**
+ * A request that is still running as C++ coroutine.
+ */
+class Channel::PendingRequest : public IntrusiveListHook<> {
+	Channel &channel;
+
+	/**
+	 * The actual coroutine.
+	 */
+	Co::EagerInvokeTask invoke_task;
+
+	const bool want_reply;
+
+	bool success;
+
+public:
+	PendingRequest(Channel &_channel, bool _want_reply,
+		       Co::EagerTask<bool> &&_task)
+		:channel(_channel),
+		 invoke_task(Run(std::move(_task))),
+		 want_reply(_want_reply) {}
+
+	bool IsDone() const noexcept {
+		return !invoke_task;
+	}
+
+	bool WantsReply() const noexcept {
+		return want_reply;
+	}
+
+	bool WasSuccessful() const noexcept {
+		assert(IsDone());
+
+		return success;
+	}
+
+	void Start() noexcept {
+		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
+	}
+
+private:
+	Co::EagerInvokeTask Run(Co::EagerTask<bool> task) {
+		success = co_await task;
+	}
+
+	void OnCompletion(std::exception_ptr error) noexcept {
+		if (error)
+			success = false;
+
+		channel.OnRequestDone(*this, std::move(error));
+	}
+};
 
 Channel::Channel(CConnection &_connection, ChannelInit init,
 		 std::size_t _receive_window) noexcept
@@ -19,7 +75,10 @@ Channel::Channel(CConnection &_connection, ChannelInit init,
 	 receive_window(_receive_window),
 	 send_window(init.send_window) {}
 
-Channel::~Channel() noexcept = default;
+Channel::~Channel() noexcept
+{
+	pending_requests.clear_and_dispose(DeleteDisposer{});
+}
 
 void
 Channel::Close() noexcept
@@ -118,9 +177,31 @@ Channel::HandleRequest(std::string_view request_type,
 		       std::span<const std::byte> type_specific,
 		       bool want_reply)
 {
-	const bool success = OnRequest(request_type, type_specific);
+	auto *request = new PendingRequest(*this, want_reply,
+					   OnRequest(request_type, type_specific));
+	pending_requests.push_back(*request);
 
-	if (want_reply) {
+	if (request->IsDone())
+		SubmitRequestResponses();
+	else
+		request->Start();
+}
+
+void
+Channel::SubmitRequestResponses() noexcept
+{
+	while (!pending_requests.empty()) {
+		const auto &request = pending_requests.front();
+		if (!request.IsDone())
+			break;
+
+		/* finished requests that want to reply have already
+		   been removed from the list */
+		assert(request.WantsReply());
+
+		const bool success = request.WasSuccessful();
+		pending_requests.pop_front_and_dispose(DeleteDisposer{});
+
 		PacketSerializer s{
 			success
 			? MessageNumber::CHANNEL_SUCCESS
@@ -130,6 +211,30 @@ Channel::HandleRequest(std::string_view request_type,
 		s.WriteU32(peer_channel);
 		connection.SendPacket(std::move(s));
 	}
+}
+
+inline void
+Channel::OnRequestDone(PendingRequest &request,
+		       std::exception_ptr error) noexcept
+{
+	assert(request.IsDone());
+	assert(!pending_requests.empty());
+
+	if (error) {
+		// TODO does this need to be connection-fatal?
+		connection.CloseError(std::move(error));
+		return;
+	}
+
+	if (!request.WantsReply()) {
+		/* if the client doesn't want a reply, there's nothing
+		   left to do and we can remove the request from any
+		   position of the list */
+		pending_requests.erase_and_dispose(pending_requests.iterator_to(request),
+						   DeleteDisposer{});
+	}
+
+	SubmitRequestResponses();
 }
 
 void
@@ -151,11 +256,11 @@ Channel::OnExtendedData([[maybe_unused]] ChannelExtendedDataType data_type,
 	ConsumeReceiveWindow(payload.size());
 }
 
-bool
+Co::EagerTask<bool>
 Channel::OnRequest([[maybe_unused]] std::string_view request_type,
 		   [[maybe_unused]] std::span<const std::byte> type_specific)
 {
-	return false;
+	co_return false;
 }
 
 } // namespace SSH

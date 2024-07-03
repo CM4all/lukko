@@ -12,6 +12,7 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
+#include "co/Task.hxx"
 #include "system/Error.hxx"
 #include "net/ToString.hxx"
 #include "io/FdHolder.hxx"
@@ -285,7 +286,7 @@ ApplyTerminalModes(FileDescriptor fd, std::span<const std::byte> src) noexcept
 	tcsetattr(fd.Get(), TCSANOW, &tio);
 }
 
-bool
+Co::EagerTask<bool>
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
 {
@@ -296,7 +297,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 	if (WasStarted())
 		/* the program was already started, and there's no
 		   point in handling further requests */
-		return false;
+		co_return false;
 
 	if (request_type == "exec"sv) {
 		SSH::Deserializer d{type_specific};
@@ -305,9 +306,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		logger.Fmt(1, "  exec {:?}"sv, command);
 
-		return Exec(command.c_str());
+		co_return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
-		return Exec(nullptr);
+		co_return Exec(nullptr);
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string_view subsystem_name{d.ReadString()};
@@ -320,7 +321,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 			if (tty.IsDefined())
 				/* refuse to run sftp with a pty */
-				return false;
+				co_return false;
 
 			UniqueFileDescriptor sftp_server;
 			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
@@ -338,12 +339,12 @@ SessionChannel::OnRequest(std::string_view request_type,
 				p.Append("/usr/lib/openssh/sftp-server");
 
 			SpawnChildProcess(std::move(p));
-			return true;
+			co_return true;
 		} else
-			return false;
+			co_return false;
 	} else if (request_type == "pty-req"sv) {
 		if (c.GetAuthorizedKeyOptions().no_pty)
-			return false;
+			co_return false;
 
 		struct winsize ws{};
 
@@ -373,7 +374,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		SetEnv("TERM"sv, term);
 
-		return true;
+		co_return true;
 	} else if (request_type == "env"sv) {
 		SSH::Deserializer d{type_specific};
 		const auto name = d.ReadString();
@@ -381,9 +382,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		d.ExpectEnd();
 
 		SetEnv(name, value);
-		return true;
+		co_return true;
 	} else
-		return false;
+		co_return false;
 
 	// TOOD "signal"
 }
