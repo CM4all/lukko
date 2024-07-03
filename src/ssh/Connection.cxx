@@ -104,19 +104,12 @@ Connection::SendPacket(MessageNumber msg, std::span<const std::byte> payload)
 }
 
 void
-Connection::SendDisconnect(DisconnectReasonCode reason_code,
-			   std::string_view msg)
-{
-	SendPacket(MakeDisconnect(reason_code, msg));
-}
-
-void
 Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept
 {
 	OnDisconnecting(reason_code, msg);
 
 	try {
-		SendDisconnect(reason_code, msg);
+		SendPacket(MakeDisconnect(reason_code, msg));
 	} catch (...) {
 		/* ignore errors, we're going to disconnect anyway */
 	}
