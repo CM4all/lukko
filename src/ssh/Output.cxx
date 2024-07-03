@@ -74,6 +74,10 @@ Output::Flush()
 {
 	if (IsEncrypted()) {
 		const std::scoped_lock lock{mutex};
+
+		if (error)
+			std::rethrow_exception(error);
+
 		pending_queue.MoveFrom(encrypted_queue);
 	}
 
@@ -114,7 +118,7 @@ Output::Flush()
 
 void
 Output::Run() noexcept
-{
+try {
 	BufferList src, dest;
 
 	{
@@ -145,6 +149,9 @@ Output::Run() noexcept
 		if (plain_queue.empty() && !next_plain_queue.empty())
 			again = true;
 	}
+} catch (...) {
+	const std::scoped_lock lock{mutex};
+	error = std::current_exception();
 }
 
 void

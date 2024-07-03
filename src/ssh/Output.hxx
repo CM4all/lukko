@@ -8,6 +8,7 @@
 #include "thread/Job.hxx"
 
 #include <cstddef>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <span>
@@ -49,7 +50,7 @@ class Output final : ThreadJob {
 
 	/**
 	 * Protects #plain_queue, #next_plain_queue, #encrypted_queue,
-	 * #next_cipher.
+	 * #next_cipher, #error.
 	 */
 	std::mutex mutex;
 
@@ -70,6 +71,12 @@ class Output final : ThreadJob {
 	 * by Done().
 	 */
 	BufferList encrypted_queue;
+
+	/**
+	 * An error caught inside of Run() which will be rethrown to
+         * the main thread by Flush().
+	 */
+	std::exception_ptr error;
 
 	/**
 	 * Destroy() sets this if the #ThreadJob could not be
