@@ -104,6 +104,25 @@ Channel::SerializeOpenConfirmation([[maybe_unused]] Serializer &s) const
 }
 
 void
+Channel::HandleRequest(std::string_view request_type,
+		       std::span<const std::byte> type_specific,
+		       bool want_reply)
+{
+	const bool success = OnRequest(request_type, type_specific);
+
+	if (want_reply) {
+		PacketSerializer s{
+			success
+			? MessageNumber::CHANNEL_SUCCESS
+			: MessageNumber::CHANNEL_FAILURE,
+		};
+
+		s.WriteU32(peer_channel);
+		connection.SendPacket(std::move(s));
+	}
+}
+
+void
 Channel::OnWindowAdjust(std::size_t nbytes)
 {
 	send_window += nbytes;

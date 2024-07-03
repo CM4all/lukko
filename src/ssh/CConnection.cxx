@@ -464,19 +464,7 @@ CConnection::HandleChannelRequest(std::span<const std::byte> payload)
 	const auto p = ParseChannelRequest(payload);
 
 	auto &channel = GetChannel(p.local_channel);
-	const uint_least32_t peer_channel = channel.GetPeerChannel();
-	const bool success = channel.OnRequest(p.request_type, p.type_specific_data);
-
-	if (p.want_reply) {
-		PacketSerializer s{
-			success
-			? MessageNumber::CHANNEL_SUCCESS
-			: MessageNumber::CHANNEL_FAILURE,
-		};
-
-		s.WriteU32(peer_channel);
-		SendPacket(std::move(s));
-	}
+	channel.HandleRequest(p.request_type, p.type_specific_data, p.want_reply);
 }
 
 void

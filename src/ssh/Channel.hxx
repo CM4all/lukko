@@ -88,6 +88,10 @@ public:
 	void SendExitSignal(std::string_view signal_name, bool core_dumped,
 			    std::string_view error_message);
 
+	void HandleRequest(std::string_view request_type,
+			   std::span<const std::byte> type_specific,
+			   bool want_reply);
+
 protected:
 	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept;
 
