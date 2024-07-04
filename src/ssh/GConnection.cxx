@@ -107,11 +107,9 @@ GConnection::OnGlobalRequestDone(PendingGlobalRequest &request,
 		  position of the list */
 		pending_global_requests.erase_and_dispose(pending_global_requests.iterator_to(request),
 							  DeleteDisposer{});
-		return;
 	}
 
-	if (&pending_global_requests.front() == &request)
-		SubmitGlobalRequestResponses();
+	SubmitGlobalRequestResponses();
 }
 
 Co::EagerTask<bool>
