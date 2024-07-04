@@ -25,7 +25,7 @@ class GConnection::PendingGlobalRequest : public IntrusiveListHook<> {
 
 public:
 	PendingGlobalRequest(GConnection &_connection, bool _want_reply,
-			     Co::EagerTask<bool> &&_task) noexcept
+			     Co::EagerTask<bool> &&_task)
 		:connection(_connection),
 		 invoke_task(Run(std::move(_task))),
 		 want_reply(_want_reply) {}
