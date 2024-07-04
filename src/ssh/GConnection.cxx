@@ -114,7 +114,7 @@ GConnection::OnGlobalRequestDone(PendingGlobalRequest &request,
 		try {
 			SubmitGlobalRequestResponses();
 		} catch (...) {
-			OnBufferedError(std::current_exception());
+			CloseError(std::current_exception());
 		}
 	}
 }
@@ -129,7 +129,7 @@ GConnection::HandleGlobalRequest([[maybe_unused]] std::string_view request_name,
 bool
 GConnection::OnGlobalRequestError(std::exception_ptr error) noexcept
 {
-	OnBufferedError(std::move(error));
+	CloseError(std::move(error));
 	return false;
 }
 

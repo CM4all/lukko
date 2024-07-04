@@ -680,7 +680,7 @@ try {
 } catch (const Destroyed &) {
 	return false;
 } catch (...) {
-	OnBufferedError(std::current_exception());
+	CloseError(std::current_exception());
 	return false;
 }
 
