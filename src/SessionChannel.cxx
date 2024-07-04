@@ -9,6 +9,7 @@
 #include "spawn/Mount.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
+#include "spawn/CoEnqueue.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
@@ -306,6 +307,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		logger.Fmt(1, "  exec {:?}"sv, command);
 
+		/* throttle if the spawner is under pressure */
+		co_await CoEnqueueSpawner(c.GetSpawnService());
+
 		co_return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
 		co_return Exec(nullptr);
@@ -322,6 +326,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 			if (tty.IsDefined())
 				/* refuse to run sftp with a pty */
 				co_return false;
+
+			/* throttle if the spawner is under pressure */
+			co_await CoEnqueueSpawner(c.GetSpawnService());
 
 			UniqueFileDescriptor sftp_server;
 			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
