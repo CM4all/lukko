@@ -33,7 +33,7 @@ public:
 	~GConnection() noexcept;
 
 private:
-	void SubmitGlobalRequestResponses();
+	void SubmitGlobalRequestResponses() noexcept;
 	void OnGlobalRequestDone(PendingGlobalRequest &request,
 				 std::exception_ptr error) noexcept;
 

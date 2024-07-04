@@ -71,7 +71,7 @@ GConnection::~GConnection() noexcept
 }
 
 void
-GConnection::SubmitGlobalRequestResponses()
+GConnection::SubmitGlobalRequestResponses() noexcept
 {
 	while (!pending_global_requests.empty()) {
 		const auto &request = pending_global_requests.front();
@@ -110,13 +110,8 @@ GConnection::OnGlobalRequestDone(PendingGlobalRequest &request,
 		return;
 	}
 
-	if (&pending_global_requests.front() == &request) {
-		try {
-			SubmitGlobalRequestResponses();
-		} catch (...) {
-			CloseError(std::current_exception());
-		}
-	}
+	if (&pending_global_requests.front() == &request)
+		SubmitGlobalRequestResponses();
 }
 
 Co::EagerTask<bool>
