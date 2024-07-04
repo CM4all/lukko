@@ -312,6 +312,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		co_return Exec(command.c_str());
 	} else if (request_type == "shell"sv) {
+		/* throttle if the spawner is under pressure */
+		co_await CoEnqueueSpawner(c.GetSpawnService());
+
 		co_return Exec(nullptr);
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
