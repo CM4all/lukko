@@ -4,6 +4,8 @@
 
 #include "DelegateOpen.hxx"
 #include "Connection.hxx"
+#include "spawn/CoEnqueue.hxx"
+#include "spawn/CoWaitSpawnCompletion.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
@@ -80,7 +82,13 @@ SendOpen(SocketDescriptor s, std::string_view path)
 Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path)
 {
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner{ssh_connection.GetSpawnService()};
+
 	auto [control_socket, child_handle] = SpawnOpen(ssh_connection);
+
+	/* wait for spawner completion and rethrow errors */
+	co_await CoWaitSpawnCompletion{*child_handle};
 
 	SendOpen(control_socket, path);
 

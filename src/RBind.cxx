@@ -26,6 +26,8 @@ using std::string_view_literals::operator""sv;
 #ifdef ENABLE_TRANSLATION
 
 #include "translation/Response.hxx"
+#include "spawn/CoEnqueue.hxx"
+#include "spawn/CoWaitSpawnCompletion.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "spawn/Prepared.hxx"
@@ -151,8 +153,14 @@ NsResolveBindTCP(EventLoop &event_loop,
 		 SpawnService &spawn_service, const ChildOptions &options,
 		 std::string_view host, const unsigned port)
 {
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner{spawn_service};
+
 	auto [control_socket, child_handle] =
 		SpawnNsResolveBindTCPFunction(spawn_service, options);
+
+	/* wait for spawner completion and rethrow errors */
+	co_await CoWaitSpawnCompletion{*child_handle};
 
 	co_return co_await SpawnResolveBind(event_loop, control_socket, host, port);
 }
