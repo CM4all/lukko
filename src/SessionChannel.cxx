@@ -10,9 +10,11 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
 #include "spawn/CoEnqueue.hxx"
+#include "spawn/CoWaitSpawnCompletion.hxx"
 #include "ssh/Deserializer.hxx"
 #include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
+#include "lib/fmt/ExceptionFormatter.hxx"
 #include "co/Task.hxx"
 #include "system/Error.hxx"
 #include "net/ToString.hxx"
@@ -310,12 +312,33 @@ SessionChannel::OnRequest(std::string_view request_type,
 		/* throttle if the spawner is under pressure */
 		co_await CoEnqueueSpawner(c.GetSpawnService());
 
-		co_return Exec(command.c_str());
+		try {
+			fmt::print(stderr, "Exec1\n");
+			if (!Exec(command.c_str()))
+				co_return false;
+
+			co_await CoWaitSpawnCompletion{*child};
+			fmt::print(stderr, "Exec2\n");
+			co_return true;
+		} catch (...) {
+			fmt::print(stderr, "Exec3\n");
+			logger.Fmt(1, "Failed to spawn child process: {}", std::current_exception());
+			co_return false;
+		}
 	} else if (request_type == "shell"sv) {
 		/* throttle if the spawner is under pressure */
 		co_await CoEnqueueSpawner(c.GetSpawnService());
 
-		co_return Exec(nullptr);
+		try {
+			if (!Exec(nullptr))
+				co_return false;
+
+			co_await CoWaitSpawnCompletion{*child};
+			co_return true;
+		} catch (...) {
+			logger.Fmt(1, "Failed to spawn shell: {}", std::current_exception());
+			co_return false;
+		}
 	} else if (request_type == "subsystem"sv) {
 		SSH::Deserializer d{type_specific};
 		const std::string_view subsystem_name{d.ReadString()};
@@ -348,8 +371,14 @@ SessionChannel::OnRequest(std::string_view request_type,
 			} else
 				p.Append("/usr/lib/openssh/sftp-server");
 
-			SpawnChildProcess(std::move(p));
-			co_return true;
+			try {
+				SpawnChildProcess(std::move(p));
+				co_await CoWaitSpawnCompletion{*child};
+				co_return true;
+			} catch (...) {
+				logger.Fmt(1, "Failed to spawn sftp server: {}", std::current_exception());
+				co_return false;
+			}
 		} else
 			co_return false;
 	} else if (request_type == "pty-req"sv) {
