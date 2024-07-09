@@ -38,8 +38,12 @@ OpenFunction(PreparedChildProcess &&)
 
 	path[nbytes] = 0;
 
-	auto fd = OpenReadOnly(path);
-	EasySendMessage(control, fd);
+	try {
+		auto fd = OpenReadOnly(path);
+		EasySendMessage(control, fd);
+	} catch (...) {
+		EasySendError(control, std::current_exception());
+	}
 
 	return 0;
 }

@@ -4,6 +4,7 @@ cm4all-lukko (0.25) unstable; urgency=low
   * cipher: handle OpenSSL encryption errors
   * throttle the spawner under pressure
   * improve spawner error reporting
+  * improve port forwarding error reporting
 
  --   
 

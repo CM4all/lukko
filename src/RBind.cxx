@@ -84,8 +84,12 @@ NsResolveBindTCPFunction(PreparedChildProcess &&)
 
 	host[host_length] = 0;
 
-	auto socket = SshResolveBindStreamSocket(host, port);
-	EasySendMessage(control, socket.ToFileDescriptor());
+	try {
+		auto socket = SshResolveBindStreamSocket(host, port);
+		EasySendMessage(control, socket.ToFileDescriptor());
+	} catch (...) {
+		EasySendError(control, std::current_exception());
+	}
 
 	return 0;
 }

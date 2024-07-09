@@ -64,9 +64,13 @@ NsResolveConnectTCPFunction(PreparedChildProcess &&)
 
 	host[host_length] = 0;
 
-	auto socket = ResolveConnectStreamSocket(host, port,
-						 std::chrono::seconds{5});
-	EasySendMessage(control, socket.ToFileDescriptor());
+	try {
+		auto socket = ResolveConnectStreamSocket(host, port,
+							       std::chrono::seconds{5});
+		EasySendMessage(control, socket.ToFileDescriptor());
+	} catch (...) {
+		EasySendError(control, std::current_exception());
+	}
 
 	return 0;
 }
