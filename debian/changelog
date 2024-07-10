@@ -7,7 +7,7 @@ cm4all-lukko (0.25) unstable; urgency=low
   * improve port forwarding error reporting
   * reduce port forwarding delay
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 10 Jul 2024 15:27:29 +0200
 
 cm4all-lukko (0.24) unstable; urgency=low
 
