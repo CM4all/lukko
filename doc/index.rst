@@ -6,7 +6,11 @@ What is Lukko?
 
 Lukko is a SSH server.
 
-This project is work in progress.
+It is not (yet) a drop-in for other SSH implementations such as
+OpenSSH.  Lukko is currently used for shared hosting environments with
+a large number of user accounts where each session runs in a separate
+container.  Maybe it will evolve into a general-purpose SSH server
+eventually, but that is not a priority.
 
 
 Configuration
