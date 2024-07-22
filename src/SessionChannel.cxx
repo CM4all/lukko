@@ -313,15 +313,12 @@ SessionChannel::OnRequest(std::string_view request_type,
 		co_await CoEnqueueSpawner(c.GetSpawnService());
 
 		try {
-			fmt::print(stderr, "Exec1\n");
 			if (!Exec(command.c_str()))
 				co_return false;
 
 			co_await CoWaitSpawnCompletion{*child};
-			fmt::print(stderr, "Exec2\n");
 			co_return true;
 		} catch (...) {
-			fmt::print(stderr, "Exec3\n");
 			logger.Fmt(1, "Failed to spawn child process: {}", std::current_exception());
 			co_return false;
 		}
