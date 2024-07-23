@@ -23,6 +23,7 @@ libssh = static_library(
   'KexState.cxx',
   'Serializer.cxx',
   'TerminalMode.cxx',
+  'EarlyDisconnect.cxx',
   include_directories: inc,
   dependencies: [
     cipher_dep,

@@ -7,6 +7,8 @@
 #include "Config.hxx"
 #include "DelayedConnection.hxx"
 #include "Connection.hxx"
+#include "ssh/EarlyDisconnect.hxx"
+#include "ssh/Protocol.hxx"
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
@@ -20,6 +22,8 @@
 #include <fmt/core.h>
 
 #include <sys/socket.h>
+
+using std::string_view_literals::operator""sv;
 
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
@@ -61,9 +65,10 @@ Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		if (!per_client->Check()) {
 			/* too many connections from this IP address -
 			   reject the new connection */
-			// TODO send SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS
 			++instance.counters.n_rejected_connections;
 			logger.Fmt(1, "Too many connections from {}", peer_address);
+			SendEarlyDisconnect(connection_fd, SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS,
+							   "Too many connections"sv);
 			return;
 		}
 
