@@ -145,7 +145,7 @@ protected:
 	void OnWriteBlocked() noexcept override;
 	void OnWriteUnblocked() noexcept override;
 	void OnDisconnecting(DisconnectReasonCode reason_code,
-			     std::string_view msg) noexcept;
+			     std::string_view msg) noexcept override;
 };
 
 } // namespace SSH
