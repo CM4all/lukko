@@ -127,6 +127,10 @@ public:
 		return max_connections;
 	}
 
+	bool HasTarpit() const noexcept {
+		return tarpit;
+	}
+
 	PerClientAccounting *Get(SocketAddress address) noexcept;
 
 	void ScheduleCleanup() noexcept;

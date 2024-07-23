@@ -3,6 +3,7 @@ cm4all-lukko (0.26) unstable; urgency=low
   * listener: send TOO_MANY_CONNECTIONS if max_connections_per_ip is
     exceeded
   * ssh: show "Lukko" in protocol version exchange
+  * fix "tarpit" bug, do not enable implicitly with "max_connections_per_ip"
 
  --   
 

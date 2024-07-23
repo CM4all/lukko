@@ -112,6 +112,9 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 void
 PerClientAccounting::UpdateTokenBucket(double size) noexcept
 {
+	if (!map.HasTarpit())
+		return;
+
 	constexpr double RATE = 1, BURST = 10;
 	constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{1};
 	constexpr Event::Duration MAX_DELAY = std::chrono::minutes{1};
