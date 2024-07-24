@@ -74,7 +74,7 @@ class PerClientAccounting final
 	 * The current delay (for the server greeting and
 	 * authentication).
 	 */
-	Event::Duration delay;
+	Event::Duration delay{};
 
 	TokenBucket token_bucket;
 
