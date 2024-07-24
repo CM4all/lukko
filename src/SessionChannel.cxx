@@ -162,13 +162,11 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		const auto peer_host = HostToString(peer_address);
 		const auto local_host = HostToString(c.GetLocalAddress());
 
-		p.SetEnv("SSH_CLIENT",
-			 fmt::format("{} {} {}",
+		p.PutEnv(fmt::format("SSH_CLIENT={} {} {}"sv,
 				     peer_host, peer_address.GetPort(),
 				     local_address.GetPort()));
 
-		p.SetEnv("SSH_CONNECTION",
-			 fmt::format("{} {} {} {}",
+		p.PutEnv(fmt::format("SSH_CONNECTION={} {} {} {}"sv,
 				     peer_host, peer_address.GetPort(),
 				     local_host, local_address.GetPort()));
 	}
