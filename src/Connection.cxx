@@ -786,6 +786,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 	username.assign(new_username);
 
+	logger = Logger{fmt::format("{} user={:?}", logger.GetDomain(), username)};
+
 	auth_timeout.Cancel();
 
 	if (const auto proxy_to = listener.GetProxyTo(); !proxy_to.IsNull()) {

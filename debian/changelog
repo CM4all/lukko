@@ -4,6 +4,7 @@ cm4all-lukko (0.26) unstable; urgency=low
     exceeded
   * ssh: show "Lukko" in protocol version exchange
   * fix "tarpit" bug, do not enable implicitly with "max_connections_per_ip"
+  * show authenticated username in each log line
 
  --   
 

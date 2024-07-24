@@ -52,7 +52,7 @@ class Connection final
 
 	AccountedClientConnection accounting;
 
-	const Logger logger;
+	Logger logger;
 
 	/**
 	 * This timer disconnects when the auth phase takes too long.
