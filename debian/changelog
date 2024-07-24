@@ -6,7 +6,7 @@ cm4all-lukko (0.26) unstable; urgency=low
   * fix "tarpit" bug, do not enable implicitly with "max_connections_per_ip"
   * show authenticated username in each log line
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Jul 2024 14:34:03 +0200
 
 cm4all-lukko (0.25) unstable; urgency=low
 
