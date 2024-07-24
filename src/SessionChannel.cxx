@@ -238,12 +238,15 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 	child->SetExitListener(*this);
 }
 
-bool
+inline Co::Task<bool>
 SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed())
-		return false;
+		co_return false;
+
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner(c.GetSpawnService());
 
 	FdHolder close_fds;
 	PreparedChildProcess p;
@@ -272,7 +275,9 @@ SessionChannel::Exec(const char *cmd)
 
 	SpawnChildProcess(std::move(p));
 
-	return true;
+	co_await CoWaitSpawnCompletion{*child};
+
+	co_return true;
 }
 
 static void
@@ -307,29 +312,15 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		logger.Fmt(1, "  exec {:?}"sv, command);
 
-		/* throttle if the spawner is under pressure */
-		co_await CoEnqueueSpawner(c.GetSpawnService());
-
 		try {
-			if (!Exec(command.c_str()))
-				co_return false;
-
-			co_await CoWaitSpawnCompletion{*child};
-			co_return true;
+			co_return co_await Exec(command.c_str());
 		} catch (...) {
 			logger.Fmt(1, "Failed to spawn child process: {}", std::current_exception());
 			co_return false;
 		}
 	} else if (request_type == "shell"sv) {
-		/* throttle if the spawner is under pressure */
-		co_await CoEnqueueSpawner(c.GetSpawnService());
-
 		try {
-			if (!Exec(nullptr))
-				co_return false;
-
-			co_await CoWaitSpawnCompletion{*child};
-			co_return true;
+			co_return co_await Exec(nullptr);
 		} catch (...) {
 			logger.Fmt(1, "Failed to spawn shell: {}", std::current_exception());
 			co_return false;

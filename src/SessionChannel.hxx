@@ -12,6 +12,7 @@
 #include <forward_list>
 #include <memory>
 
+namespace Co { template<typename T> class Task; }
 struct PreparedChildProcess;
 class ChildProcessHandle;
 class FdHolder;
@@ -92,7 +93,9 @@ private:
 				 FdHolder &close_fds,
 				 bool sftp);
 	void SpawnChildProcess(PreparedChildProcess &&p);
-	bool Exec(const char *cmd);
+
+	[[nodiscard]]
+	Co::Task<bool> Exec(const char *cmd);
 
 	void CancelRead() noexcept {
 		/* stdout/stderr must be canceled completely to avoid
