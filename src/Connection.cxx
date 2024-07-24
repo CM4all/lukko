@@ -312,7 +312,7 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 		(sftp ? translation->sftp_response : translation->response)
 			.child_options.CopyTo(p, close_fds);
 
-		if (p.cgroup != nullptr && p.cgroup->name != nullptr &&
+		if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 		    p.cgroup_session == nullptr) {
 			/* create a session cgroup for each SSH
 			   session */
