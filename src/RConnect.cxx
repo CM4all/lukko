@@ -130,7 +130,7 @@ SpawnResolveConnect(EventLoop &event_loop, SocketDescriptor socket,
 	if (!fd.IsDefined())
 		throw SocketProtocolError{"Bad number of fds"};
 
-	co_return UniqueSocketDescriptor{fd.Release()};
+	co_return UniqueSocketDescriptor{std::move(fd)};
 }
 
 static Co::Task<UniqueSocketDescriptor>
