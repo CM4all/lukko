@@ -195,12 +195,28 @@ Instance::OnAvahiError(std::exception_ptr e) noexcept
 std::string
 Instance::OnPrometheusExporterRequest()
 {
-
 	Listener::Stats listener_stats;
 	for (const auto &i : listeners)
 		listener_stats += i.GetStats();
 
+	const auto &spawn_stats = spawn_service->GetStats();
+
 	return fmt::format(R"(
+# HELP lukko_children_spawned Total number of child processes spawned
+# TYPE lukko_children_spawned counter
+
+# HELP lukko_spawn_errors Total number of child processes that failed to spawn
+# TYPE lukko_spawn_errors counter
+
+# HELP lukko_children_killed Total number of child processes that were killed with a signal
+# TYPE lukko_children_killed counter
+
+# HELP lukko_children_exited Total number of child processes that have exited
+# TYPE lukko_children_exited counter
+
+# HELP lukko_children Number of child processes
+# TYPE lukko_children gauge
+
 # HELP lukko_connections_accepted Number of accepted SSH connections (including those that were rejected later)
 # TYPE lukko_connections_accepted counter
 
@@ -238,6 +254,12 @@ Instance::OnPrometheusExporterRequest()
 # HELP lukko_connections_active Number of active SSH connections
 # TYPE lukko_connections_active gauge
 
+lukko_children_spawned {}
+lukko_spawn_errors {}
+lukko_children_killed {}
+lukko_children_exited {}
+lukko_children {}
+
 lukko_connections_accepted {}
 lukko_connections_rejected {}
 lukko_connections_closed{{reason="terminated"}} {}
@@ -260,6 +282,12 @@ lukko_packets_received {}
 lukko_packets_sent {}
 lukko_connections_active {}
 )",
+			   spawn_stats.spawned,
+			   spawn_stats.errors,
+			   spawn_stats.killed,
+			   spawn_stats.exited,
+			   spawn_stats.alive,
+
 			   counters.n_accepted_connections,
 			   counters.n_rejected_connections,
 			   counters.n_terminated_connections,

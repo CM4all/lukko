@@ -1,6 +1,6 @@
 cm4all-lukko (0.27) unstable; urgency=low
 
-  * 
+  * prometheus_exporter: add spawner stats
 
  --   
 
