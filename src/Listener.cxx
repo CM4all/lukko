@@ -67,8 +67,9 @@ Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 			   reject the new connection */
 			++instance.counters.n_rejected_connections;
 			logger.Fmt(1, "Too many connections from {}", peer_address);
-			SendEarlyDisconnect(connection_fd, SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS,
-							   "Too many connections"sv);
+			SendEarlyDisconnect(connection_fd,
+					    SSH::DisconnectReasonCode::TOO_MANY_CONNECTIONS,
+					    "Too many connections"sv);
 			return;
 		}
 
