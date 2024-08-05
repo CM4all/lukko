@@ -80,7 +80,7 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool first_packet_was_kexinit = true;
 
-protected:
+public:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
 	 * connection.

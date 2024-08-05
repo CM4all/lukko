@@ -36,6 +36,9 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	 */
 	std::forward_list<std::string> env;
 
+	static constexpr std::size_t MAX_ENV_SIZE = 16384;
+	std::size_t env_size = 0;
+
 public:
 	SessionChannel(SSH::CConnection &_connection,
 		       SSH::ChannelInit init) noexcept;
@@ -87,7 +90,7 @@ private:
 			CloseIfInactive();
 	}
 
-	void SetEnv(std::string_view name, std::string_view value) noexcept;
+	void SetEnv(std::string_view name, std::string_view value);
 
 	void PrepareChildProcess(PreparedChildProcess &p,
 				 FdHolder &close_fds,

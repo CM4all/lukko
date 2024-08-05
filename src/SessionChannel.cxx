@@ -67,8 +67,19 @@ SessionChannel::CloseIfInactive() noexcept
 }
 
 void
-SessionChannel::SetEnv(std::string_view name, std::string_view value) noexcept
+SessionChannel::SetEnv(std::string_view name, std::string_view value)
 {
+	/* this integer addition cannot overflow because the packet
+           size is limited; the 32 is an arbitrary number to limit the
+           number of (tiny) environment variables */
+	env_size += name.size() + value.size() + 32;
+
+	if (env_size >= MAX_ENV_SIZE)
+		throw SSH::Connection::Disconnect{
+			SSH::DisconnectReasonCode::BY_APPLICATION,
+			"Environment too large"sv,
+		};
+
 	// TODO check if already exists?
 
 	env.emplace_front(fmt::format("{}={}", name, value));
