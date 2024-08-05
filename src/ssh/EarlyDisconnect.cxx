@@ -22,6 +22,10 @@ SendEarlyDisconnect(SocketDescriptor socket,
 	};
 
 	(void)socket.Send(v);
+
+	/* shut down the socket gracefully so pending data really gets
+           transmitted */
+	socket.Shutdown();
 }
 
 } // namespace SSH
