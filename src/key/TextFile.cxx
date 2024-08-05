@@ -154,7 +154,6 @@ ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 
 	AuthorizedKeyOptions options;
 	if (!MaybeSupportsKeyType(key_type)) {
-		// TODO parse & obey options
 		line = ParseOptions(line, options);
 		std::tie(key_type, rest) = Split(line, ' ');
 	}
