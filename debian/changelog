@@ -1,6 +1,6 @@
 cm4all-lukko (0.28) unstable; urgency=low
 
-  * 
+  * increase listener backlog to 1024
 
  --   
 
