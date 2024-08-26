@@ -180,6 +180,8 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		p.PutEnv(fmt::format("SSH_CONNECTION={} {} {} {}"sv,
 				     peer_host, peer_address.GetPort(),
 				     local_host, local_address.GetPort()));
+
+		p.SetEnv("SHELL", c.GetShell());
 	}
 
 	c.PrepareChildProcess(p, close_fds, sftp);
@@ -215,8 +217,6 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		p.SetEnv("HOME", home);
 		p.chdir = home;
 	}
-
-	p.SetEnv("SHELL", c.GetShell());
 }
 
 void
