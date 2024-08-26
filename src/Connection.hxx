@@ -89,6 +89,12 @@ class Connection final
 
 	std::unique_ptr<OutgoingConnection> outgoing;
 
+#ifdef ENABLE_TRANSLATION
+	bool sftp_only = false;
+#else
+	static constexpr bool sftp_only = false;
+#endif
+
 	bool log_disconnect = true;
 
 	bool have_service_userauth = false;
@@ -162,7 +168,9 @@ public:
 #endif
 
 	[[gnu::pure]]
-	bool IsSftpOnly() const noexcept;
+	bool IsSftpOnly() const noexcept {
+		return sftp_only;
+	}
 
 	[[gnu::pure]]
 	bool IsExecAllowed() const noexcept {

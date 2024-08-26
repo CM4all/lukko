@@ -208,20 +208,6 @@ Connection::HasTag(std::string_view tag) const noexcept
 #endif // ENABLE_TRANSLATION
 
 bool
-Connection::IsSftpOnly() const noexcept
-{
-	assert(IsAuthenticated());
-
-#ifdef ENABLE_TRANSLATION
-	if (translation && translation->response.token != nullptr &&
-	    StringIsEqual(translation->response.token, "sftp-only"))
-		return true;
-#endif
-
-	return false;
-}
-
-bool
 Connection::IsForwardingAllowed() const noexcept
 {
 	if (authorized_key_options.no_port_forwarding)
@@ -608,6 +594,10 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			SendPacket(SSH::MakeUserauthFailure({}, false));
 			co_return;
 		}
+
+		if (response.token != nullptr &&
+		    StringIsEqual(response.token, "sftp-only"))
+			sftp_only = true;
 
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response),
