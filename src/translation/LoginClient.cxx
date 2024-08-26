@@ -67,8 +67,7 @@ WritePacket(std::byte *&p, TranslationCommand cmd,
 static void
 SendFull(SocketDescriptor fd, std::span<const std::byte> buffer)
 {
-	ssize_t nbytes = send(fd.Get(), buffer.data(), buffer.size(),
-			      MSG_NOSIGNAL);
+	ssize_t nbytes = fd.Send(buffer);
 	if (nbytes < 0)
 		throw MakeSocketError("send() to translation server failed");
 
