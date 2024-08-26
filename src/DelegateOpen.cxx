@@ -64,7 +64,7 @@ SpawnOpen(const Connection &ssh_connection)
 	   rootfs; minimalism! */
 	ssh_connection.PrepareChildProcess(p, close_fds, true);
 
-	if (const char *home = p.ns.mount.GetJailedHome())
+	if (const char *home = p.GetJailedHome())
 		p.chdir = home;
 
 	p.control_fd = control_socket_for_child.ToFileDescriptor();

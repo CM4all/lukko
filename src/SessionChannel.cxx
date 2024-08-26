@@ -211,7 +211,7 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		stderr_pipe.Open(stderr_r.Release());
 	}
 
-	if (const char *home = p.ns.mount.GetJailedHome()) {
+	if (const char *home = p.GetJailedHome()) {
 		p.SetEnv("HOME", home);
 		p.chdir = home;
 	}
@@ -236,7 +236,7 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 	    p.ns.mount.HasMountHome()) {
 		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
 
-		const char *const home = p.ns.mount.home;
+		const char *const home = p.GetHome();
 
 		for (auto &i : p.ns.mount.mounts) {
 			if (i.type == Mount::Type::BIND && i.IsSourcePath(home))

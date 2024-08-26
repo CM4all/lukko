@@ -247,7 +247,7 @@ Connection::GetHome() const noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation)
-		return translation->response.child_options.ns.mount.home;
+		return translation->response.child_options.GetHome();
 #endif // ENABLE_TRANSLATION
 
 	if (!home_path.empty())
