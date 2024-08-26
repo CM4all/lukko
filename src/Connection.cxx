@@ -572,7 +572,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			};
 		}
 
-		if (response.status != HttpStatus{}) {
+		for (const auto *i : {&response, &sftp_response}) {
+			const auto &r = *i;
+			if (r.status == HttpStatus{})
+				continue;
+
 			accounting.UpdateTokenBucket(8);
 
 			if (password.empty())
@@ -583,13 +587,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			if (password.empty())
 				LogFmt("Rejected auth for user {:?}{}{}"sv,
 				       new_username,
-				       response.message != nullptr ? ": "sv : ""sv,
-				       response.message != nullptr ? response.message : "");
+				       r.message != nullptr ? ": "sv : ""sv,
+				       r.message != nullptr ? r.message : "");
 			else
 				LogFmt("Failed password for user {:?}{}{}"sv,
 				       new_username,
-				       response.message != nullptr ? ": "sv : ""sv,
-				       response.message != nullptr ? response.message : "");
+				       r.message != nullptr ? ": "sv : ""sv,
+				       r.message != nullptr ? r.message : "");
 
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure({}, false));
