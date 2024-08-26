@@ -43,6 +43,7 @@
 #include "util/Exception.hxx" // for GetFullMessage()
 #include "util/IterableSplitString.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringVerify.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -599,11 +600,19 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		    StringIsEqual(response.token, "sftp-only"))
 			sftp_only = true;
 
-		password_accepted = !password.empty();
-
-		if (response.no_password != nullptr)
-			// TODO check the "no_password" payload
+		if (!password.empty())
 			password_accepted = true;
+		else if (response.no_password != nullptr) {
+			password_accepted = true;
+
+			if (StringIsEqual(response.no_password, "sftp"))
+				sftp_only = true;
+			else if (!StringIsEmpty(response.no_password))
+				/* unrecognized NO_PASSWORD payload;
+                                   we can't accept the password that
+                                   way */
+				password_accepted = false;
+		}
 
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response),
