@@ -9,6 +9,7 @@
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketError.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "co/AwaitableHelper.hxx"
 #include "co/Task.hxx"
@@ -164,7 +165,7 @@ ReceiveResponse(EventLoop &event_loop,
 	while (true) {
 		auto w = buffer.Write();
 		if (w.empty())
-			throw std::runtime_error("Translation receive buffer is full");
+			throw SocketBufferFullError{"Translation receive buffer is full"};
 
 		ssize_t nbytes = recv(fd.Get(), w.data(), w.size(), MSG_NOSIGNAL);
 		if (nbytes < 0) {
@@ -178,7 +179,7 @@ ReceiveResponse(EventLoop &event_loop,
 		}
 
 		if (nbytes == 0)
-			throw std::runtime_error("Translation server hung up");
+			throw SocketClosedPrematurelyError{"Translation server hung up"};
 
 		buffer.Append(nbytes);
 
@@ -200,7 +201,7 @@ ReceiveResponse(EventLoop &event_loop,
 
 			case TranslateParser::Result::DONE:
 				if (!buffer.empty())
-					throw std::runtime_error("Excessive data from translation server");
+					throw SocketProtocolError{"Excessive data from translation server"};
 
 				co_return response;
 			}
