@@ -599,14 +599,15 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		    StringIsEqual(response.token, "sftp-only"))
 			sftp_only = true;
 
+		password_accepted = !password.empty();
+
+		if (response.no_password != nullptr)
+			// TODO check the "no_password" payload
+			password_accepted = true;
+
 		translation = std::make_unique<Translation>(std::move(alloc),
 							    std::move(response),
 							    std::move(sftp_response));
-		password_accepted = !password.empty();
-
-		if (translation->response.no_password != nullptr)
-			// TODO check the "no_password" payload
-			password_accepted = true;
 
 		if (password_accepted)
 			++instance.counters.n_userauth_password_accepted;
