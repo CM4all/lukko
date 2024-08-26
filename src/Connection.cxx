@@ -88,6 +88,28 @@ struct Connection::Translation {
 		 sftp_response(std::move(_sftp_response)) {}
 };
 
+static void
+CheckChildOptions(const ChildOptions &options)
+{
+	if (options.uid_gid.uid == 0)
+		throw std::invalid_argument{"Translation response contains no UID"};
+
+	if (options.uid_gid.gid == 0)
+		throw std::invalid_argument{"Translation response contains no GID"};
+
+	if (!options.HasHome())
+		throw std::invalid_argument{"Translation response contains no HOME"};
+}
+
+static void
+CheckTranslateResponse(const TranslateResponse &response)
+{
+	// status must have been checked already
+	assert(response.status == HttpStatus{});
+
+	CheckChildOptions(response.child_options);
+}
+
 #endif // ENABLE_TRANSLATION
 
 Connection::Connection(Instance &_instance, Listener &_listener,
@@ -616,6 +638,19 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
                                    we can't accept the password that
                                    way */
 				password_accepted = false;
+		}
+
+		try {
+			CheckTranslateResponse(response);
+			CheckTranslateResponse(sftp_response);
+		} catch (...) {
+			++instance.counters.n_translation_errors;
+			logger(1, "Translation server error: ", std::current_exception());
+			accounting.UpdateTokenBucket(2);
+			throw Disconnect{
+				SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
+				"Configuration server failed"sv,
+			};
 		}
 
 		translation = std::make_unique<Translation>(std::move(alloc),
