@@ -2,6 +2,7 @@ cm4all-lukko (0.29) unstable; urgency=low
 
   * obey the NO_PASSWORD=sftp translation packet
   * verify that the translation response has UID, GID and HOME
+  * translation: add packet CHROOT
 
  --   
 
