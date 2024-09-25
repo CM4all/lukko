@@ -5,7 +5,7 @@ cm4all-lukko (0.29) unstable; urgency=low
   * set HOME and CHDIR only if not set by translation server
   * translation: add packet CHROOT
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Sep 2024 22:15:41 +0200
 
 cm4all-lukko (0.28) unstable; urgency=low
 
