@@ -213,10 +213,12 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		stderr_pipe.Open(stderr_r.Release());
 	}
 
-	if (const char *home = p.GetJailedHome()) {
-		p.SetEnv("HOME", home);
-		p.chdir = home;
-	}
+	if (!p.HasEnv("HOME"sv))
+		if (const char *home = p.GetJailedHome())
+			p.SetEnv("HOME"sv, home);
+
+	if (p.chdir == nullptr)
+		p.chdir = p.GetJailedHome();
 }
 
 void
