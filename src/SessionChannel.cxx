@@ -200,8 +200,8 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		/* allocate 256 kB for each pipe to maximize
 		   throughput */
 		constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-		fcntl(stdout_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
-		fcntl(stdin_w.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+		stdout_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
+		stdin_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
 
 		p.stdin_fd = close_fds.Insert(std::move(stdin_r));
 		p.stdout_fd = close_fds.Insert(std::move(stdout_w));
