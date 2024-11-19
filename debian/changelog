@@ -2,7 +2,7 @@ cm4all-lukko (0.30) unstable; urgency=low
 
   * use open(O_NONBLOCK) to fix FIFO DoS vulnerability
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Nov 2024 11:48:42 +0100
 
 cm4all-lukko (0.29) unstable; urgency=low
 
