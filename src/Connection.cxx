@@ -61,6 +61,7 @@
 
 #include <fcntl.h> // for O_*
 #include <pwd.h>
+#include <sys/stat.h>
 
 using std::string_view_literals::operator""sv;
 
@@ -373,9 +374,13 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 
 	if (ShouldLoadHomeAuthorizedKeys()) {
 		if (auto fd = co_await OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
-			if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
-				authorized_key_options = std::move(*options);
-				co_return true;
+			if (struct stat st;
+			    fstat(fd.Get(), &st) == 0 &&
+			    S_ISREG(st.st_mode) && st.st_size < 1024 * 1024) {
+				if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
+					authorized_key_options = std::move(*options);
+					co_return true;
+				}
 			}
 		}
 	}
