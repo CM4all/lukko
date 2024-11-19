@@ -1,6 +1,6 @@
 cm4all-lukko (0.30) unstable; urgency=low
 
-  * 
+  * use open(O_NONBLOCK) to fix FIFO DoS vulnerability
 
  --   
 
