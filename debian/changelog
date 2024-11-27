@@ -2,7 +2,7 @@ cm4all-lukko (0.31) unstable; urgency=low
 
   * spawn: mount `proc` with "hidepid=1,subset=pid"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 27 Nov 2024 16:23:59 +0100
 
 cm4all-lukko (0.30) unstable; urgency=low
 
