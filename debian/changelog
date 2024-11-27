@@ -1,3 +1,9 @@
+cm4all-lukko (0.32) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-lukko (0.31) unstable; urgency=low
 
   * spawn: mount `proc` with "hidepid=1,subset=pid"
