@@ -2,7 +2,7 @@ cm4all-lukko (0.32) unstable; urgency=low
 
   * spawn: forbid the "listmount" and "statmount" system calls
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 18:17:51 +0100
 
 cm4all-lukko (0.31) unstable; urgency=low
 
