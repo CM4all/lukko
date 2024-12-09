@@ -134,6 +134,7 @@ subdir('libcommon/src/io/config')
 subdir('libcommon/src/io/linux')
 subdir('libcommon/src/system')
 subdir('libcommon/src/event')
+subdir('libcommon/src/event/co')
 subdir('libcommon/src/net')
 subdir('libcommon/src/event/net')
 subdir('libcommon/src/thread')
@@ -247,6 +248,7 @@ executable(
     ssh_dep,
     libsystemd,
     fmt_dep,
+    event_co_dep,
     event_net_dep,
     event_systemd_dep,
     system_dep,
