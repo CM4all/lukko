@@ -47,6 +47,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 
 Listener::~Listener() noexcept
 {
+	delayed_connections.clear_and_dispose(DeleteDisposer{});
 	connections.clear_and_dispose(DeleteDisposer{});
 }
 

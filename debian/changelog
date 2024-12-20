@@ -1,6 +1,6 @@
 cm4all-lukko (0.33) unstable; urgency=low
 
-  * 
+  * fix shutdown hang due to delayed connections
 
  --   
 
