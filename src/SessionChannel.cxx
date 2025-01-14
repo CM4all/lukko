@@ -406,6 +406,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		tty.Close();
 		tty.Open(FileDescriptor{master});
 		tty.GetFileDescriptor().EnableCloseOnExec();
+		tty.GetFileDescriptor().SetNonBlocking();
 
 		if (!encoded_terminal_modes.empty())
 			ApplyTerminalModes(slave_tty, encoded_terminal_modes);
