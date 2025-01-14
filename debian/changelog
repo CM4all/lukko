@@ -3,7 +3,7 @@ cm4all-lukko (0.33) unstable; urgency=low
   * fix shutdown hang due to delayed connections
   * make the pty non-blocking
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 14 Jan 2025 12:23:32 +0100
 
 cm4all-lukko (0.32) unstable; urgency=low
 
