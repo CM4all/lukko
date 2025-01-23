@@ -10,7 +10,7 @@
 #include "SocketForwardListener.hxx"
 #include "RConnect.hxx"
 #include "RBind.hxx"
-#include "DelegateOpen.hxx"
+#include "Delegate.hxx"
 #include "DebugMode.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"

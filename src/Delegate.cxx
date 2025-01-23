@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <mk@cm4all.com>
 
-#include "DelegateOpen.hxx"
+#include "Delegate.hxx"
 #include "Connection.hxx"
 #include "spawn/CoEnqueue.hxx"
 #include "spawn/CoWaitSpawnCompletion.hxx"
