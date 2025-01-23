@@ -14,6 +14,7 @@
 #include "net/SocketError.hxx"
 #include "net/SocketPair.hxx"
 #include "net/SocketProtocolError.hxx"
+#include "net/LocalSocketAddress.hxx"
 #include "io/FdHolder.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -32,6 +33,30 @@ static void ReceivePath(SocketDescriptor control, std::span<char> path) {
 		throw SocketBufferFullError{};
 
 	path[nbytes] = 0;
+}
+
+static int
+LocalConnectExec(PreparedChildProcess &&)
+{
+	SocketDescriptor control{3};
+	char path[4096];
+	ReceivePath(control, path);
+	try {
+		UniqueSocketDescriptor sock;
+		if (!sock.Create(AF_UNIX, SOCK_STREAM, 0)) {
+			throw MakeErrno("Could not create unix domain socket");
+		}
+
+		const LocalSocketAddress addr(path);
+		if (!sock.Connect(addr)) {
+			throw MakeErrno("Could not connect to unix domain socket");
+		}
+
+		EasySendMessage(control, sock.ToFileDescriptor());
+	} catch (...) {
+		EasySendError(control, std::current_exception());
+	}
+	return 0;
 }
 
 static int
@@ -116,4 +141,12 @@ DelegateOpen(const Connection &ssh_connection, std::string_view path)
 {
 	// using SFTP mode because this (usually) mounts an empt rootfs; minimalism!
 	return Delegate(ssh_connection, path, OpenExec, true);
+}
+
+Co::Task<UniqueFileDescriptor>
+DelegateLocalConnect(const Connection &ssh_connection, std::string_view path)
+{
+	/* Don't use SFTP mode because we are most likely interested in connecting
+	 * to the sockets that will not be mounted in SFTP mode. */
+	return Delegate(ssh_connection, path, LocalConnectExec, false);
 }
