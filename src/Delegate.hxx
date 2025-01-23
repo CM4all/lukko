@@ -15,3 +15,6 @@ class Connection;
  */
 Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path);
+
+Co::Task<UniqueFileDescriptor>
+DelegateLocalConnect(const Connection &ssh_connection, std::string_view path);

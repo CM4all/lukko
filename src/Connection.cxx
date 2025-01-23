@@ -10,7 +10,7 @@
 #include "SocketForwardListener.hxx"
 #include "RConnect.hxx"
 #include "RBind.hxx"
-#include "DelegateOpen.hxx"
+#include "Delegate.hxx"
 #include "DebugMode.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
@@ -443,6 +443,50 @@ private:
 	}
 };
 
+class LocalConnectSocketChannelOperation final : Cancellable {
+	Connection &connection;
+	const SSH::ChannelInit init;
+	Co::InvokeTask invoke_task;
+	UniqueSocketDescriptor socket;
+
+public:
+	LocalConnectSocketChannelOperation(Connection &_connection,
+					   SSH::ChannelInit _init) noexcept
+		:connection(_connection), init(_init) {}
+
+	void Start(std::string_view path, CancellablePointer &caller_cancel_ptr) noexcept {
+		caller_cancel_ptr = *this;
+		invoke_task = Start(path);
+		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
+	}
+
+private:
+	Co::InvokeTask Start(std::string_view path) {
+		auto fd = co_await DelegateLocalConnect(connection, path);
+		socket = UniqueSocketDescriptor{std::move(fd)};
+	}
+
+	void OnCompletion(std::exception_ptr error) noexcept {
+		if (error) {
+			// TODO log error?
+			connection.AsyncChannelOpenFailure(init,
+							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+							   GetFullMessage(error));
+			delete this;
+		} else {
+			auto &_connection = connection;
+			auto *channel = new SocketChannel(_connection, init, std::move(socket));
+			delete this;
+			_connection.AsyncChannelOpenSuccess(*channel);
+		}
+	}
+
+	// virtual methods from class Cancellable
+	virtual void Cancel() noexcept override { // Cancellable
+		delete this;
+	}
+};
+
 std::unique_ptr<SSH::Channel>
 Connection::CreateChannel(std::string_view channel_type,
 			  SSH::ChannelInit init,
@@ -476,6 +520,17 @@ Connection::CreateChannel(std::string_view channel_type,
 
 		auto *operation = new ResolveSocketChannelOperation(*this, init);
 		operation->Start(connect_host, connect_port, cancel_ptr);
+		return {};
+	} else if (channel_type == "direct-streamlocal@openssh.com") {
+		SSH::Deserializer d{payload};
+		const auto socket_path = d.ReadString();
+		// Ignore remaining "reserved" fields (string, u32):
+		// https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL#rev1.30
+
+		// We have to impersonate the user to have access to their container's file system,
+		// which contains the socket.
+		auto *operation = new LocalConnectSocketChannelOperation(*this, init);
+		operation->Start(socket_path, cancel_ptr);
 		return {};
 	} else
 		return SSH::CConnection::CreateChannel(channel_type, init, payload,

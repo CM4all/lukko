@@ -239,7 +239,7 @@ executable(
   'src/SocketForwardListener.cxx',
   'src/RConnect.cxx',
   'src/RBind.cxx',
-  'src/DelegateOpen.cxx',
+  'src/Delegate.cxx',
   'src/OutgoingConnection.cxx',
   'src/net/ClientAccounting.cxx',
   'src/system/SetupProcess.cxx',
