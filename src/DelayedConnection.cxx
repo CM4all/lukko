@@ -36,7 +36,7 @@ DelayedConnection::~DelayedConnection() noexcept
 void
 DelayedConnection::OnTimer() noexcept
 {
-	UniqueSocketDescriptor fd{socket.ReleaseSocket()};
+	UniqueSocketDescriptor fd{AdoptTag{}, socket.ReleaseSocket()};
 
 	try {
 		auto *c = new Connection(instance, listener,

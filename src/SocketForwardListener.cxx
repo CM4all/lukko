@@ -86,7 +86,7 @@ SocketForwardListener::Factory::CreateChannel(SSH::ChannelInit init)
 	cancel_ptr = {};
 
 	auto &_connection = connection;
-	UniqueSocketDescriptor _socket{socket.ReleaseSocket()};
+	UniqueSocketDescriptor _socket{AdoptTag{}, socket.ReleaseSocket()};
 	delete this;
 	return std::make_unique<SocketChannel>(_connection, init, std::move(_socket));
 }
