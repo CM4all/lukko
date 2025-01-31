@@ -400,7 +400,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		if (openpty(&master, &slave, nullptr, nullptr, &ws) < 0)
 			throw MakeErrno("openpty() failed");
 
-		slave_tty = UniqueFileDescriptor{slave};
+		slave_tty = UniqueFileDescriptor{AdoptTag{}, slave};
 		slave_tty.EnableCloseOnExec();
 
 		tty.Close();
