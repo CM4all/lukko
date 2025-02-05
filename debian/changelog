@@ -2,7 +2,7 @@ cm4all-lukko (0.35) unstable; urgency=low
 
   * spawn: apply TMPFS_DIRS_READABLE to tmpfs mounts
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 05 Feb 2025 07:26:01 +0100
 
 cm4all-lukko (0.34) unstable; urgency=low
 
