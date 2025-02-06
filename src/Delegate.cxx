@@ -20,6 +20,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/Task.hxx"
 #include "util/SpanCast.hxx"
+#include "AllocatorPtr.hxx"
 
 static void ReceivePath(SocketDescriptor control, std::span<char> path) {
 	auto nbytes = control.Receive(std::as_writable_bytes(path));
@@ -82,6 +83,7 @@ SpawnOpen(const Connection &ssh_connection,
 	// TODO this is a horrible and inefficient kludge
 	auto [control_socket, control_socket_for_child] = CreateSocketPair(SOCK_SEQPACKET);
 
+	Allocator alloc;
 	FdHolder close_fds;
 
 	PreparedChildProcess p;
@@ -91,7 +93,8 @@ SpawnOpen(const Connection &ssh_connection,
 	ssh_connection.PrepareChildProcess(p, close_fds, sftp_mode);
 
 	if (p.chdir == nullptr)
-		p.chdir = p.GetJailedHome();
+		if (const char *home = p.ToContainerPath(alloc, p.GetHome()))
+			p.chdir = home;
 
 	p.control_fd = control_socket_for_child.ToFileDescriptor();
 

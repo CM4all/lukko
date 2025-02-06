@@ -14,6 +14,7 @@
 
 namespace Co { template<typename T> class Task; }
 struct PreparedChildProcess;
+class AllocatorPtr;
 class ChildProcessHandle;
 class FdHolder;
 class Logger;
@@ -92,10 +93,12 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value);
 
-	void PrepareChildProcess(PreparedChildProcess &p,
+	void PrepareChildProcess(AllocatorPtr alloc,
+				 PreparedChildProcess &p,
 				 FdHolder &close_fds,
 				 bool sftp);
-	void SpawnChildProcess(PreparedChildProcess &&p);
+	void SpawnChildProcess(AllocatorPtr alloc,
+			       PreparedChildProcess &&p);
 
 	[[nodiscard]]
 	Co::Task<bool> Exec(const char *cmd);

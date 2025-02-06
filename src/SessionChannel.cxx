@@ -157,7 +157,8 @@ LoginShellName(const char *shell) noexcept
 }
 
 void
-SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
+SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
+				    PreparedChildProcess &p,
 				    FdHolder &close_fds,
 				    bool sftp)
 {
@@ -213,16 +214,18 @@ SessionChannel::PrepareChildProcess(PreparedChildProcess &p,
 		stderr_pipe.Open(stderr_r.Release());
 	}
 
-	if (!p.HasEnv("HOME"sv))
-		if (const char *home = p.GetJailedHome())
+	if (const char *home = p.ToContainerPath(alloc, p.GetHome())) {
+		if (!p.HasEnv("HOME"sv))
 			p.SetEnv("HOME"sv, home);
 
-	if (p.chdir == nullptr)
-		p.chdir = p.GetJailedHome();
+		if (p.chdir == nullptr)
+			p.chdir = home;
+	}
 }
 
 void
-SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
+SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
+				  PreparedChildProcess &&p)
 {
 	auto &c = static_cast<Connection &>(GetConnection());
 	auto &spawn_service = c.GetSpawnService();
@@ -233,15 +236,13 @@ SessionChannel::SpawnChildProcess(PreparedChildProcess &&p)
 	for (const auto &i : env)
 		p.PutEnv(i.c_str());
 
-	Allocator alloc;
-	if (c.GetAuthorizedKeyOptions().home_read_only &&
-	    p.ns.mount.HasMountHome()) {
+	if (c.GetAuthorizedKeyOptions().home_read_only) {
 		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
 
 		const char *const home = p.GetHome();
 
 		for (auto &i : p.ns.mount.mounts) {
-			if (i.type == Mount::Type::BIND && i.IsSourcePath(home))
+			if (i.type == Mount::Type::BIND && i.IsInSourcePath(home))
 				i.writable = false;
 		}
 	}
@@ -261,10 +262,11 @@ SessionChannel::Exec(const char *cmd)
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner(c.GetSpawnService());
 
+	Allocator alloc;
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	PrepareChildProcess(p, close_fds, false);
+	PrepareChildProcess(alloc, p, close_fds, false);
 
 	const char *const shell = c.GetShell();
 
@@ -286,7 +288,7 @@ SessionChannel::Exec(const char *cmd)
 		p.args.push_back((login_shell_name = LoginShellName(shell)).c_str());
 	}
 
-	SpawnChildProcess(std::move(p));
+	SpawnChildProcess(alloc, std::move(p));
 
 	co_await CoWaitSpawnCompletion{*child};
 
@@ -358,10 +360,11 @@ SessionChannel::OnRequest(std::string_view request_type,
 			UniqueFileDescriptor sftp_server;
 			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
 
+			Allocator alloc;
 			FdHolder close_fds;
 			PreparedChildProcess p;
 
-			PrepareChildProcess(p, close_fds,
+			PrepareChildProcess(alloc, p, close_fds,
 					    sftp_server.IsDefined());
 
 			if (sftp_server.IsDefined()) {
@@ -371,7 +374,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 				p.Append("/usr/lib/openssh/sftp-server");
 
 			try {
-				SpawnChildProcess(std::move(p));
+				SpawnChildProcess(alloc, std::move(p));
 				co_await CoWaitSpawnCompletion{*child};
 				co_return true;
 			} catch (...) {
