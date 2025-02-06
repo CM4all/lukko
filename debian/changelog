@@ -1,7 +1,7 @@
 cm4all-lukko (0.36) unstable; urgency=low
 
   * spawn: allow HOME inside a BIND_MOUNT
-  * translation: add packet SYMLINK
+  * translation: add packets SYMLINK, BIND_MOUNT_RW_EXEC
 
  --   
 
