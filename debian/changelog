@@ -1,6 +1,7 @@
 cm4all-lukko (0.37) unstable; urgency=low
 
   * translation: allow BIND_MOUNT from container
+  * translation: add packet BIND_MOUNT_FILE_EXEC
 
  --   
 
