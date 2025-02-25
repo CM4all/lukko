@@ -92,10 +92,10 @@ struct Connection::Translation {
 static void
 CheckChildOptions(const ChildOptions &options)
 {
-	if (options.uid_gid.uid == 0)
+	if (options.uid_gid.effective_uid == 0)
 		throw std::invalid_argument{"Translation response contains no UID"};
 
-	if (options.uid_gid.gid == 0)
+	if (options.uid_gid.effective_gid == 0)
 		throw std::invalid_argument{"Translation response contains no GID"};
 
 	if (!options.HasHome())
@@ -332,8 +332,8 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 		}
 	} else {
 #endif // ENABLE_TRANSLATION
-		p.uid_gid.uid = uid;
-		p.uid_gid.gid = gid;
+		p.uid_gid.effective_uid = uid;
+		p.uid_gid.effective_gid = gid;
 
 		if (!home_path.empty())
 			p.ns.mount.home = home_path.c_str();
