@@ -92,10 +92,10 @@ struct Connection::Translation {
 static void
 CheckChildOptions(const ChildOptions &options)
 {
-	if (options.uid_gid.effective_uid == 0)
+	if (options.uid_gid.effective_uid == UidGid::UNSET_UID)
 		throw std::invalid_argument{"Translation response contains no UID"};
 
-	if (options.uid_gid.effective_gid == 0)
+	if (options.uid_gid.effective_gid == UidGid::UNSET_GID)
 		throw std::invalid_argument{"Translation response contains no GID"};
 
 	if (!options.HasHome())
