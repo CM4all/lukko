@@ -13,7 +13,7 @@ Building Lukko
 You need:
 
 - Linux kernel 5.12 or later
-- a C++20 compliant compiler
+- a C++23 compliant compiler
 - `Meson 1.2 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 - `libfmt <https://fmt.dev/>`__
 - `libsodium <https://www.libsodium.org/>`__
