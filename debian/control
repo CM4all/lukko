@@ -3,7 +3,7 @@ Section: net
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 13.3~),
- meson (>= 1.0),
+ meson (>= 1.2),
  python3-sphinx,
  g++ (>= 4:12),
  libc6-dev (>= 2.36),

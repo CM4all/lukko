@@ -1,5 +1,5 @@
 project('CM4all Lukko', 'cpp', version: '0.38',
-  meson_version: '>= 1.0',
+  meson_version: '>= 1.2',
   default_options: [
     'cpp_std=c++2a',
     'warning_level=3',
