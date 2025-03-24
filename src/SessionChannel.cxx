@@ -384,7 +384,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 		} else
 			co_return false;
 	} else if (request_type == "pty-req"sv) {
-		if (c.GetAuthorizedKeyOptions().no_pty)
+		if (!c.IsExecAllowed() || c.GetAuthorizedKeyOptions().no_pty)
 			co_return false;
 
 		struct winsize ws{};
@@ -418,6 +418,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		co_return true;
 	} else if (request_type == "env"sv) {
+		if (!c.IsExecAllowed())
+			co_return false;
+
 		SSH::Deserializer d{type_specific};
 		const auto name = d.ReadString();
 		const auto value = d.ReadString();
