@@ -1,6 +1,8 @@
 cm4all-lukko (0.38) unstable; urgency=low
 
   * reject "pty-req" and "env" requests for sftp-only accounts
+  * option "exec_reject_stderr" prints error message instead of rejecting
+    the "exec" request
   * translation: add packet REAL_UID_GID
 
  --   

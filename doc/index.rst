@@ -84,6 +84,13 @@ Known attributes:
   responses.  The exact conditions and the delay is currently
   hard-coded.  The default is ``no``.
 
+- ``exec_reject_stderr``: ``yes`` means when an ``exec`` request on a
+  session channel is rejected (e.g. for SFTP-only accounts), Lukko
+  pretends the request has succeeded, but prints an error message on
+  ``stderr``.  This is a slight protocol violation but may be less
+  confusing for users than the normal OpenSSH client error message
+  "shell request failed on channel 0".
+
 - ``pond_server``: send log messages to this Pond server.
 
 

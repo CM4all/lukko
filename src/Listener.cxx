@@ -37,7 +37,8 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 		     ? CreateConnectDatagramSocket(config.pond_server)
 		     : UniqueSocketDescriptor{}),
 #endif
-	 logger(instance.GetLogger())
+	 logger(instance.GetLogger()),
+	 exec_reject_stderr(config.exec_reject_stderr)
 {
 	if (config.max_connections_per_ip > 0 || config.tarpit)
 		client_accounting = std::make_unique<ClientAccountingMap>(_instance.GetEventLoop(),

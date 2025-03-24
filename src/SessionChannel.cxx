@@ -4,6 +4,7 @@
 
 #include "SessionChannel.hxx"
 #include "Connection.hxx"
+#include "Listener.hxx"
 #include "DebugMode.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Mount.hxx"
@@ -20,6 +21,7 @@
 #include "net/ToString.hxx"
 #include "io/FdHolder.hxx"
 #include "io/Pipe.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -64,6 +66,28 @@ SessionChannel::CloseIfInactive() noexcept
 {
 	if (!IsActive())
 		Close();
+}
+
+/**
+ * Creates a pipe that contains the given string and returns the read
+ * side.
+ */
+static UniqueFileDescriptor
+MakeStringPipe(std::string_view s)
+{
+	auto [r, w] = CreatePipe();
+	(void)w.Write(AsBytes(s));
+	return std::move(r);
+}
+
+void
+SessionChannel::SetStderrString(std::string_view s)
+{
+	assert(!stderr_pipe.IsDefined());
+
+	stderr_pipe.Open(MakeStringPipe(s).Release());
+	if (GetSendWindow() > 0)
+		ScheduleRead();
 }
 
 void
@@ -256,8 +280,14 @@ inline Co::Task<bool>
 SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
-	if (!c.IsExecAllowed())
+	if (!c.IsExecAllowed()) {
+		if (c.IsSftpOnly() && c.GetListener().GetExecRejectStderr()) {
+			SetStderrString("This is an SFTP-only account.\n"sv);
+			co_return true;
+		}
+
 		co_return false;
+	}
 
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner(c.GetSpawnService());

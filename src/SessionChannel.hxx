@@ -91,6 +91,13 @@ private:
 			CloseIfInactive();
 	}
 
+	/**
+	 * Inject the specified string into STDERR (to be displayed to
+	 * the user).  Call this if process execution is rejected,
+	 * before any pipe is set up.
+	 */
+	void SetStderrString(std::string_view s);
+
 	void SetEnv(std::string_view name, std::string_view value);
 
 	void PrepareChildProcess(AllocatorPtr alloc,

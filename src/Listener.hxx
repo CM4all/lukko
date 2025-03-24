@@ -45,6 +45,8 @@ class Listener final : ServerSocket {
 	IntrusiveList<Connection> connections;
 	IntrusiveList<DelayedConnection> delayed_connections;
 
+	const bool exec_reject_stderr;
+
 public:
 	Listener(Instance &_instance, const ListenerConfig &_config);
 	~Listener() noexcept;
@@ -57,6 +59,10 @@ public:
 
 	SocketAddress GetProxyTo() const noexcept {
 		return proxy_to;
+	}
+
+	bool GetExecRejectStderr() const noexcept {
+		return exec_reject_stderr;
 	}
 
 #ifdef ENABLE_POND

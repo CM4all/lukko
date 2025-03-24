@@ -31,6 +31,8 @@ struct ListenerConfig : SocketConfig {
 
 	bool tarpit = false;
 
+	bool exec_reject_stderr = false;
+
 	ListenerConfig() noexcept {
 		listen = 256;
 		tcp_no_delay = true;
