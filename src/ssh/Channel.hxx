@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception> // for std::exception_ptr
 #include <span>
 #include <string_view>
 

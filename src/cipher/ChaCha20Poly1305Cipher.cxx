@@ -10,6 +10,7 @@
 
 #include <sodium/utils.h>
 
+#include <algorithm> // for std::copy()
 #include <cassert>
 #include <stdexcept>
 
