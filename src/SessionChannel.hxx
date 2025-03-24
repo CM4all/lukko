@@ -93,8 +93,7 @@ private:
 
 	/**
 	 * Inject the specified string into STDERR (to be displayed to
-	 * the user).  Call this if process execution is rejected,
-	 * before any pipe is set up.
+	 * the user).  Call this if process execution is rejected.
 	 */
 	void SetStderrString(std::string_view s);
 

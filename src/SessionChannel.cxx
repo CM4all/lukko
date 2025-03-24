@@ -83,7 +83,12 @@ MakeStringPipe(std::string_view s)
 void
 SessionChannel::SetStderrString(std::string_view s)
 {
-	assert(!stderr_pipe.IsDefined());
+	child = {};
+	slave_tty.Close();
+	stdin_pipe.Close();
+	stdout_pipe.Close();
+	stderr_pipe.Close();
+	tty.Close();
 
 	stderr_pipe.Open(MakeStringPipe(s).Release());
 	if (GetSendWindow() > 0)
