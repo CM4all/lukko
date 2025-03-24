@@ -381,7 +381,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 			// TODO repeat translation request with service="sftp"
 
 			if (tty.IsDefined())
-				/* refuse to run sftp with a pty */
+				/* refuse to run SFTP with a pty */
 				co_return false;
 
 			/* throttle if the spawner is under pressure */
@@ -408,7 +408,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 				co_await CoWaitSpawnCompletion{*child};
 				co_return true;
 			} catch (...) {
-				logger.Fmt(1, "Failed to spawn sftp server: {}", std::current_exception());
+				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
 				co_return false;
 			}
 		} else
