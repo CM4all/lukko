@@ -67,12 +67,7 @@ jobs:
         run: ninja -C output -v
 
       - name: Unit Tests
-        run: meson test -C output
-
-      - name: Dump Unit Test Log
-        if: ${{ failure() }}
-        continue-on-error: true
-        run: cat output/meson-logs/testlog.txt
+        run: meson test -C output --print-errorlogs
 
       - name: Connect Tests
         run: ./test/test_lukko.py output
@@ -115,9 +110,4 @@ jobs:
         run: ninja -C output -v
 
       - name: Unit Tests
-        run: meson test -C output
-
-      - name: Dump Unit Test Log
-        if: ${{ failure() }}
-        continue-on-error: true
-        run: cat output/meson-logs/testlog.txt
+        run: meson test -C output --print-errorlogs
