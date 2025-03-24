@@ -84,6 +84,9 @@ Known attributes:
   responses.  The exact conditions and the delay is currently
   hard-coded.  The default is ``no``.
 
+- ``verbose_errors``: ``yes`` sends internal error messages to the
+  client on ``stderr``.
+
 - ``exec_reject_stderr``: ``yes`` means when an ``exec`` request on a
   session channel is rejected (e.g. for SFTP-only accounts), Lukko
   pretends the request has succeeded, but prints an error message on

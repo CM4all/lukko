@@ -170,6 +170,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "tarpit")) {
 		config.tarpit = line.NextBool();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "verbose_errors")) {
+		config.verbose_errors = line.NextBool();
+		line.ExpectEnd();
 	} else if (StringIsEqual(word, "exec_reject_stderr")) {
 		config.exec_reject_stderr = line.NextBool();
 		line.ExpectEnd();

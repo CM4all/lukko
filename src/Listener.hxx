@@ -45,7 +45,7 @@ class Listener final : ServerSocket {
 	IntrusiveList<Connection> connections;
 	IntrusiveList<DelayedConnection> delayed_connections;
 
-	const bool exec_reject_stderr;
+	const bool verbose_errors, exec_reject_stderr;
 
 public:
 	Listener(Instance &_instance, const ListenerConfig &_config);
@@ -59,6 +59,10 @@ public:
 
 	SocketAddress GetProxyTo() const noexcept {
 		return proxy_to;
+	}
+
+	bool GetVerboseErrors() const noexcept {
+		return verbose_errors;
 	}
 
 	bool GetExecRejectStderr() const noexcept {

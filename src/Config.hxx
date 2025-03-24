@@ -31,6 +31,8 @@ struct ListenerConfig : SocketConfig {
 
 	bool tarpit = false;
 
+	bool verbose_errors = false;
+
 	bool exec_reject_stderr = false;
 
 	ListenerConfig() noexcept {

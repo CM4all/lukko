@@ -366,6 +366,13 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return co_await Exec(command.c_str());
 		} catch (...) {
 			logger.Fmt(1, "Failed to spawn child process: {}", std::current_exception());
+
+			if (c.GetListener().GetVerboseErrors()) {
+				SetStderrString(fmt::format("Failed to execute: {}\n",
+							    std::current_exception()));
+				co_return true;
+			}
+
 			co_return false;
 		}
 	} else if (request_type == "shell"sv) {
@@ -373,6 +380,13 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return co_await Exec(nullptr);
 		} catch (...) {
 			logger.Fmt(1, "Failed to spawn shell: {}", std::current_exception());
+
+			if (c.GetListener().GetVerboseErrors()) {
+				SetStderrString(fmt::format("Failed to spawn shell: {}\n",
+							    std::current_exception()));
+				co_return true;
+			}
+
 			co_return false;
 		}
 	} else if (request_type == "subsystem"sv) {
@@ -414,6 +428,13 @@ SessionChannel::OnRequest(std::string_view request_type,
 				co_return true;
 			} catch (...) {
 				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
+
+				if (c.GetListener().GetVerboseErrors()) {
+					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\n",
+								    std::current_exception()));
+					co_return true;
+				}
+
 				co_return false;
 			}
 		} else

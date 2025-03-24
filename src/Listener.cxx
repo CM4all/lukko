@@ -38,6 +38,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 		     : UniqueSocketDescriptor{}),
 #endif
 	 logger(instance.GetLogger()),
+	 verbose_errors(config.verbose_errors),
 	 exec_reject_stderr(config.exec_reject_stderr)
 {
 	if (config.max_connections_per_ip > 0 || config.tarpit)
