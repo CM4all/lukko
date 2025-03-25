@@ -8,7 +8,7 @@ cm4all-lukko (0.38) unstable; urgency=low
   * spawn: fix chroot into directories that are not world-searchable
   * require Meson 1.2
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 25 Mar 2025 12:05:19 +0100
 
 cm4all-lukko (0.37) unstable; urgency=low
 
