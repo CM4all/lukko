@@ -440,8 +440,15 @@ SessionChannel::OnRequest(std::string_view request_type,
 		} else
 			co_return false;
 	} else if (request_type == "pty-req"sv) {
-		if (!c.IsExecAllowed() || c.GetAuthorizedKeyOptions().no_pty)
+		if (!c.IsExecAllowed() || c.GetAuthorizedKeyOptions().no_pty) {
+			if (c.IsSftpOnly() && c.GetListener().GetExecRejectStderr())
+				/* fake a positive response (but
+				   ignore the request) if this is
+				   SFTP-only */
+				co_return true;
+
 			co_return false;
+		}
 
 		struct winsize ws{};
 
