@@ -368,7 +368,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 			logger.Fmt(1, "Failed to spawn child process: {}", std::current_exception());
 
 			if (c.GetListener().GetVerboseErrors()) {
-				SetStderrString(fmt::format("Failed to execute: {}\n",
+				SetStderrString(fmt::format("Failed to execute: {}\r\n",
 							    std::current_exception()));
 				co_return true;
 			}
@@ -382,7 +382,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 			logger.Fmt(1, "Failed to spawn shell: {}", std::current_exception());
 
 			if (c.GetListener().GetVerboseErrors()) {
-				SetStderrString(fmt::format("Failed to spawn shell: {}\n",
+				SetStderrString(fmt::format("Failed to spawn shell: {}\r\n",
 							    std::current_exception()));
 				co_return true;
 			}
@@ -430,7 +430,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
 
 				if (c.GetListener().GetVerboseErrors()) {
-					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\n",
+					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
 								    std::current_exception()));
 					co_return true;
 				}
