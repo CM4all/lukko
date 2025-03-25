@@ -287,7 +287,7 @@ SessionChannel::Exec(const char *cmd)
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed()) {
 		if (c.IsSftpOnly() && c.GetListener().GetExecRejectStderr()) {
-			SetStderrString("This is an SFTP-only account.\n"sv);
+			SetStderrString("Shell access denied (SFTP only).\r\n"sv);
 			co_return true;
 		}
 
