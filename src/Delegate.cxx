@@ -142,7 +142,7 @@ Delegate(const Connection &ssh_connection,
 Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path)
 {
-	// using SFTP mode because this (usually) mounts an empt rootfs; minimalism!
+	// using SFTP mode because this (usually) mounts an empty rootfs; minimalism!
 	return Delegate(ssh_connection, path, OpenExec, true);
 }
 
