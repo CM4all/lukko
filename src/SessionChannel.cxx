@@ -360,7 +360,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const std::string command{d.ReadString()};
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  exec {:?}"sv, command);
+		static constexpr std::size_t MAX_LOG_SIZE = 256;
+		logger.Fmt(1, "  exec {:?}{}"sv, command.size() > MAX_LOG_SIZE ? command.substr(0, MAX_LOG_SIZE) : command, command.size() > 5 ? "…"sv : ""sv);
 
 		try {
 			co_return co_await Exec(command.c_str());
