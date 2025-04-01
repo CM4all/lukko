@@ -5,6 +5,7 @@
 #pragma once
 
 #include "OutgoingConnection.hxx"
+#include "Service.hxx"
 #include "ssh/CConnection.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -195,7 +196,7 @@ public:
 	[[nodiscard]]
 	Co::Task<void> PrepareChildProcess(PreparedChildProcess &p,
 					   FdHolder &close_fds,
-					   bool sftp) const noexcept;
+					   SSH::Service service) const noexcept;
 
 	using SSH::Connection::DoDisconnect;
 

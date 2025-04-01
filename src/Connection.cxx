@@ -375,14 +375,19 @@ Connection::GetShell() const noexcept
 Co::Task<void>
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				[[maybe_unused]] FdHolder &close_fds,
-				[[maybe_unused]] bool sftp) const noexcept
+				[[maybe_unused]] SSH::Service service) const noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		if (sftp)
-			(co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); })).child_options.CopyTo(p, close_fds);
-		else
+		switch (service) {
+		case SSH::Service::SSH:
 			translation->response.child_options.CopyTo(p, close_fds);
+			break;
+
+		case SSH::Service::SFTP:
+			(co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); })).child_options.CopyTo(p, close_fds);
+			break;
+		}
 
 		if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 		    p.cgroup_session == nullptr) {

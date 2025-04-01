@@ -91,7 +91,8 @@ SpawnOpen(const Connection &ssh_connection,
 	p.exec_function = exec_function;
 	p.args.push_back("dummy");
 
-	co_await ssh_connection.PrepareChildProcess(p, close_fds, sftp_mode);
+	co_await ssh_connection.PrepareChildProcess(p, close_fds,
+						    sftp_mode ? SSH::Service::SFTP : SSH::Service::SSH);
 
 	if (p.chdir == nullptr)
 		if (const char *home = p.ToContainerPath(alloc, p.GetHome()))

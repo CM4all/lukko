@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Service.hxx"
 #include "ssh/BufferedChannel.hxx"
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
@@ -103,7 +104,7 @@ private:
 	Co::Task<void> PrepareChildProcess(AllocatorPtr alloc,
 					   PreparedChildProcess &p,
 					   FdHolder &close_fds,
-					   bool sftp);
+					   SSH::Service service);
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 

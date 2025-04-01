@@ -189,7 +189,7 @@ Co::Task<void>
 SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    PreparedChildProcess &p,
 				    FdHolder &close_fds,
-				    bool sftp)
+				    SSH::Service service)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
@@ -197,7 +197,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 	p.SetEnv("USER", username);
 	p.SetEnv("LOGNAME", username);
 
-	if (!sftp) {
+	if (service == SSH::Service::SSH) {
 		const auto peer_address = c.GetPeerAddress();
 		const auto local_address = c.GetLocalAddress();
 		const auto peer_host = HostToString(peer_address);
@@ -214,10 +214,10 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 		p.SetEnv("SHELL", c.GetShell());
 	}
 
-	co_await c.PrepareChildProcess(p, close_fds, sftp);
+	co_await c.PrepareChildProcess(p, close_fds, service);
 
 	if (tty.IsDefined()) {
-		assert(!sftp);
+		assert(service == SSH::Service::SSH);
 
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = close_fds.Insert(std::move(slave_tty));
 		p.tty = true;
@@ -301,7 +301,7 @@ SessionChannel::Exec(const char *cmd)
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	co_await PrepareChildProcess(alloc, p, close_fds, false);
+	co_await PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
 
 	const char *const shell = c.GetShell();
 
@@ -426,7 +426,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 			PreparedChildProcess p;
 
 			co_await PrepareChildProcess(alloc, p, close_fds,
-						     sftp_server.IsDefined());
+						     sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
 
 			if (sftp_server.IsDefined()) {
 				p.exec_fd = sftp_server;
