@@ -213,6 +213,14 @@ private:
 	const char *GetHome() const noexcept;
 	UniqueFileDescriptor OpenHome() const noexcept;
 
+#ifdef ENABLE_TRANSLATION
+	/**
+	 * Perform a (secondary) translation with a different SERVICE,
+	 * e.g. "sftp".
+	 */
+	Co::Task<TranslateResponse> TranslateService(std::string_view service) const noexcept;
+#endif
+
 	/**
 	 * Open a file in the home directory of the user (with
 	 * O_RDONLY).

@@ -49,6 +49,7 @@
 #ifdef ENABLE_TRANSLATION
 #include "translation/LoginGlue.hxx"
 #include "translation/Response.hxx"
+#include "co/MultiLoader.hxx"
 #include "AllocatorPtr.hxx"
 #endif // ENABLE_TRANSLATION
 
@@ -68,25 +69,29 @@ using std::string_view_literals::operator""sv;
 #ifdef ENABLE_TRANSLATION
 
 struct Connection::Translation {
+	/**
+	 * A copy of the username.  We need this copy if
+	 * TranslateService() if called during the authentication
+	 * phase (e.g. by OpenInHome() / DelegateOpen()), when
+	 * #username is not yet set.
+	 */
+	const std::string user;
+
 	Allocator alloc;
 	TranslateResponse response;
 
 	/**
-	 * Because SessionChannel::OnRequest() is not a coroutine, we
-	 * must always query the translation for "sftp" from within
-	 * Connection::CoHandleUserauthRequest().  This is where we
-	 * store it.
-	 *
-	 * TODO query #sftp_response only when needed.
+	 * The translation response for "SERVICE=sftp".  It is loaded
+	 * on demand.
 	 */
-	TranslateResponse sftp_response;
+	mutable Co::MultiLoader<TranslateResponse> sftp_response;
 
-	Translation(Allocator &&_alloc,
-		    TranslateResponse &&_response,
-		    TranslateResponse &&_sftp_response) noexcept
-		:alloc(std::move(_alloc)),
-		 response(std::move(_response)),
-		 sftp_response(std::move(_sftp_response)) {}
+	Translation(std::string_view _user,
+		    Allocator &&_alloc,
+		    TranslateResponse &&_response) noexcept
+		:user(_user),
+		 alloc(std::move(_alloc)),
+		 response(std::move(_response)) {}
 };
 
 static void
@@ -208,6 +213,28 @@ Connection::GetSpawnService() const noexcept
 
 #ifdef ENABLE_TRANSLATION
 
+inline Co::Task<TranslateResponse>
+Connection::TranslateService(std::string_view service) const noexcept
+{
+	assert(translation);
+	assert(!translation->user.empty());
+
+	const char *const translation_server = instance.GetTranslationServer();
+	assert(translation_server != nullptr);
+
+	auto response = co_await TranslateLogin(GetEventLoop(), translation->alloc,
+						translation_server,
+						service, listener.GetTag(),
+						translation->user, {});
+
+	if (response.status != HttpStatus{})
+		throw std::runtime_error{"Translation server rejected LOGIN"};
+
+	CheckTranslateResponse(response);
+
+	co_return std::move(response);
+}
+
 const TranslateResponse *
 Connection::GetTranslationResponse() const noexcept
 {
@@ -319,8 +346,10 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		(sftp ? translation->sftp_response : translation->response)
-			.child_options.CopyTo(p, close_fds);
+		if (sftp)
+			(co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); })).child_options.CopyTo(p, close_fds);
+		else
+			translation->response.child_options.CopyTo(p, close_fds);
 
 		if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 		    p.cgroup_session == nullptr) {
@@ -634,18 +663,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		Allocator alloc;
-		TranslateResponse response, sftp_response;
+		TranslateResponse response;
 
 		try {
 			response = co_await
 				TranslateLogin(GetEventLoop(), alloc, translation_server,
 					       "ssh"sv, listener.GetTag(),
 					       new_username, password);
-
-			sftp_response = co_await
-				TranslateLogin(GetEventLoop(), alloc, translation_server,
-					       "sftp"sv, listener.GetTag(),
-					       new_username, {});
 		} catch (...) {
 			++instance.counters.n_translation_errors;
 			logger(1, "Translation server error: ", std::current_exception());
@@ -656,11 +680,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			};
 		}
 
-		for (const auto *i : {&response, &sftp_response}) {
-			const auto &r = *i;
-			if (r.status == HttpStatus{})
-				continue;
-
+		if (response.status != HttpStatus{}) {
 			accounting.UpdateTokenBucket(8);
 
 			if (password.empty())
@@ -671,13 +691,13 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			if (password.empty())
 				LogFmt("Rejected auth for user {:?}{}{}"sv,
 				       new_username,
-				       r.message != nullptr ? ": "sv : ""sv,
-				       r.message != nullptr ? r.message : "");
+				       response.message != nullptr ? ": "sv : ""sv,
+				       response.message != nullptr ? response.message : "");
 			else
 				LogFmt("Failed password for user {:?}{}{}"sv,
 				       new_username,
-				       r.message != nullptr ? ": "sv : ""sv,
-				       r.message != nullptr ? r.message : "");
+				       response.message != nullptr ? ": "sv : ""sv,
+				       response.message != nullptr ? response.message : "");
 
 			co_await fail_sleep;
 			SendPacket(SSH::MakeUserauthFailure({}, false));
@@ -704,7 +724,6 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		try {
 			CheckTranslateResponse(response);
-			CheckTranslateResponse(sftp_response);
 		} catch (...) {
 			++instance.counters.n_translation_errors;
 			logger(1, "Translation server error: ", std::current_exception());
@@ -715,9 +734,9 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			};
 		}
 
-		translation = std::make_unique<Translation>(std::move(alloc),
-							    std::move(response),
-							    std::move(sftp_response));
+		translation = std::make_unique<Translation>(new_username,
+							    std::move(alloc),
+							    std::move(response));
 
 		if (password_accepted)
 			++instance.counters.n_userauth_password_accepted;
