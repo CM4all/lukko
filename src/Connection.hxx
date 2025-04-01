@@ -192,9 +192,10 @@ public:
 	 * @param sftp is this for an SFTP process with an empty
 	 * rootfs?
 	 */
-	void PrepareChildProcess(PreparedChildProcess &p,
-				 FdHolder &close_fds,
-				 bool sftp) const noexcept;
+	[[nodiscard]]
+	Co::Task<void> PrepareChildProcess(PreparedChildProcess &p,
+					   FdHolder &close_fds,
+					   bool sftp) const noexcept;
 
 	using SSH::Connection::DoDisconnect;
 

@@ -99,10 +99,11 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value);
 
-	void PrepareChildProcess(AllocatorPtr alloc,
-				 PreparedChildProcess &p,
-				 FdHolder &close_fds,
-				 bool sftp);
+	[[nodiscard]]
+	Co::Task<void> PrepareChildProcess(AllocatorPtr alloc,
+					   PreparedChildProcess &p,
+					   FdHolder &close_fds,
+					   bool sftp);
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 

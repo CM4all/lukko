@@ -75,7 +75,8 @@ OpenExec(PreparedChildProcess &&)
 	return 0;
 }
 
-static std::pair<UniqueSocketDescriptor, std::unique_ptr<ChildProcessHandle>>
+[[nodiscard]]
+static Co::Task<std::pair<UniqueSocketDescriptor, std::unique_ptr<ChildProcessHandle>>>
 SpawnOpen(const Connection &ssh_connection,
 	  int (*exec_function)(PreparedChildProcess &&p),
 	  bool sftp_mode)
@@ -90,7 +91,7 @@ SpawnOpen(const Connection &ssh_connection,
 	p.exec_function = exec_function;
 	p.args.push_back("dummy");
 
-	ssh_connection.PrepareChildProcess(p, close_fds, sftp_mode);
+	co_await ssh_connection.PrepareChildProcess(p, close_fds, sftp_mode);
 
 	if (p.chdir == nullptr)
 		if (const char *home = p.ToContainerPath(alloc, p.GetHome()))
@@ -98,7 +99,7 @@ SpawnOpen(const Connection &ssh_connection,
 
 	p.control_fd = control_socket_for_child.ToFileDescriptor();
 
-	return {
+	co_return std::pair{
 		std::move(control_socket),
 		ssh_connection.GetSpawnService().SpawnChildProcess("connect", std::move(p)),
 	};
@@ -122,7 +123,7 @@ Delegate(const Connection &ssh_connection,
 	co_await CoEnqueueSpawner{ssh_connection.GetSpawnService()};
 
 	auto [control_socket, child_handle] =
-		SpawnOpen(ssh_connection, exec_function, sftp_mode);
+		co_await SpawnOpen(ssh_connection, exec_function, sftp_mode);
 
 	/* wait for spawner completion and rethrow errors */
 	co_await CoWaitSpawnCompletion{*child_handle};

@@ -312,7 +312,7 @@ Connection::GetShell() const noexcept
 	return "/bin/sh";
 }
 
-void
+Co::Task<void>
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				[[maybe_unused]] FdHolder &close_fds,
 				[[maybe_unused]] bool sftp) const noexcept
@@ -340,6 +340,8 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 #ifdef ENABLE_TRANSLATION
 	}
 #endif // ENABLE_TRANSLATION
+
+	co_return;
 }
 
 inline bool

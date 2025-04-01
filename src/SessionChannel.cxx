@@ -185,7 +185,7 @@ LoginShellName(const char *shell) noexcept
 	return fmt::format("-{}"sv, shell);
 }
 
-void
+Co::Task<void>
 SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    PreparedChildProcess &p,
 				    FdHolder &close_fds,
@@ -214,7 +214,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 		p.SetEnv("SHELL", c.GetShell());
 	}
 
-	c.PrepareChildProcess(p, close_fds, sftp);
+	co_await c.PrepareChildProcess(p, close_fds, sftp);
 
 	if (tty.IsDefined()) {
 		assert(!sftp);
@@ -301,7 +301,7 @@ SessionChannel::Exec(const char *cmd)
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	PrepareChildProcess(alloc, p, close_fds, false);
+	co_await PrepareChildProcess(alloc, p, close_fds, false);
 
 	const char *const shell = c.GetShell();
 
@@ -425,8 +425,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 			FdHolder close_fds;
 			PreparedChildProcess p;
 
-			PrepareChildProcess(alloc, p, close_fds,
-					    sftp_server.IsDefined());
+			co_await PrepareChildProcess(alloc, p, close_fds,
+						     sftp_server.IsDefined());
 
 			if (sftp_server.IsDefined()) {
 				p.exec_fd = sftp_server;
