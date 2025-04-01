@@ -84,7 +84,7 @@ struct Connection::Translation {
 	 * The translation response for "SERVICE=sftp".  It is loaded
 	 * on demand.
 	 */
-	mutable Co::MultiLoader<TranslateResponse> sftp_response;
+	Co::MultiLoader<TranslateResponse> sftp_response;
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
