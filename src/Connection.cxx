@@ -213,6 +213,39 @@ Connection::GetSpawnService() const noexcept
 
 #ifdef ENABLE_TRANSLATION
 
+inline Co::Task<const TranslateResponse &>
+Connection::LazyTranslate(const char *translation_server,
+			  std::string_view new_username,
+			  std::string_view password) noexcept
+{
+	if (translation && password.empty() &&
+	    new_username == translation->user)
+		co_return translation->response;
+
+	Allocator alloc;
+	TranslateResponse response;
+
+	try {
+		response = co_await
+			TranslateLogin(GetEventLoop(), alloc, translation_server,
+				       "ssh"sv, listener.GetTag(),
+				       new_username, password);
+	} catch (...) {
+		++instance.counters.n_translation_errors;
+		logger(1, "Translation server error: ", std::current_exception());
+		accounting.UpdateTokenBucket(2);
+		throw Disconnect{
+			SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
+			"Configuration server failed"sv,
+		};
+	}
+
+	translation = std::make_unique<Translation>(new_username,
+						    std::move(alloc),
+						    std::move(response));
+	co_return translation->response;
+}
+
 inline Co::Task<TranslateResponse>
 Connection::TranslateService(std::string_view service) const noexcept
 {
@@ -662,23 +695,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			accounting.UpdateTokenBucket(1);
 		}
 
-		Allocator alloc;
-		TranslateResponse response;
-
-		try {
-			response = co_await
-				TranslateLogin(GetEventLoop(), alloc, translation_server,
-					       "ssh"sv, listener.GetTag(),
-					       new_username, password);
-		} catch (...) {
-			++instance.counters.n_translation_errors;
-			logger(1, "Translation server error: ", std::current_exception());
-			accounting.UpdateTokenBucket(2);
-			throw Disconnect{
-				SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
-				"Configuration server failed"sv,
-			};
-		}
+		const TranslateResponse &response = co_await LazyTranslate(translation_server,
+									   new_username, password);
 
 		if (response.status != HttpStatus{}) {
 			accounting.UpdateTokenBucket(8);
@@ -733,10 +751,6 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 				"Configuration server failed"sv,
 			};
 		}
-
-		translation = std::make_unique<Translation>(new_username,
-							    std::move(alloc),
-							    std::move(response));
 
 		if (password_accepted)
 			++instance.counters.n_userauth_password_accepted;

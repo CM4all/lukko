@@ -215,6 +215,14 @@ private:
 
 #ifdef ENABLE_TRANSLATION
 	/**
+	 * Perform the (primary) translation, but return the cached
+	 * response if the username matches and the password is empty.
+	 */
+	Co::Task<const TranslateResponse &> LazyTranslate(const char *translation_server,
+							  std::string_view new_username,
+							  std::string_view password) noexcept;
+
+	/**
 	 * Perform a (secondary) translation with a different SERVICE,
 	 * e.g. "sftp".
 	 */

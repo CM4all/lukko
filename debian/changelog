@@ -1,6 +1,7 @@
 cm4all-lukko (0.39) unstable; urgency=low
 
   * perform the SFTP translation on demand
+  * cache the primary translation response
   * session channel: log truncated commands
   * session channel: limit "env" plus command to 16 kB
   * spawn: fix assertion failure with large payloads
