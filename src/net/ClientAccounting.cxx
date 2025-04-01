@@ -115,13 +115,13 @@ PerClientAccounting::UpdateTokenBucket(double size) noexcept
 	if (!map.HasTarpit())
 		return;
 
-	constexpr double RATE = 1, BURST = 10;
+	constexpr TokenBucketConfig CONFIG{.rate = 1, .burst = 10};
 	constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{1};
 	constexpr Event::Duration MAX_DELAY = std::chrono::minutes{1};
 	constexpr Event::Duration DELAY_STEP = std::chrono::milliseconds{100};
 
 	const auto now = map.GetEventLoop().SteadyNow();
-	double available = token_bucket.Update(ToFloatSeconds(now.time_since_epoch()), RATE, BURST, size);
+	double available = token_bucket.Update(CONFIG, ToFloatSeconds(now.time_since_epoch()), size);
 	if (available < 0) {
 		tarpit_until = now + TARPIT_FOR;
 
