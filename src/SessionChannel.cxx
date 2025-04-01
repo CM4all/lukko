@@ -23,10 +23,13 @@
 #include "io/Pipe.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
 #include "translation/Response.hxx"
+#include "io/Open.hxx" // for OpenPath()
+#include <forward_list>
 #endif // ENABLE_TRANSLATION
 
 #include <fmt/core.h>
@@ -281,11 +284,98 @@ SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 	child->SetExitListener(*this);
 }
 
+#ifdef ENABLE_TRANSLATION
+
+/**
+ * Split the command string into command-line parameters.
+ *
+ * @param strings a container that will hold string allocations for
+ * the C string pointers in the #PreparedChildProcess
+ */
+static void
+SplitCmdline(PreparedChildProcess &p, std::forward_list<std::string> &strings,
+	     const char *cmd) noexcept
+{
+	while (true) {
+		while (*cmd == ' ')
+			++cmd;
+		if (*cmd == '\0')
+			break;
+
+		auto &s = strings.emplace_front();
+
+		while (*cmd != '\0') {
+			char ch = *cmd++;
+			if (ch == ' ')
+				break;
+			else if (ch == '\\') [[unlikely]] {
+				if (*cmd == '\0') [[unlikely]] {
+					s.push_back(ch);
+					break;
+				}
+
+				s.push_back(*cmd++);
+			} else
+				s.push_back(ch);
+		}
+
+		p.Append(s.c_str());
+	}
+}
+
+inline Co::Task<bool>
+SessionChannel::ExecRsync(const char *cmd)
+{
+	assert(StringStartsWith(cmd, "rsync "sv));
+
+	const auto &c = static_cast<Connection &>(GetConnection());
+	assert(c.IsRsyncAllowed());
+
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner(c.GetSpawnService());
+
+	Allocator alloc;
+	FdHolder close_fds;
+	PreparedChildProcess p;
+
+	try {
+		co_await PrepareChildProcess(alloc, p, close_fds, SSH::Service::RSYNC);
+	} catch (...) {
+		/* this is probably because the translation server has
+		   rejected the rsync execution */
+		// TODO log the error?  use it for the SSH response?
+		co_return false;
+	}
+
+	assert(p.exec_path != nullptr);
+
+	const UniqueFileDescriptor exec_fd = OpenPath(p.exec_path);
+	p.exec_fd = exec_fd;
+
+	std::forward_list<std::string> strings;
+	SplitCmdline(p, strings, cmd);
+
+	SpawnChildProcess(alloc, std::move(p));
+
+	co_await CoWaitSpawnCompletion{*child};
+
+	co_return true;
+}
+
+#endif
+
 inline Co::Task<bool>
 SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed()) {
+#ifdef ENABLE_TRANSLATION
+		if (cmd != nullptr && c.IsRsyncAllowed() &&
+		    StringStartsWith(cmd, "rsync --server "sv) &&
+		    co_await ExecRsync(cmd))
+			co_return true;
+#endif
+
 		if (c.IsSftpOnly() && c.GetListener().GetExecRejectStderr()) {
 			SetStderrString("Shell access denied (SFTP only).\r\n"sv);
 			co_return true;

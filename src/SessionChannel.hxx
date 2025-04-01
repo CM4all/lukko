@@ -108,6 +108,19 @@ private:
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 
+	/**
+	 * Execute "rsync" (for an sftp-only account).  This asks the
+	 * translation server how to execute "rsync"; likely a
+	 * statically linked rsync executable in an empty container.
+	 *
+	 * Throws on error.
+	 *
+	 * @return true if allowed (and successful), false if the
+	 * translation server has rejected rsync execution.
+	 */
+	[[nodiscard]]
+	Co::Task<bool> ExecRsync(const char *cmd);
+
 	[[nodiscard]]
 	Co::Task<bool> Exec(const char *cmd);
 

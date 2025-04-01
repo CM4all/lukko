@@ -4,6 +4,7 @@ cm4all-lukko (0.39) unstable; urgency=low
   * cache the primary translation response
   * session channel: log truncated commands
   * session channel: limit "env" plus command to 16 kB
+  * session channel: allow sftp-only accounts to invoke rsync
   * spawn: fix assertion failure with large payloads
 
  --   

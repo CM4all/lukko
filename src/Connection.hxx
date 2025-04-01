@@ -174,6 +174,11 @@ public:
 	}
 
 	[[gnu::pure]]
+	bool IsRsyncAllowed() const noexcept {
+		return true;
+	}
+
+	[[gnu::pure]]
 	bool IsExecAllowed() const noexcept {
 		return !IsSftpOnly();
 	}

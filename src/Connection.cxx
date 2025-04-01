@@ -34,6 +34,7 @@
 #include "io/FileAt.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
+#include "co/MultiAwaitable.hxx"
 #include "co/Task.hxx"
 #include "time/Cast.hxx"
 #include "util/AllocatedArray.hxx"
@@ -85,6 +86,12 @@ struct Connection::Translation {
 	 * on demand.
 	 */
 	Co::MultiLoader<TranslateResponse> sftp_response;
+
+	/**
+	 * The translation response for "SERVICE=rsync".  It is loaded
+	 * on demand.
+	 */
+	Co::MultiLoader<TranslateResponse> rsync_response;
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
@@ -386,6 +393,16 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 
 		case SSH::Service::SFTP:
 			(co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); })).child_options.CopyTo(p, close_fds);
+			break;
+
+		case SSH::Service::RSYNC:
+			const TranslateResponse &response = co_await translation->rsync_response.get([this]{ return TranslateService("rsync"sv); });
+			response.child_options.CopyTo(p, close_fds);
+
+			if (response.execute == nullptr)
+				throw std::runtime_error{"No EXECUTE"};
+
+			p.exec_path = response.execute;
 			break;
 		}
 
