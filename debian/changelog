@@ -7,7 +7,7 @@ cm4all-lukko (0.39) unstable; urgency=low
   * session channel: allow sftp-only accounts to invoke rsync
   * spawn: fix assertion failure with large payloads
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Apr 2025 09:39:15 +0200
 
 cm4all-lukko (0.38) unstable; urgency=low
 
