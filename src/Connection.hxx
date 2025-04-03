@@ -161,8 +161,23 @@ public:
 	const char *GetShell() const noexcept;
 
 #ifdef ENABLE_TRANSLATION
+	/**
+	 * Return the main translation response or nullptr if no
+	 * translation server is configured.
+	 */
 	[[gnu::pure]]
 	const TranslateResponse *GetTranslationResponse() const noexcept;
+
+	/**
+	 * Return the translation response for a specific service.
+	 * Calling this method is only allowed if a translation server
+	 * is used.  The method may suspend when the translation
+	 * server gets queried.
+	 *
+	 * Throws on error.
+	 */
+	[[nodiscard]]
+	Co::Task<const TranslateResponse &> GetTranslationResponse(SSH::Service service) const;
 
 	[[gnu::pure]]
 	bool HasTag(std::string_view tag) const noexcept;

@@ -283,6 +283,25 @@ Connection::GetTranslationResponse() const noexcept
 		: nullptr;
 }
 
+Co::Task<const TranslateResponse &>
+Connection::GetTranslationResponse(SSH::Service service) const
+{
+	assert(translation);
+
+	switch (service) {
+	case SSH::Service::SSH:
+		co_return translation->response;
+
+	case SSH::Service::SFTP:
+		co_return co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); });
+
+	case SSH::Service::RSYNC:
+		co_return co_await translation->rsync_response.get([this]{ return TranslateService("rsync"sv); });
+	}
+
+	std::unreachable();
+}
+
 bool
 Connection::HasTag(std::string_view tag) const noexcept
 {
@@ -386,25 +405,9 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		switch (service) {
-		case SSH::Service::SSH:
-			translation->response.child_options.CopyTo(p, close_fds);
-			break;
-
-		case SSH::Service::SFTP:
-			(co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); })).child_options.CopyTo(p, close_fds);
-			break;
-
-		case SSH::Service::RSYNC:
-			const TranslateResponse &response = co_await translation->rsync_response.get([this]{ return TranslateService("rsync"sv); });
-			response.child_options.CopyTo(p, close_fds);
-
-			if (response.execute == nullptr)
-				throw std::runtime_error{"No EXECUTE"};
-
-			p.exec_path = response.execute;
-			break;
-		}
+		const auto &response = co_await GetTranslationResponse(service);
+		response.child_options.CopyTo(p, close_fds);
+		p.exec_path = response.execute;
 
 		if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 		    p.cgroup_session == nullptr) {

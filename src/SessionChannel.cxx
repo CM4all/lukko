@@ -347,7 +347,8 @@ SessionChannel::ExecRsync(const char *cmd)
 		co_return false;
 	}
 
-	assert(p.exec_path != nullptr);
+	if (p.exec_path == nullptr)
+		throw std::runtime_error{"No EXECUTE"};
 
 	const UniqueFileDescriptor exec_fd = OpenPath(p.exec_path);
 	p.exec_fd = exec_fd;
