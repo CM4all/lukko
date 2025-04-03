@@ -453,6 +453,52 @@ ApplyTerminalModes(FileDescriptor fd, std::span<const std::byte> src) noexcept
 	tcsetattr(fd.Get(), TCSANOW, &tio);
 }
 
+inline Co::EagerTask<bool>
+SessionChannel::StartSftpServer()
+{
+	const auto &c = static_cast<Connection &>(GetConnection());
+
+	if (tty.IsDefined())
+		/* refuse to run SFTP with a pty */
+		co_return false;
+
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner(c.GetSpawnService());
+
+	UniqueFileDescriptor sftp_server;
+	(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
+
+	Allocator alloc;
+	FdHolder close_fds;
+	PreparedChildProcess p;
+
+	co_await PrepareChildProcess(alloc, p, close_fds,
+				     sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
+
+	if (sftp_server.IsDefined()) {
+		p.exec_fd = sftp_server;
+		p.Append("sftp-server");
+	} else
+		p.Append("/usr/lib/openssh/sftp-server");
+
+	try {
+		SpawnChildProcess(alloc, std::move(p));
+		co_await CoWaitSpawnCompletion{*child};
+		EnableStdin();
+		co_return true;
+	} catch (...) {
+		logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
+
+		if (c.GetListener().GetVerboseErrors()) {
+			SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
+						    std::current_exception()));
+			co_return true;
+		}
+
+		co_return false;
+	}
+}
+
 Co::EagerTask<bool>
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
@@ -519,47 +565,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		logger.Fmt(1, "  subsystem {:?}"sv, subsystem_name);
 
-		if (subsystem_name == "sftp"sv) {
-			if (tty.IsDefined())
-				/* refuse to run SFTP with a pty */
-				co_return false;
-
-			/* throttle if the spawner is under pressure */
-			co_await CoEnqueueSpawner(c.GetSpawnService());
-
-			UniqueFileDescriptor sftp_server;
-			(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
-
-			Allocator alloc;
-			FdHolder close_fds;
-			PreparedChildProcess p;
-
-			co_await PrepareChildProcess(alloc, p, close_fds,
-						     sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
-
-			if (sftp_server.IsDefined()) {
-				p.exec_fd = sftp_server;
-				p.Append("sftp-server");
-			} else
-				p.Append("/usr/lib/openssh/sftp-server");
-
-			try {
-				SpawnChildProcess(alloc, std::move(p));
-				co_await CoWaitSpawnCompletion{*child};
-				EnableStdin();
-				co_return true;
-			} catch (...) {
-				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
-
-				if (c.GetListener().GetVerboseErrors()) {
-					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
-								    std::current_exception()));
-					co_return true;
-				}
-
-				co_return false;
-			}
-		} else
+		if (subsystem_name == "sftp"sv)
+			co_return co_await StartSftpServer();
+		else
 			co_return false;
 	} else if (request_type == "pty-req"sv) {
 		if (!c.IsExecAllowed() || c.GetAuthorizedKeyOptions().no_pty) {

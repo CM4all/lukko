@@ -150,6 +150,16 @@ private:
 			       PreparedChildProcess &&p);
 
 	/**
+	 * Start the SFTP server process.
+	 *
+	 * Throws on error.
+	 *
+	 * @return whether the "subsystem=sftp" request was accepted
+	 */
+	[[nodiscard]]
+	Co::EagerTask<bool> StartSftpServer();
+
+	/**
 	 * Execute "rsync" (for an sftp-only account).  This asks the
 	 * translation server how to execute "rsync"; likely a
 	 * statically linked rsync executable in an empty container.
