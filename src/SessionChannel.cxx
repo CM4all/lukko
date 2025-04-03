@@ -193,6 +193,42 @@ LoginShellName(const char *shell) noexcept
 	return fmt::format("-{}"sv, shell);
 }
 
+inline void
+SessionChannel::PreparePipes(PreparedChildProcess &p,
+			     FdHolder &close_fds)
+{
+	auto [stdin_r, stdin_w] = CreatePipe();
+	auto [stdout_r, stdout_w] = CreatePipe();
+	auto [stderr_r, stderr_w] = CreatePipe();
+
+	/* allocate 256 kB for each pipe to maximize
+	   throughput */
+	constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
+	stdout_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
+	stdin_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
+
+	p.stdin_fd = close_fds.Insert(std::move(stdin_r));
+	p.stdout_fd = close_fds.Insert(std::move(stdout_w));
+	p.stderr_fd = close_fds.Insert(std::move(stderr_w));
+
+	stdin_w.SetNonBlocking();
+	stdin_pipe.Open(stdin_w.Release());
+	stdout_pipe.Open(stdout_r.Release());
+	stderr_pipe.Open(stderr_r.Release());
+}
+
+inline void
+SessionChannel::PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcept
+{
+	if (const char *home = p.ToContainerPath(alloc, p.GetHome())) {
+		if (!p.HasEnv("HOME"sv))
+			p.SetEnv("HOME"sv, home);
+
+		if (p.chdir == nullptr)
+			p.chdir = home;
+	}
+}
+
 Co::Task<void>
 SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    PreparedChildProcess &p,
@@ -231,33 +267,10 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
 	} else {
-		auto [stdin_r, stdin_w] = CreatePipe();
-		auto [stdout_r, stdout_w] = CreatePipe();
-		auto [stderr_r, stderr_w] = CreatePipe();
-
-		/* allocate 256 kB for each pipe to maximize
-		   throughput */
-		constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-		stdout_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
-		stdin_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
-
-		p.stdin_fd = close_fds.Insert(std::move(stdin_r));
-		p.stdout_fd = close_fds.Insert(std::move(stdout_w));
-		p.stderr_fd = close_fds.Insert(std::move(stderr_w));
-
-		stdin_w.SetNonBlocking();
-		stdin_pipe.Open(stdin_w.Release());
-		stdout_pipe.Open(stdout_r.Release());
-		stderr_pipe.Open(stderr_r.Release());
+		PreparePipes(p, close_fds);
 	}
 
-	if (const char *home = p.ToContainerPath(alloc, p.GetHome())) {
-		if (!p.HasEnv("HOME"sv))
-			p.SetEnv("HOME"sv, home);
-
-		if (p.chdir == nullptr)
-			p.chdir = home;
-	}
+	PrepareHome(alloc, p);
 }
 
 void

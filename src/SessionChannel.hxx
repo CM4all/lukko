@@ -128,6 +128,19 @@ private:
 
 	void SetEnv(std::string_view name, std::string_view value);
 
+	/**
+	 * Create pipes for stdin, stdout, stderr and install one side
+	 * in this object and the other in the specified
+	 * #PreparedChildProcess.
+	 */
+	void PreparePipes(PreparedChildProcess &p, FdHolder &close_fds);
+
+	/**
+	 * Ask the #PreparedChildProcess to go to the home directory
+	 * and set the HOME environment variable.
+	 */
+	static void PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
+
 	[[nodiscard]]
 	Co::Task<void> PrepareChildProcess(AllocatorPtr alloc,
 					   PreparedChildProcess &p,
