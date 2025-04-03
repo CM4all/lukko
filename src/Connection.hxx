@@ -161,6 +161,10 @@ public:
 	const char *GetShell() const noexcept;
 
 #ifdef ENABLE_TRANSLATION
+	bool HasTranslation() const noexcept {
+		return (bool)translation;
+	}
+
 	/**
 	 * Return the main translation response or nullptr if no
 	 * translation server is configured.

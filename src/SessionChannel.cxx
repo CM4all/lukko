@@ -465,6 +465,49 @@ SessionChannel::StartSftpServer()
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner(c.GetSpawnService());
 
+#ifdef ENABLE_TRANSLATION
+	if (c.HasTranslation()) {
+		if (const auto &response = co_await c.GetTranslationResponse(SSH::Service::SFTP);
+		    response.execute != nullptr) {
+			try {
+				// TODO reduce code duplication in this block
+
+				const auto sftp_server = OpenReadOnly(response.execute);
+
+				Allocator alloc;
+				FdHolder close_fds;
+				PreparedChildProcess p;
+
+				/* sftp-server wants to know its own username */
+				p.SetEnv("USER", c.GetUsername());
+
+				c.PrepareChildProcess(p, close_fds, response);
+				PreparePipes(p, close_fds);
+				PrepareHome(alloc, p);
+
+				p.exec_fd = sftp_server;
+				p.Append("sftp-server");
+
+				SpawnChildProcess(alloc, std::move(p));
+				co_await CoWaitSpawnCompletion{*child};
+				EnableStdin();
+
+				co_return true;
+			} catch (...) {
+				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
+
+				if (c.GetListener().GetVerboseErrors()) {
+					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
+								    std::current_exception()));
+					co_return true;
+				}
+
+				co_return false;
+			}
+		}
+	}
+#endif
+
 	UniqueFileDescriptor sftp_server;
 	(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
 
