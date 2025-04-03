@@ -179,6 +179,10 @@ public:
 	[[nodiscard]]
 	Co::Task<const TranslateResponse &> GetTranslationResponse(SSH::Service service) const;
 
+	static void PrepareChildProcess(PreparedChildProcess &p,
+					FdHolder &close_fds,
+					const TranslateResponse &response) noexcept;
+
 	[[gnu::pure]]
 	bool HasTag(std::string_view tag) const noexcept;
 #endif

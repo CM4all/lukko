@@ -302,6 +302,24 @@ Connection::GetTranslationResponse(SSH::Service service) const
 	std::unreachable();
 }
 
+void
+Connection::PrepareChildProcess(PreparedChildProcess &p,
+				FdHolder &close_fds,
+				const TranslateResponse &response) noexcept
+{
+	response.child_options.CopyTo(p, close_fds);
+	p.exec_path = response.execute;
+
+	if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
+	    p.cgroup_session == nullptr) {
+		/* create a session cgroup for each SSH
+		   session */
+		static unsigned session_id_counter = 0;
+		p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
+		p.cgroup_session = p.strings.front().c_str();
+	}
+}
+
 bool
 Connection::HasTag(std::string_view tag) const noexcept
 {
@@ -406,17 +424,7 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
 		const auto &response = co_await GetTranslationResponse(service);
-		response.child_options.CopyTo(p, close_fds);
-		p.exec_path = response.execute;
-
-		if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
-		    p.cgroup_session == nullptr) {
-			/* create a session cgroup for each SSH
-			   session */
-			static unsigned session_id_counter = 0;
-			p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
-			p.cgroup_session = p.strings.front().c_str();
-		}
+		PrepareChildProcess(p, close_fds, response);
 	} else {
 #endif // ENABLE_TRANSLATION
 		p.uid_gid.effective_uid = uid;
