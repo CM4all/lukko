@@ -499,8 +499,6 @@ SessionChannel::OnRequest(std::string_view request_type,
 		logger.Fmt(1, "  subsystem {:?}"sv, subsystem_name);
 
 		if (subsystem_name == "sftp"sv) {
-			// TODO repeat translation request with service="sftp"
-
 			if (tty.IsDefined())
 				/* refuse to run SFTP with a pty */
 				co_return false;
