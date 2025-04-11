@@ -131,6 +131,11 @@ SessionChannel::OnWindowAdjust(std::size_t nbytes)
 std::size_t
 SessionChannel::OnBufferedData(std::span<const std::byte> payload)
 {
+	if (!stdin_enabled) {
+		stdin_deferred = true;
+		return 0;
+	}
+
 	ssize_t nbytes;
 
 	if (stdin_pipe.IsDefined())
@@ -360,6 +365,7 @@ SessionChannel::ExecRsync(const char *cmd)
 
 	co_await CoWaitSpawnCompletion{*child};
 
+	EnableStdin();
 	co_return true;
 }
 
@@ -418,6 +424,7 @@ SessionChannel::Exec(const char *cmd)
 
 	co_await CoWaitSpawnCompletion{*child};
 
+	EnableStdin();
 	co_return true;
 }
 
@@ -526,6 +533,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 			try {
 				SpawnChildProcess(alloc, std::move(p));
 				co_await CoWaitSpawnCompletion{*child};
+				EnableStdin();
 				co_return true;
 			} catch (...) {
 				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());

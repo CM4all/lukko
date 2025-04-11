@@ -41,6 +41,17 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	static constexpr std::size_t MAX_ENV_SIZE = 16384;
 	std::size_t env_size = 0;
 
+	/**
+	 * All input is deferred by OnBufferedData() until this flag
+	 * becomes true.  Call EnableStdin() to enable it.
+	 */
+	bool stdin_enabled = false;
+
+	/**
+	 * Was data deferred by OnBufferedData()?
+	 */
+	bool stdin_deferred = false;
+
 public:
 	SessionChannel(SSH::CConnection &_connection,
 		       SSH::ChannelInit init) noexcept;
@@ -90,6 +101,23 @@ private:
 	void MaybeSendEofAndClose() noexcept {
 		if (MaybeSendEof())
 			CloseIfInactive();
+	}
+
+	/**
+	 * Enable #stdin_enabled and schedule handling the deferred data.
+	 */
+	void EnableStdin() noexcept {
+		stdin_enabled = true;
+
+		if (stdin_deferred) {
+			/* make sure that ReadBuffer() gets called to
+			   handle the data that was already received
+			   by BufferedChannel */
+			if (stdin_pipe.IsDefined())
+				stdin_pipe.ScheduleWrite();
+			else if (tty.IsDefined())
+				tty.ScheduleWrite();
+		}
 	}
 
 	/**
