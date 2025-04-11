@@ -8,7 +8,7 @@ cm4all-lukko (0.40) unstable; urgency=low
 
   * session channel: defer input until child process is spawned
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 11 Apr 2025 11:29:23 +0200
 
 cm4all-lukko (0.39) unstable; urgency=low
 
