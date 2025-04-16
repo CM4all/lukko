@@ -2,7 +2,7 @@ cm4all-lukko (0.41) unstable; urgency=low
 
   * support custom SFTP program with EXECUTE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 16 Apr 2025 13:21:19 +0200
 
 cm4all-lukko (0.40) unstable; urgency=low
 
