@@ -1,6 +1,7 @@
 cm4all-lukko (0.42) unstable; urgency=low
 
   * reduce worker thread stack to 128 kB on ARM64
+  * translation: add packet MAPPED_REAL_UID_GID
 
  --   
 
