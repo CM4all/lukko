@@ -27,7 +27,7 @@
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
-#include "translation/Response.hxx"
+#include "translation/ExecuteOptions.hxx"
 #include "io/Open.hxx" // for OpenPath()
 #include <forward_list>
 #endif // ENABLE_TRANSLATION
@@ -467,12 +467,12 @@ SessionChannel::StartSftpServer()
 
 #ifdef ENABLE_TRANSLATION
 	if (c.HasTranslation()) {
-		if (const auto &response = co_await c.GetTranslationResponse(SSH::Service::SFTP);
-		    response.execute != nullptr) {
+		if (const auto &options = co_await c.GetExecuteOptions(SSH::Service::SFTP);
+		    options.execute != nullptr) {
 			try {
 				// TODO reduce code duplication in this block
 
-				const auto sftp_server = OpenReadOnly(response.execute);
+				const auto sftp_server = OpenReadOnly(options.execute);
 
 				Allocator alloc;
 				FdHolder close_fds;
@@ -481,7 +481,7 @@ SessionChannel::StartSftpServer()
 				/* sftp-server wants to know its own username */
 				p.SetEnv("USER", c.GetUsername());
 
-				c.PrepareChildProcess(p, close_fds, response);
+				c.PrepareChildProcess(p, close_fds, options);
 				PreparePipes(p, close_fds);
 				PrepareHome(alloc, p);
 

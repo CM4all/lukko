@@ -23,6 +23,7 @@
 #ifdef ENABLE_TRANSLATION
 
 #include "translation/Response.hxx"
+#include "translation/ExecuteOptions.hxx"
 #include "spawn/CoEnqueue.hxx"
 #include "spawn/CoWaitSpawnCompletion.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -184,10 +185,11 @@ ResolveConnectTCP(const Connection &ssh_connection,
 	if (const auto *tr = ssh_connection.GetTranslationResponse()) {
 		// TODO switch uid/gid?
 
-		if (tr->child_options.ns.network_namespace != nullptr)
+		if (tr->execute_options != nullptr &&
+		    tr->execute_options->child_options.ns.network_namespace != nullptr)
 			return NsResolveConnectTCP(ssh_connection.GetEventLoop(),
 						   ssh_connection.GetSpawnService(),
-						   tr->child_options,
+						   tr->execute_options->child_options,
 						   host, port);
 	}
 #endif // ENABLE_TRANSLATION

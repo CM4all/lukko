@@ -22,6 +22,7 @@
 
 namespace Co { template<typename T> class Task; }
 struct TranslateResponse;
+struct ExecuteOptions;
 struct PreparedChildProcess;
 class FdHolder;
 class Instance;
@@ -183,9 +184,12 @@ public:
 	[[nodiscard]]
 	Co::Task<const TranslateResponse &> GetTranslationResponse(SSH::Service service) const;
 
+	[[nodiscard]]
+	Co::Task<const ExecuteOptions &> GetExecuteOptions(SSH::Service service) const;
+
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
-					const TranslateResponse &response) noexcept;
+					const ExecuteOptions &options) noexcept;
 
 	[[gnu::pure]]
 	bool HasTag(std::string_view tag) const noexcept;

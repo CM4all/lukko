@@ -50,6 +50,7 @@
 #ifdef ENABLE_TRANSLATION
 #include "translation/LoginGlue.hxx"
 #include "translation/Response.hxx"
+#include "translation/ExecuteOptions.hxx"
 #include "co/MultiLoader.hxx"
 #include "AllocatorPtr.hxx"
 #endif // ENABLE_TRANSLATION
@@ -115,12 +116,21 @@ CheckChildOptions(const ChildOptions &options)
 }
 
 static void
+CheckExecuteOptions(const ExecuteOptions &options)
+{
+	CheckChildOptions(options.child_options);
+}
+
+static void
 CheckTranslateResponse(const TranslateResponse &response)
 {
 	// status must have been checked already
 	assert(response.status == HttpStatus{});
 
-	CheckChildOptions(response.child_options);
+	if (response.execute_options == nullptr)
+		throw std::invalid_argument{"Translation response contains spawner options"};
+
+	CheckExecuteOptions(*response.execute_options);
 }
 
 #endif // ENABLE_TRANSLATION
@@ -302,13 +312,22 @@ Connection::GetTranslationResponse(SSH::Service service) const
 	std::unreachable();
 }
 
+Co::Task<const ExecuteOptions &>
+Connection::GetExecuteOptions(SSH::Service service) const
+{
+	const auto &response = co_await GetTranslationResponse(service);
+	assert(response.execute_options != nullptr);
+
+	co_return *response.execute_options;
+}
+
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				FdHolder &close_fds,
-				const TranslateResponse &response) noexcept
+				const ExecuteOptions &options) noexcept
 {
-	response.child_options.CopyTo(p, close_fds);
-	p.exec_path = response.execute;
+	options.child_options.CopyTo(p, close_fds);
+	p.exec_path = options.execute;
 
 	if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 	    p.cgroup_session == nullptr) {
@@ -323,10 +342,10 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 bool
 Connection::HasTag(std::string_view tag) const noexcept
 {
-	if (translation == nullptr)
+	if (translation == nullptr || translation->response.execute_options == nullptr)
 		return false;
 
-	for (std::string_view i : IterableSplitString(translation->response.child_options.tag, '\0'))
+	for (std::string_view i : IterableSplitString(translation->response.execute_options->child_options.tag, '\0'))
 		if (i == tag)
 			return true;
 
@@ -345,8 +364,8 @@ Connection::IsForwardingAllowed() const noexcept
 		return false;
 
 #ifdef ENABLE_TRANSLATION
-	if (translation &&
-	    translation->response.child_options.ns.enable_network)
+	if (translation && translation->response.execute_options != nullptr &&
+	    translation->response.execute_options->child_options.ns.enable_network)
 		/* if the user is supposed to run in an isolated
 		   network namespace, refuse to open TCP connections
 		   anywhere */
@@ -360,8 +379,8 @@ inline const char *
 Connection::GetHome() const noexcept
 {
 #ifdef ENABLE_TRANSLATION
-	if (translation)
-		return translation->response.child_options.GetHome();
+	if (translation && translation->response.execute_options != nullptr)
+		return translation->response.execute_options->child_options.GetHome();
 #endif // ENABLE_TRANSLATION
 
 	if (!home_path.empty())
@@ -406,8 +425,9 @@ const char *
 Connection::GetShell() const noexcept
 {
 #ifdef ENABLE_TRANSLATION
-	if (translation && translation->response.shell != nullptr)
-		return translation->response.shell;
+	if (translation && translation->response.execute_options != nullptr &&
+	    translation->response.execute_options->shell != nullptr)
+		return translation->response.execute_options->shell;
 #endif // ENABLE_TRANSLATION
 
 	if (!shell.empty())
@@ -423,8 +443,8 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		const auto &response = co_await GetTranslationResponse(service);
-		PrepareChildProcess(p, close_fds, response);
+		const auto &options = co_await GetExecuteOptions(service);
+		PrepareChildProcess(p, close_fds, options);
 	} else {
 #endif // ENABLE_TRANSLATION
 		p.uid_gid.effective_uid = uid;
