@@ -86,13 +86,13 @@ struct Connection::Translation {
 	 * The translation response for "SERVICE=sftp".  It is loaded
 	 * on demand.
 	 */
-	Co::MultiLoader<TranslateResponse> sftp_response;
+	Co::MultiLoader<ExecuteOptions> sftp_options;
 
 	/**
 	 * The translation response for "SERVICE=rsync".  It is loaded
 	 * on demand.
 	 */
-	Co::MultiLoader<TranslateResponse> rsync_response;
+	Co::MultiLoader<ExecuteOptions> rsync_options;
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
@@ -263,7 +263,7 @@ Connection::LazyTranslate(const char *translation_server,
 	co_return translation->response;
 }
 
-inline Co::Task<TranslateResponse>
+inline Co::Task<ExecuteOptions>
 Connection::TranslateService(std::string_view service) const noexcept
 {
 	assert(translation);
@@ -282,7 +282,7 @@ Connection::TranslateService(std::string_view service) const noexcept
 
 	CheckTranslateResponse(response);
 
-	co_return std::move(response);
+	co_return std::move(*response.execute_options);
 }
 
 const TranslateResponse *
@@ -293,32 +293,24 @@ Connection::GetTranslationResponse() const noexcept
 		: nullptr;
 }
 
-Co::Task<const TranslateResponse &>
-Connection::GetTranslationResponse(SSH::Service service) const
+Co::Task<const ExecuteOptions &>
+Connection::GetExecuteOptions(SSH::Service service) const
 {
 	assert(translation);
 
 	switch (service) {
 	case SSH::Service::SSH:
-		co_return translation->response;
+		assert(translation->response.execute_options != nullptr);
+		co_return *translation->response.execute_options;
 
 	case SSH::Service::SFTP:
-		co_return co_await translation->sftp_response.get([this]{ return TranslateService("sftp"sv); });
+		co_return co_await translation->sftp_options.get([this]{ return TranslateService("sftp"sv); });
 
 	case SSH::Service::RSYNC:
-		co_return co_await translation->rsync_response.get([this]{ return TranslateService("rsync"sv); });
+		co_return co_await translation->rsync_options.get([this]{ return TranslateService("rsync"sv); });
 	}
 
 	std::unreachable();
-}
-
-Co::Task<const ExecuteOptions &>
-Connection::GetExecuteOptions(SSH::Service service) const
-{
-	const auto &response = co_await GetTranslationResponse(service);
-	assert(response.execute_options != nullptr);
-
-	co_return *response.execute_options;
 }
 
 void

@@ -174,16 +174,13 @@ public:
 	const TranslateResponse *GetTranslationResponse() const noexcept;
 
 	/**
-	 * Return the translation response for a specific service.
+	 * Return the #ExecuteOptions for a specific service.
 	 * Calling this method is only allowed if a translation server
 	 * is used.  The method may suspend when the translation
 	 * server gets queried.
 	 *
 	 * Throws on error.
 	 */
-	[[nodiscard]]
-	Co::Task<const TranslateResponse &> GetTranslationResponse(SSH::Service service) const;
-
 	[[nodiscard]]
 	Co::Task<const ExecuteOptions &> GetExecuteOptions(SSH::Service service) const;
 
@@ -259,7 +256,7 @@ private:
 	 * Perform a (secondary) translation with a different SERVICE,
 	 * e.g. "sftp".
 	 */
-	Co::Task<TranslateResponse> TranslateService(std::string_view service) const noexcept;
+	Co::Task<ExecuteOptions> TranslateService(std::string_view service) const noexcept;
 #endif
 
 	/**
