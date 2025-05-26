@@ -96,11 +96,23 @@ struct Connection::Translation {
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
-		    TranslateResponse &&_response) noexcept
-		:user(_user),
-		 alloc(std::move(_alloc)),
-		 response(std::move(_response)) {}
+		    TranslateResponse &&_response) noexcept;
 };
+
+inline
+Connection::Translation::Translation(std::string_view _user,
+				     Allocator &&_alloc,
+				     TranslateResponse &&_response) noexcept
+	:user(_user),
+	 alloc(std::move(_alloc)),
+	 response(std::move(_response))
+{
+	if (const auto *sftp = response.service_execute_options.Get("sftp"))
+		sftp_options.InjectValue(ShallowCopy{}, *sftp);
+
+	if (const auto *rsync = response.service_execute_options.Get("rsync"))
+		rsync_options.InjectValue(ShallowCopy{}, *rsync);
+}
 
 static void
 CheckChildOptions(const ChildOptions &options)
@@ -268,6 +280,16 @@ Connection::TranslateService(std::string_view service) const
 {
 	assert(translation);
 	assert(!translation->user.empty());
+
+	if (!translation->response.service_execute_options.empty()) {
+		/* if the translation server has sent a
+		 * SERVICE-specific response and this function has
+		 * been reached, it means that the specified service
+		 * was not listed; therefore we disallow it */
+		assert(translation->response.service_execute_options.Get(std::string{service}.c_str()) == nullptr);
+
+		throw std::runtime_error{"Service not allowed"};
+	}
 
 	const char *const translation_server = instance.GetTranslationServer();
 	assert(translation_server != nullptr);
