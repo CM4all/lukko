@@ -256,7 +256,7 @@ private:
 	 * Perform a (secondary) translation with a different SERVICE,
 	 * e.g. "sftp".
 	 */
-	Co::Task<ExecuteOptions> TranslateService(std::string_view service) const noexcept;
+	Co::Task<ExecuteOptions> TranslateService(std::string_view service) const;
 #endif
 
 	/**

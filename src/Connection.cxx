@@ -264,7 +264,7 @@ Connection::LazyTranslate(const char *translation_server,
 }
 
 inline Co::Task<ExecuteOptions>
-Connection::TranslateService(std::string_view service) const noexcept
+Connection::TranslateService(std::string_view service) const
 {
 	assert(translation);
 	assert(!translation->user.empty());
