@@ -2,7 +2,7 @@ cm4all-lukko (0.43) unstable; urgency=low
 
   * translation: fix CHROOT support for SFTP (0.42 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 03 Jun 2025 14:45:31 +0200
 
 cm4all-lukko (0.42) unstable; urgency=low
 
