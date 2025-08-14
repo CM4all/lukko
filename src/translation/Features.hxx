@@ -3,7 +3,7 @@
  * client.  More specifically, it can be used to eliminate
  * #TranslateRequest and #TranslateResponse attributes.
  *
- * author: Max Kellermann <mk@cm4all.com>
+ * author: Max Kellermann <max.kellermann@ionos.com>
  */
 
 #pragma once

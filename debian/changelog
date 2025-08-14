@@ -8,7 +8,7 @@ cm4all-lukko (0.43) unstable; urgency=low
 
   * translation: fix CHROOT support for SFTP (0.42 regression)
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 03 Jun 2025 14:45:31 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 03 Jun 2025 14:45:31 +0200
 
 cm4all-lukko (0.42) unstable; urgency=low
 
@@ -16,19 +16,19 @@ cm4all-lukko (0.42) unstable; urgency=low
   * translation: add packet MAPPED_REAL_UID_GID
   * translation: support combined response for multiple SERVICEs
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 26 May 2025 12:08:15 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 26 May 2025 12:08:15 +0200
 
 cm4all-lukko (0.41) unstable; urgency=low
 
   * support custom SFTP program with EXECUTE
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 16 Apr 2025 13:21:19 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 16 Apr 2025 13:21:19 +0200
 
 cm4all-lukko (0.40) unstable; urgency=low
 
   * session channel: defer input until child process is spawned
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 11 Apr 2025 11:29:23 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 11 Apr 2025 11:29:23 +0200
 
 cm4all-lukko (0.39) unstable; urgency=low
 
@@ -39,7 +39,7 @@ cm4all-lukko (0.39) unstable; urgency=low
   * session channel: allow sftp-only accounts to invoke rsync
   * spawn: fix assertion failure with large payloads
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 02 Apr 2025 09:39:15 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 02 Apr 2025 09:39:15 +0200
 
 cm4all-lukko (0.38) unstable; urgency=low
 
@@ -52,59 +52,59 @@ cm4all-lukko (0.38) unstable; urgency=low
   * switch to C++23
   * require Meson 1.2
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 25 Mar 2025 12:05:19 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 25 Mar 2025 12:05:19 +0100
 
 cm4all-lukko (0.37) unstable; urgency=low
 
   * translation: allow BIND_MOUNT from container
   * translation: add packet BIND_MOUNT_FILE_EXEC
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 18 Feb 2025 20:30:12 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 18 Feb 2025 20:30:12 +0100
 
 cm4all-lukko (0.36) unstable; urgency=low
 
   * spawn: allow HOME inside a BIND_MOUNT
   * translation: add packets SYMLINK, BIND_MOUNT_RW_EXEC
 
- -- Max Kellermann <mk@cm4all.com>  Thu, 06 Feb 2025 06:03:42 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 06 Feb 2025 06:03:42 +0100
 
 cm4all-lukko (0.35) unstable; urgency=low
 
   * spawn: apply TMPFS_DIRS_READABLE to tmpfs mounts
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 05 Feb 2025 07:26:01 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 05 Feb 2025 07:26:01 +0100
 
 cm4all-lukko (0.34) unstable; urgency=low
 
   * add support for direct-streamlocal@openssh.com extension
   * translation: add packet TMPFS_DIRS_READABLE
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 04 Feb 2025 15:06:05 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 04 Feb 2025 15:06:05 +0100
 
 cm4all-lukko (0.33) unstable; urgency=low
 
   * fix shutdown hang due to delayed connections
   * make the pty non-blocking
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 14 Jan 2025 12:23:32 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 14 Jan 2025 12:23:32 +0100
 
 cm4all-lukko (0.32) unstable; urgency=low
 
   * spawn: forbid the "listmount" and "statmount" system calls
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 09 Dec 2024 18:17:51 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 09 Dec 2024 18:17:51 +0100
 
 cm4all-lukko (0.31) unstable; urgency=low
 
   * spawn: mount `proc` with "hidepid=1,subset=pid"
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 27 Nov 2024 16:23:59 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 27 Nov 2024 16:23:59 +0100
 
 cm4all-lukko (0.30) unstable; urgency=low
 
   * use open(O_NONBLOCK) to fix FIFO DoS vulnerability
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 19 Nov 2024 11:48:42 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 19 Nov 2024 11:48:42 +0100
 
 cm4all-lukko (0.29) unstable; urgency=low
 
@@ -113,20 +113,20 @@ cm4all-lukko (0.29) unstable; urgency=low
   * set HOME and CHDIR only if not set by translation server
   * translation: add packet CHROOT
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 25 Sep 2024 22:15:41 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 25 Sep 2024 22:15:41 +0200
 
 cm4all-lukko (0.28) unstable; urgency=low
 
   * increase listener backlog to 1024
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 21 Aug 2024 14:28:34 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 21 Aug 2024 14:28:34 +0200
 
 cm4all-lukko (0.27) unstable; urgency=low
 
   * session channel: limit "env" to 16 kB
   * prometheus_exporter: add spawner stats
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 05 Aug 2024 20:05:42 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 05 Aug 2024 20:05:42 +0200
 
 cm4all-lukko (0.26) unstable; urgency=low
 
@@ -136,7 +136,7 @@ cm4all-lukko (0.26) unstable; urgency=low
   * fix "tarpit" bug, do not enable implicitly with "max_connections_per_ip"
   * show authenticated username in each log line
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 24 Jul 2024 14:34:03 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 24 Jul 2024 14:34:03 +0200
 
 cm4all-lukko (0.25) unstable; urgency=low
 
@@ -147,13 +147,13 @@ cm4all-lukko (0.25) unstable; urgency=low
   * improve port forwarding error reporting
   * reduce port forwarding delay
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 10 Jul 2024 15:27:29 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 10 Jul 2024 15:27:29 +0200
 
 cm4all-lukko (0.24) unstable; urgency=low
 
   * ssh: allow the '.' and '@' character in user names
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 03 Jul 2024 13:59:05 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 03 Jul 2024 13:59:05 +0200
 
 cm4all-lukko (0.23) unstable; urgency=low
 
@@ -161,7 +161,7 @@ cm4all-lukko (0.23) unstable; urgency=low
   * authorized_keys: add option "home-read-only"
   * add option to log auth messages to Pond server
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 19 Jun 2024 14:53:53 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 19 Jun 2024 14:53:53 +0200
 
 cm4all-lukko (0.22) unstable; urgency=low
 
@@ -169,19 +169,19 @@ cm4all-lukko (0.22) unstable; urgency=low
   * control: fix socket deregistration bug after malformed packet
   * prometheus_exporter defaults to port 9100
 
- -- Max Kellermann <mk@cm4all.com>  Sat, 08 Jun 2024 09:24:26 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Sat, 08 Jun 2024 09:24:26 +0200
 
 cm4all-lukko (0.21) unstable; urgency=low
 
   * export Promtheus metrics
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 24 Apr 2024 20:16:29 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 24 Apr 2024 20:16:29 +0200
 
 cm4all-lukko (0.20) unstable; urgency=low
 
   * fix regression with opening ~/.ssh/authorized_keys as target user
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 19 Apr 2024 13:06:48 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 19 Apr 2024 13:06:48 +0200
 
 cm4all-lukko (0.19) unstable; urgency=low
 
@@ -195,7 +195,7 @@ cm4all-lukko (0.19) unstable; urgency=low
   * quote client-specified strings for logging
   * add configuration settings "max_connections_per_ip", "tarpit"
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 17 Apr 2024 22:12:19 +0200
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 17 Apr 2024 22:12:19 +0200
 
 cm4all-lukko (0.18) unstable; urgency=low
 
@@ -204,7 +204,7 @@ cm4all-lukko (0.18) unstable; urgency=low
   * session channel: send EOF only if both stdout and stderr have ended
   * translation: add packet ANALYTICS_ID
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 22 Mar 2024 09:59:43 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 22 Mar 2024 09:59:43 +0100
 
 cm4all-lukko (0.17) unstable; urgency=low
 
@@ -212,7 +212,7 @@ cm4all-lukko (0.17) unstable; urgency=low
   * systemd: raise LimitNOFILE to 65536
   * systemd: configure a memory limit
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 08 Mar 2024 18:13:20 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 08 Mar 2024 18:13:20 +0100
 
 cm4all-lukko (0.16) unstable; urgency=low
 
@@ -221,31 +221,31 @@ cm4all-lukko (0.16) unstable; urgency=low
   * spawn: don't write internal errors to session's stderr
   * debian: recommend openssh-sftp-server
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 05 Mar 2024 00:19:13 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 05 Mar 2024 00:19:13 +0100
 
 cm4all-lukko (0.15) unstable; urgency=low
 
   * spawn: don't kill on syscall get_mempolicy(), fail with ENOSYS
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 21 Feb 2024 11:10:36 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 21 Feb 2024 11:10:36 +0100
 
 cm4all-lukko (0.14) unstable; urgency=low
 
   * fix bignum padding in ECDH reply ("incorrect signature" error)
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 02 Feb 2024 13:00:26 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 02 Feb 2024 13:00:26 +0100
 
 cm4all-lukko (0.13) unstable; urgency=low
 
   * fix crash on certain malformed packets
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 12 Jan 2024 12:48:25 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 12 Jan 2024 12:48:25 +0100
 
 cm4all-lukko (0.12) unstable; urgency=low
 
   * implement "tcpip-forward" (for "ssh -R")
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 08 Jan 2024 11:40:14 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 08 Jan 2024 11:40:14 +0100
 
 cm4all-lukko (0.11) unstable; urgency=low
 
@@ -258,7 +258,7 @@ cm4all-lukko (0.11) unstable; urgency=low
   * enlarge per-channel receive window to 1 MB
   * enlarge kernel pipe buffers to 256 kB
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 19 Dec 2023 20:17:26 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 19 Dec 2023 20:17:26 +0100
 
 cm4all-lukko (0.10) unstable; urgency=low
 
@@ -268,7 +268,7 @@ cm4all-lukko (0.10) unstable; urgency=low
   * systemd: add "After=cm4all-spawn-accessory.socket"
   * debian: add Recommends/Suggests on cm4all-spawn-*
 
- -- Max Kellermann <mk@cm4all.com>  Thu, 07 Dec 2023 17:25:08 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 07 Dec 2023 17:25:08 +0100
 
 cm4all-lukko (0.9) unstable; urgency=low
 
@@ -276,7 +276,7 @@ cm4all-lukko (0.9) unstable; urgency=low
   * load the authorized_host_keys file
   * add spawner setting `cgroups_writable_by_gid`
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 01 Dec 2023 17:30:44 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 01 Dec 2023 17:30:44 +0100
 
 cm4all-lukko (0.8) unstable; urgency=low
 
@@ -286,27 +286,27 @@ cm4all-lukko (0.8) unstable; urgency=low
   * fix assertion failure
   * fix file descriptor leak bug
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 29 Nov 2023 17:37:45 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 29 Nov 2023 17:37:45 +0100
 
 cm4all-lukko (0.7) unstable; urgency=low
 
   * control: allow controlling the server with UDP datagrams
   * implement translation packet NO_PASSWORD (partially)
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 28 Nov 2023 15:19:58 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 28 Nov 2023 15:19:58 +0100
 
 cm4all-lukko (0.6) unstable; urgency=low
 
   * translation: add packet NO_HOME_AUTHORIZED_KEYS
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 28 Nov 2023 11:16:55 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 28 Nov 2023 11:16:55 +0100
 
 cm4all-lukko (0.5) unstable; urgency=low
 
   * fix crash after translation server connect error
   * translation server error closes with SERVICE_NOT_AVAILABLE
 
- -- Max Kellermann <mk@cm4all.com>  Mon, 20 Nov 2023 17:37:48 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 20 Nov 2023 17:37:48 +0100
 
 cm4all-lukko (0.4) unstable; urgency=low
 
@@ -314,7 +314,7 @@ cm4all-lukko (0.4) unstable; urgency=low
   * improve handling of send errors on the SSH socket
   * fix exit-status/exit-signal reporting
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 17 Nov 2023 15:07:52 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 17 Nov 2023 15:07:52 +0100
 
 cm4all-lukko (0.3) unstable; urgency=low
 
@@ -324,7 +324,7 @@ cm4all-lukko (0.3) unstable; urgency=low
   * translation: add packet MAPPED_UID_GID
   * spawn: use cm4all.slice
 
- -- Max Kellermann <mk@cm4all.com>  Thu, 16 Nov 2023 15:07:06 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 16 Nov 2023 15:07:06 +0100
 
 cm4all-lukko (0.2) unstable; urgency=low
 
@@ -333,10 +333,10 @@ cm4all-lukko (0.2) unstable; urgency=low
   * implement authorized_keys options
   * open ~/.ssh/authorized_keys as target user
 
- -- Max Kellermann <mk@cm4all.com>  Tue, 14 Nov 2023 11:29:34 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 14 Nov 2023 11:29:34 +0100
 
 cm4all-lukko (0.1) unstable; urgency=low
 
   * initial release
 
- -- Max Kellermann <mk@cm4all.com>  Fri, 10 Nov 2023 17:31:51 +0100
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 10 Nov 2023 17:31:51 +0100
