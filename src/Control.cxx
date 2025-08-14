@@ -69,6 +69,7 @@ Instance::OnControlPacket([[maybe_unused]] BengControl::Server &control_server,
 	case Command::RELOAD_STATE:
 	case Command::DISCONNECT_DATABASE:
 	case Command::DISABLE_URING:
+	case Command::RESET_LIMITER:
 		break;
 
 	case Command::TERMINATE_CHILDREN:
