@@ -96,6 +96,35 @@ Known attributes:
 
 - ``pond_server``: send log messages to this Pond server.
 
+- ``proxy_to_zeroconf``: act as proxy, forward all incoming
+  connections after the authentication phase to the specified Zeroconf
+  cluster.  The connection to this Zeroconf cluster is authenticated
+  using the SSH host key with the :ref:`"hostbased" method
+  <hostbased>`.  Therefore, this server's host key must be in the
+  destination's ``authorized_host_keys`` file.
+
+
+Zeroconf cluster
+----------------
+
+The ``zeroconf_cluster`` section describes a destination for the
+``proxy_to_zeroconf`` setting::
+
+  zeroconf_cluster "name" {
+    service "lukko-internal"
+    interface "internal"
+  }
+
+Known attributes:
+
+- ``service``: The name of the Zeroconf service.
+
+- ``domain`` (optional): The name of the Zeroconf service.
+
+- ``interface`` (optional): Look up only on this network interface.
+
+- ``protocol`` (optional): Limit lookups to ``inet`` or ``inet6``.
+
 
 Control Listener
 ----------------
@@ -228,6 +257,8 @@ Passwords are verified by the :ref:`translation server <ts>`,
 therefore this authentication method is only available if a
 translation server is configured.
 
+
+.. _hostbased:
 
 Host-Based Authentication
 -------------------------

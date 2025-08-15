@@ -26,6 +26,7 @@
 #include "spawn/Prepared.hxx"
 #include "event/co/Sleep.hxx"
 #include "event/net/CoConnectSocket.hxx"
+#include "system/Arch.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -733,6 +734,9 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 	std::string_view auth_methods = "publickey,hostbased"sv;
 
+	Arch arch = Arch::NONE;
+	std::span<const std::byte> sticky_source = AsBytes(new_username);
+
 #ifdef ENABLE_TRANSLATION
 	bool password_accepted = false;
 
@@ -821,6 +825,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 		if (password_accepted)
 			++instance.counters.n_userauth_password_accepted;
+
+		arch = response.arch;
+
+		if (response.site != nullptr)
+			sticky_source = AsBytes(std::string_view{response.site});
 	} else
 #endif // ENABLE_TRANSLATION
 	{
@@ -991,7 +1000,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 
 	auth_timeout.Cancel();
 
-	if (const auto proxy_to = listener.GetProxyTo(); !proxy_to.IsNull()) {
+	if (const auto proxy_to = listener.GetProxyTo(arch, sticky_source);
+	    !proxy_to.IsNull()) {
 		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
 
 		OutgoingConnectionHandler &handler = *this;

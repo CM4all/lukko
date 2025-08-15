@@ -187,6 +187,10 @@ else
   control_server_dep = dependency('', required: false)
 endif
 
+if avahi_dep.found()
+  sources += 'src/ZeroconfCluster.cxx'
+endif
+
 if get_option('pond')
   subdir('libcommon/src/http')
   subdir('libcommon/src/net/log')

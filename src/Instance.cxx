@@ -18,6 +18,7 @@
 #endif
 
 #ifdef HAVE_AVAHI
+#include "ZeroconfCluster.hxx"
 #include "lib/avahi/Client.hxx"
 #include "lib/avahi/Publisher.hxx"
 #include "lib/avahi/Service.hxx"
@@ -87,6 +88,16 @@ Instance::GetAvahiClient()
 	}
 
 	return *avahi_client;
+}
+
+ZeroconfCluster &
+Instance::MakeZeroconfCluster(const ZeroconfClusterConfig &config)
+{
+	Avahi::ErrorHandler &error_handler = *this;
+	const auto [it, _] = zeroconf_clusters.try_emplace(&config, GetAvahiClient(),
+							   error_handler,
+							   config.zeroconf);
+	return it->second;
 }
 
 void

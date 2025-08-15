@@ -20,6 +20,19 @@
 // not defaulting to 22 until this project is fully-featured
 static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
 
+#ifdef HAVE_AVAHI
+
+inline void
+ZeroconfClusterConfig::Check() const
+{
+	if (!zeroconf.IsEnabled())
+		throw LineParser::Error{"Zeroconf service missing"};
+
+	zeroconf.Check();
+}
+
+#endif // HAVE_AVAHI
+
 Config::Config()
 {
 	if (!debug_mode)
@@ -58,6 +71,23 @@ Config::Check()
 
 class LukkoConfigParser final : public NestedConfigParser {
 	Config &config;
+
+#ifdef HAVE_AVAHI
+	class ZeroconfCluster final : public ConfigParser {
+		Config &parent;
+		std::string name;
+		ZeroconfClusterConfig config;
+
+	public:
+		ZeroconfCluster(Config &_parent, const char *_name) noexcept
+			:parent(_parent), name(_name) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+#endif // HAVE_AVAHI
 
 	class Listener final : public ConfigParser {
 		Config &parent;
@@ -108,6 +138,30 @@ protected:
 	/* virtual methods from class NestedConfigParser */
 	void ParseLine2(FileLineParser &line) override;
 };
+
+#ifdef HAVE_AVAHI
+
+void
+LukkoConfigParser::ZeroconfCluster::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (!config.zeroconf.ParseLine(word, line))
+		throw LineParser::Error{"Unknown option"};
+}
+
+void
+LukkoConfigParser::ZeroconfCluster::Finish()
+{
+	config.Check();
+
+	if (!parent.zeroconf_clusters.emplace(std::move(name), std::move(config)).second)
+		throw LineParser::Error{"Duplicate zeroconf_cluster name"};
+
+	ConfigParser::Finish();
+}
+
+#endif // HAVE_AVAHI
 
 void
 LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
@@ -168,6 +222,19 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 
 		config.proxy_to = ParseSocketAddress(line.ExpectValueAndEnd(),
 						     22, false);
+#ifdef HAVE_AVAHI
+	} else if (StringIsEqual(word, "proxy_to_zeroconf")) {
+		if (!std::holds_alternative<std::monostate>(config.proxy_to))
+			throw LineParser::Error{"Duplicate 'proxy_to_zeroconf'"};
+
+		const std::string_view name = line.ExpectValueAndEnd();
+
+		if (const auto i = parent.zeroconf_clusters.find(name);
+		    i != parent.zeroconf_clusters.end())
+			config.proxy_to = &i->second;
+		else
+			throw LineParser::Error{"No such zeroconf_cluster"};
+#endif // HAVE_AVAHI
 	} else if (StringIsEqual(word, "max_connections_per_ip")) {
 		config.max_connections_per_ip = line.NextPositiveInteger();
 		line.ExpectEnd();
@@ -292,6 +359,14 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 	if (StringIsEqual(word, "listener")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<Listener>(config));
+	} else if (StringIsEqual(word, "zeroconf_cluster")) {
+#ifdef HAVE_AVAHI
+		const char *name = line.ExpectValue();
+		line.ExpectSymbolAndEol('{');
+		SetChild(std::make_unique<ZeroconfCluster>(config, name));
+#else
+		throw std::runtime_error{"Zeroconf support is disabled"};
+#endif // HAVE_AVAHI
 	} else if (StringIsEqual(word, "spawn")) {
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<SpawnConfigParser>(config.spawn));

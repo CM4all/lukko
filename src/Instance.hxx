@@ -35,7 +35,13 @@ class Listener;
 class PrometheusExporterListener;
 class SpawnService;
 class SpawnServerClient;
+
+#ifdef HAVE_AVAHI
+#include <map>
+struct ZeroconfClusterConfig;
+class ZeroconfCluster;
 namespace Avahi { class Client; class Publisher; struct Service; }
+#endif // HAVE_AVAHI
 
 struct DummyBase {};
 
@@ -78,6 +84,8 @@ class Instance final
 	std::unique_ptr<Avahi::Client> avahi_client;
 	std::forward_list<Avahi::Service> avahi_services;
 	std::unique_ptr<Avahi::Publisher> avahi_publisher;
+
+	std::map<const ZeroconfClusterConfig *, ZeroconfCluster> zeroconf_clusters;
 #endif // HAVE_AVAHI
 
 	std::forward_list<Listener> listeners;
@@ -126,6 +134,17 @@ public:
 
 #ifdef HAVE_AVAHI
 	Avahi::Client &GetAvahiClient();
+
+	/**
+	 * Create a #ZeroconfCluster instance from a
+	 * #ZeroconfClusterConfig, possibly returning an instance that
+	 * is shared between multiple callers.  The returned object is
+	 * owned by this #Instance.  Supposed to be called during
+	 * startup.
+	 *
+	 * Throws on error.
+	 */
+	ZeroconfCluster &MakeZeroconfCluster(const ZeroconfClusterConfig &config);
 
 	void EnableZeroconf() noexcept;
 	void DisableZeroconf() noexcept;

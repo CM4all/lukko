@@ -13,10 +13,15 @@
 #include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
 #include "time/Cast.hxx"
+#include "util/AlwaysFalse.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #ifdef ENABLE_POND
 #include "net/ConnectSocket.hxx"
+#endif
+
+#ifdef HAVE_AVAHI
+#include "ZeroconfCluster.hxx"
 #endif
 
 #include <fmt/core.h>
@@ -25,15 +30,19 @@
 
 using std::string_view_literals::operator""sv;
 
-template <class> constexpr bool always_false_v = false;
-
 static Listener::ProxyTo
-LoadProxyTo(const ListenerConfig &config)
+LoadProxyTo(Instance &instance, const ListenerConfig &config)
 {
-	return std::visit([](const auto &value) -> Listener::ProxyTo {
+	return std::visit([&instance](const auto &value) -> Listener::ProxyTo {
 		using T = std::decay_t<decltype(value)>;
 		if constexpr (std::is_same_v<T, AllocatedSocketAddress>) {
 			return value;
+#ifdef HAVE_AVAHI
+		} else if constexpr (std::is_same_v<T, const ZeroconfClusterConfig *>) {
+			return &instance.MakeZeroconfCluster(*value);
+#else
+			(void)instance;
+#endif // HAVE_AVAHI
 		} else if constexpr (std::is_same_v<T, std::monostate>) {
 			return {};
 		} else {
@@ -48,7 +57,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 #ifdef ENABLE_TRANSLATION
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
-	 proxy_to(LoadProxyTo(config)),
+	 proxy_to(LoadProxyTo(instance, config)),
 #ifdef ENABLE_POND
 	 pond_socket(!config.pond_server.IsNull()
 		     ? CreateConnectDatagramSocket(config.pond_server)
@@ -71,12 +80,23 @@ Listener::~Listener() noexcept
 }
 
 SocketAddress
-Listener::GetProxyTo() const noexcept
+Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 {
-	return std::visit([](const auto &value) -> SocketAddress {
+	return std::visit([arch, sticky_source](const auto &value) -> SocketAddress {
 		using T = std::decay_t<decltype(value)>;
 		if constexpr (std::is_same_v<T, SocketAddress>) {
 			return value;
+#ifdef HAVE_AVAHI
+		} else if constexpr (std::is_same_v<T, ZeroconfCluster *>) {
+			const SocketAddress address = value->Pick(arch, sticky_source);
+			if (address.IsNull())
+				throw std::runtime_error{"Zeroconf cluster is empty"};
+
+			return address;
+#else
+			(void)arch;
+			(void)sticky_source;
+#endif // HAVE_AVAHI
 		} else if constexpr (std::is_same_v<T, std::monostate>) {
 			return nullptr;
 		} else {

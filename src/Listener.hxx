@@ -24,11 +24,22 @@ class Connection;
 class RootLogger;
 class ClientAccountingMap;
 
+enum class Arch : uint_least8_t;
+
+#ifdef HAVE_AVAHI
+#include <cstddef>
+#include <span>
+class ZeroconfCluster;
+#endif
+
 class Listener final : ServerSocket {
 	friend class DelayedConnection;
 
 public:
 	using ProxyTo = std::variant<std::monostate,
+#ifdef HAVE_AVAHI
+				     ZeroconfCluster *,
+#endif
 				     SocketAddress>;
 
 private:
@@ -63,8 +74,10 @@ public:
 	}
 #endif // ENABLE_TRANSLATION
 
-	[[gnu::pure]]
-	SocketAddress GetProxyTo() const noexcept;
+	/**
+	 * Throws on error.
+	 */
+	SocketAddress GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const;
 
 	bool GetVerboseErrors() const noexcept {
 		return verbose_errors;

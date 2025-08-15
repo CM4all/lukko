@@ -9,9 +9,25 @@
 #include "net/SocketConfig.hxx"
 #include "config.h"
 
+#ifdef HAVE_AVAHI
+#include "lib/avahi/ExplorerConfig.hxx"
+#include <map>
+#endif // HAVE_AVAHI
+
 #include <cstddef>
 #include <forward_list>
+#include <string>
 #include <variant>
+
+#ifdef HAVE_AVAHI
+
+struct ZeroconfClusterConfig {
+	Avahi::ServiceExplorerConfig zeroconf;
+
+	void Check() const;
+};
+
+#endif // HAVE_AVAHI
 
 struct ListenerConfig : SocketConfig {
 #ifdef HAVE_AVAHI
@@ -23,7 +39,14 @@ struct ListenerConfig : SocketConfig {
 #endif
 
 	std::variant<std::monostate,
+#ifdef HAVE_AVAHI
+		     const ZeroconfClusterConfig *,
+#endif // HAVE_AVAHI
 		     AllocatedSocketAddress> proxy_to;
+
+#ifdef HAVE_AVAHI
+	const ZeroconfClusterConfig *proxy_to_zeroconf_cluster = nullptr;
+#endif
 
 #ifdef ENABLE_POND
 	AllocatedSocketAddress pond_server;
@@ -78,6 +101,10 @@ struct Config {
 #endif // ENABLE_CONTROL
 
 	std::forward_list<ListenerConfig> listeners;
+
+#ifdef HAVE_AVAHI
+	std::map<std::string, ZeroconfClusterConfig, std::less<>> zeroconf_clusters;
+#endif
 
 	std::forward_list<PrometheusExporterConfig> prometheus_exporters;
 
