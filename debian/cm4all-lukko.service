@@ -19,6 +19,7 @@ ExecStart=/usr/sbin/cm4all-lukko
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure
+RestartPreventExitStatus=USAGE CONFIG
 
 # run as non-root user so it can't read root-owned files
 User=cm4all-lukko

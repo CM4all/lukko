@@ -1,6 +1,6 @@
 cm4all-lukko (0.44) unstable; urgency=low
 
-  * 
+  * systemd: do not restart on configuration errors
 
  --   
 

@@ -43,6 +43,7 @@
 #include <filesystem>
 
 #include <stdlib.h>
+#include <sysexits.h> // for EX_*
 
 using std::string_view_literals::operator""sv;
 
@@ -131,7 +132,14 @@ try {
 #endif
 
 	Config config;
-	LoadConfigFile(config, cmdline.config_path);
+
+	try {
+		LoadConfigFile(config, cmdline.config_path);
+	} catch (...) {
+		PrintException(std::current_exception());
+		return EX_CONFIG;
+	}
+
 	config.Check();
 
 	SetupProcess();
