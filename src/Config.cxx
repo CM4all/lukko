@@ -162,6 +162,10 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 #endif // ENABLE_TRANSLATION
 	} else if (StringIsEqual(word, "proxy_to")) {
 		// TODO experimental feature
+
+		if (!std::holds_alternative<std::monostate>(config.proxy_to))
+			throw LineParser::Error{"Duplicate 'proxy_to'"};
+
 		config.proxy_to = ParseSocketAddress(line.ExpectValueAndEnd(),
 						     22, false);
 	} else if (StringIsEqual(word, "max_connections_per_ip")) {

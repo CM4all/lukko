@@ -25,13 +25,30 @@
 
 using std::string_view_literals::operator""sv;
 
+template <class> constexpr bool always_false_v = false;
+
+static Listener::ProxyTo
+LoadProxyTo(const ListenerConfig &config)
+{
+	return std::visit([](const auto &value) -> Listener::ProxyTo {
+		using T = std::decay_t<decltype(value)>;
+		if constexpr (std::is_same_v<T, AllocatedSocketAddress>) {
+			return value;
+		} else if constexpr (std::is_same_v<T, std::monostate>) {
+			return {};
+		} else {
+			static_assert(always_false_v<T>);
+		}
+        }, config.proxy_to);
+}
+
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
 	 instance(_instance),
 #ifdef ENABLE_TRANSLATION
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
-	 proxy_to(config.proxy_to),
+	 proxy_to(LoadProxyTo(config)),
 #ifdef ENABLE_POND
 	 pond_socket(!config.pond_server.IsNull()
 		     ? CreateConnectDatagramSocket(config.pond_server)
@@ -51,6 +68,21 @@ Listener::~Listener() noexcept
 {
 	delayed_connections.clear_and_dispose(DeleteDisposer{});
 	connections.clear_and_dispose(DeleteDisposer{});
+}
+
+SocketAddress
+Listener::GetProxyTo() const noexcept
+{
+	return std::visit([](const auto &value) -> SocketAddress {
+		using T = std::decay_t<decltype(value)>;
+		if constexpr (std::is_same_v<T, SocketAddress>) {
+			return value;
+		} else if constexpr (std::is_same_v<T, std::monostate>) {
+			return nullptr;
+		} else {
+			static_assert(always_false_v<T>);
+		}
+        }, proxy_to);
 }
 
 void

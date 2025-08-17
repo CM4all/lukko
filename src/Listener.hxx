@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <string_view>
+#include <variant>
 
 struct ListenerConfig;
 class Instance;
@@ -26,13 +27,18 @@ class ClientAccountingMap;
 class Listener final : ServerSocket {
 	friend class DelayedConnection;
 
+public:
+	using ProxyTo = std::variant<std::monostate,
+				     SocketAddress>;
+
+private:
 	Instance &instance;
 
 #ifdef ENABLE_TRANSLATION
 	const std::string_view tag;
 #endif // ENABLE_TRANSLATION
 
-	const SocketAddress proxy_to;
+	const ProxyTo proxy_to;
 
 #ifdef ENABLE_POND
 	const UniqueSocketDescriptor pond_socket;
@@ -57,9 +63,8 @@ public:
 	}
 #endif // ENABLE_TRANSLATION
 
-	SocketAddress GetProxyTo() const noexcept {
-		return proxy_to;
-	}
+	[[gnu::pure]]
+	SocketAddress GetProxyTo() const noexcept;
 
 	bool GetVerboseErrors() const noexcept {
 		return verbose_errors;

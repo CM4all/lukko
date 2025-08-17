@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <forward_list>
+#include <variant>
 
 struct ListenerConfig : SocketConfig {
 #ifdef HAVE_AVAHI
@@ -21,7 +22,8 @@ struct ListenerConfig : SocketConfig {
 	std::string tag;
 #endif
 
-	AllocatedSocketAddress proxy_to;
+	std::variant<std::monostate,
+		     AllocatedSocketAddress> proxy_to;
 
 #ifdef ENABLE_POND
 	AllocatedSocketAddress pond_server;
