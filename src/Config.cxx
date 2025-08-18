@@ -12,10 +12,13 @@
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringCompare.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Check.hxx"
 #endif
+
+using std::string_view_literals::operator""sv;
 
 // not defaulting to 22 until this project is fully-featured
 static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
@@ -203,13 +206,12 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "reuse_port")) {
 		config.reuse_port = line.NextBool();
 		line.ExpectEnd();
-	} else if (StringIsEqual(word, "zeroconf_service")) {
 #ifdef HAVE_AVAHI
-		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
-								  "_tcp");
+	} else if (config.zeroconf.ParseLine(word, line)) {
 #else
-		throw std::runtime_error{"Zeroconf support is disabled"};
-#endif // HAVE_AVAHI
+	} else if (StringStartsWith(word, "zeroconf_"sv)) {
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
 	} else if (StringIsEqual(word, "tag")) {
 #ifdef ENABLE_TRANSLATION
 		config.tag = line.ExpectValueAndEnd();

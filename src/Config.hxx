@@ -11,6 +11,7 @@
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/ExplorerConfig.hxx"
+#include "lib/avahi/ServiceConfig.hxx"
 #include <map>
 #endif // HAVE_AVAHI
 
@@ -31,7 +32,7 @@ struct ZeroconfClusterConfig {
 
 struct ListenerConfig : SocketConfig {
 #ifdef HAVE_AVAHI
-	std::string zeroconf_service;
+	Avahi::ServiceConfig zeroconf;
 #endif
 
 #ifdef ENABLE_TRANSLATION

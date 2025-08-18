@@ -1,6 +1,8 @@
 cm4all-lukko (0.44) unstable; urgency=low
 
   * Zeroconf support for "proxy_to"
+  * Zeroconf: add options "zeroconf_domain", "zeroconf_protocol",
+    "zeroconf_weight"
   * systemd: do not restart on configuration errors
 
  --   

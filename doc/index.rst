@@ -70,8 +70,19 @@ Known attributes:
 - ``zeroconf_service``: if specified, then register this listener as
   Zeroconf service in the local Avahi daemon.
 
+- ``zeroconf_domain`` (optional): The name of the Zeroconf domain.
+
 - ``zeroconf_interface``: publish the Zeroconf service only on the
   given interface.
+
+- ``zeroconf_protocol`` (optional): Publish only protocol ``inet`` or
+  ``inet6``.
+
+- ``zeroconf_weight``: publish the Zeroconf service with the specified
+  "weight", i.e. ask a load balancer to use this weight when choosing
+  nodes.  The value is a decimal number; the implied default value is
+  :samp:`1.0`.  For example, if you specify :samp:`0.5`, you expect
+  this node to get only half as many connections as others.
 
 - ``tag``: a string sent to the :ref:`translation server <ts>` in a
   ``LISTENER_TAG`` packet.

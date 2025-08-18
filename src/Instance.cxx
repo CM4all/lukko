@@ -139,19 +139,15 @@ Instance::AddListener(const ListenerConfig &config)
 #ifdef HAVE_AVAHI
 	auto &listener = listeners.front();
 
-	if (!config.zeroconf_service.empty()) {
+	if (config.zeroconf.IsEnabled()) {
 		/* ask the kernel for the effective address via
 		   getsockname(), because it may have changed, e.g. if
 		   the kernel has selected a port for us */
 		if (const auto local_address = listener.GetSocket().GetLocalAddress();
 		    local_address.IsDefined()) {
-			const char *const interface = config.interface.empty()
-				? nullptr
-				: config.interface.c_str();
-
-			avahi_services.emplace_front(config.zeroconf_service.c_str(),
-						     interface, local_address,
-						     config.v6only);
+			avahi_services.emplace_front(config.zeroconf,
+						     config.interface.empty() ? nullptr : config.interface.c_str(),
+						     local_address, config.v6only);
 		}
 	}
 #endif // HAVE_AVAHI
