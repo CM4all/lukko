@@ -111,19 +111,19 @@ The ``zeroconf_cluster`` section describes a destination for the
 ``proxy_to_zeroconf`` setting::
 
   zeroconf_cluster "name" {
-    service "lukko-internal"
-    interface "internal"
+    zeroconf_service "lukko-internal"
+    zeroconf_interface "internal"
   }
 
 Known attributes:
 
-- ``service``: The name of the Zeroconf service.
+- ``zeroconf_service``: The name of the Zeroconf service.
 
-- ``domain`` (optional): The name of the Zeroconf service.
+- ``zeroconf_domain`` (optional): The name of the Zeroconf service.
 
-- ``interface`` (optional): Look up only on this network interface.
+- ``zeroconf_interface`` (optional): Look up only on this network interface.
 
-- ``protocol`` (optional): Limit lookups to ``inet`` or ``inet6``.
+- ``zeroconf_protocol`` (optional): Limit lookups to ``inet`` or ``inet6``.
 
 
 Control Listener
