@@ -7,7 +7,7 @@ cm4all-lukko (0.44) unstable; urgency=low
   * systemd: do not restart on configuration errors
   * debian: start daemon during initial installation, stop on uninstall
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Aug 2025 13:35:40 +0200
 
 cm4all-lukko (0.43) unstable; urgency=low
 
