@@ -5,6 +5,7 @@ cm4all-lukko (0.44) unstable; urgency=low
   * Zeroconf: add options "zeroconf_domain", "zeroconf_protocol",
     "zeroconf_weight"
   * systemd: do not restart on configuration errors
+  * debian: start daemon during initial installation, stop on uninstall
 
  --   
 
