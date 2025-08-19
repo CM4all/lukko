@@ -1,6 +1,6 @@
 cm4all-lukko (0.44) unstable; urgency=low
 
-  * translation: send PROBE in "proxy_to" requests
+  * translation: send PEEK in "proxy_to" requests
   * Zeroconf support for "proxy_to"
   * Zeroconf: add options "zeroconf_domain", "zeroconf_protocol",
     "zeroconf_weight"

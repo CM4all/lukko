@@ -18,10 +18,10 @@ TranslateLogin(EventLoop &event_loop,
 	       AllocatorPtr alloc, const char *socket_path,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password,
-	       bool probe)
+	       bool peek)
 {
 	auto fd = CreateConnectSocket(LocalSocketAddress{socket_path}, SOCK_STREAM);
 	return TranslateLogin(event_loop, alloc, std::move(fd),
 			      service, listener_tag,
-			      user, password, probe);
+			      user, password, peek);
 }

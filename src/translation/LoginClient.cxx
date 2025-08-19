@@ -80,7 +80,7 @@ static void
 SendTranslateLogin(SocketDescriptor fd,
 		   std::string_view service, std::string_view listener_tag,
 		   std::string_view user, std::string_view password,
-		   bool probe)
+		   bool peek)
 {
 	assert(user.data() != nullptr);
 
@@ -104,8 +104,8 @@ SendTranslateLogin(SocketDescriptor fd,
 	if (password.data() != nullptr)
 		WritePacket(p, TranslationCommand::PASSWORD, password);
 
-	if (probe)
-		WritePacket(p, TranslationCommand::PROBE);
+	if (peek)
+		WritePacket(p, TranslationCommand::PEEK);
 
 	WritePacket(p, TranslationCommand::END);
 
@@ -218,8 +218,8 @@ TranslateLogin(EventLoop &event_loop,
 	       AllocatorPtr alloc, UniqueSocketDescriptor fd,
 	       std::string_view service, std::string_view listener_tag,
 	       std::string_view user, std::string_view password,
-	       bool probe)
+	       bool peek)
 {
-	SendTranslateLogin(fd, service, listener_tag, user, password, probe);
+	SendTranslateLogin(fd, service, listener_tag, user, password, peek);
 	return ReceiveResponse(event_loop, alloc, std::move(fd));
 }
