@@ -259,7 +259,8 @@ Connection::LazyTranslate(const char *translation_server,
 		response = co_await
 			TranslateLogin(GetEventLoop(), alloc, translation_server,
 				       "ssh"sv, listener.GetTag(),
-				       new_username, password);
+				       new_username, password,
+				       listener.HasProxyTo());
 	} catch (...) {
 		++instance.counters.n_translation_errors;
 		logger(1, "Translation server error: ", std::current_exception());
@@ -298,7 +299,8 @@ Connection::TranslateService(std::string_view service) const
 	auto response = co_await TranslateLogin(GetEventLoop(), translation->alloc,
 						translation_server,
 						service, listener.GetTag(),
-						translation->user, {});
+						translation->user, {},
+						listener.HasProxyTo());
 
 	if (response.status != HttpStatus{})
 		throw std::runtime_error{"Translation server rejected LOGIN"};

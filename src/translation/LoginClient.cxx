@@ -79,7 +79,8 @@ SendFull(SocketDescriptor fd, std::span<const std::byte> buffer)
 static void
 SendTranslateLogin(SocketDescriptor fd,
 		   std::string_view service, std::string_view listener_tag,
-		   std::string_view user, std::string_view password)
+		   std::string_view user, std::string_view password,
+		   bool probe)
 {
 	assert(user.data() != nullptr);
 
@@ -102,6 +103,9 @@ SendTranslateLogin(SocketDescriptor fd,
 
 	if (password.data() != nullptr)
 		WritePacket(p, TranslationCommand::PASSWORD, password);
+
+	if (probe)
+		WritePacket(p, TranslationCommand::PROBE);
 
 	WritePacket(p, TranslationCommand::END);
 
@@ -213,8 +217,9 @@ Co::Task<TranslateResponse>
 TranslateLogin(EventLoop &event_loop,
 	       AllocatorPtr alloc, UniqueSocketDescriptor fd,
 	       std::string_view service, std::string_view listener_tag,
-	       std::string_view user, std::string_view password)
+	       std::string_view user, std::string_view password,
+	       bool probe)
 {
-	SendTranslateLogin(fd, service, listener_tag, user, password);
+	SendTranslateLogin(fd, service, listener_tag, user, password, probe);
 	return ReceiveResponse(event_loop, alloc, std::move(fd));
 }

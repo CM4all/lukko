@@ -74,6 +74,11 @@ public:
 	}
 #endif // ENABLE_TRANSLATION
 
+	[[gnu::pure]]
+	bool HasProxyTo() const noexcept {
+		return !std::holds_alternative<std::monostate>(proxy_to);
+	}
+
 	/**
 	 * Throws on error.
 	 */
