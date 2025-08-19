@@ -135,12 +135,12 @@ try {
 
 	try {
 		LoadConfigFile(config, cmdline.config_path);
+
+		config.Check();
 	} catch (...) {
 		PrintException(std::current_exception());
 		return EX_CONFIG;
 	}
-
-	config.Check();
 
 	SetupProcess();
 
