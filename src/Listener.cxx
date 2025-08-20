@@ -35,7 +35,7 @@ LoadProxyTo(Instance &instance, const ListenerConfig &config)
 {
 	return std::visit([&instance](const auto &value) -> Listener::ProxyTo {
 		using T = std::decay_t<decltype(value)>;
-		if constexpr (std::is_same_v<T, AllocatedSocketAddress>) {
+		if constexpr (std::is_same_v<T, const TargetHostConfig *>) {
 			return value;
 #ifdef HAVE_AVAHI
 		} else if constexpr (std::is_same_v<T, const ZeroconfClusterConfig *>) {
@@ -84,8 +84,8 @@ Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 {
 	return std::visit([arch, sticky_source](const auto &value) -> SocketAddress {
 		using T = std::decay_t<decltype(value)>;
-		if constexpr (std::is_same_v<T, SocketAddress>) {
-			return value;
+		if constexpr (std::is_same_v<T, const TargetHostConfig *>) {
+			return value->address;
 #ifdef HAVE_AVAHI
 		} else if constexpr (std::is_same_v<T, ZeroconfCluster *>) {
 			const SocketAddress address = value->Pick(arch, sticky_source);

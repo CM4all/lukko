@@ -107,12 +107,38 @@ Known attributes:
 
 - ``pond_server``: send log messages to this Pond server.
 
+- ``proxy_to``: act as proxy, forward all incoming connections after
+  the authentication phase to the specified target.  See :ref:`proxy`
+  for details.
+
 - ``proxy_to_zeroconf``: act as proxy, forward all incoming
   connections after the authentication phase to the specified Zeroconf
-  cluster.  The connection to this Zeroconf cluster is authenticated
-  using the SSH host key with the :ref:`"hostbased" method
-  <hostbased>`.  Therefore, this server's host key must be in the
-  destination's ``authorized_host_keys`` file.
+  cluster.
+
+
+.. _proxy:
+
+Proxy Mode Configuration
+------------------------
+
+When acting as a proxy (with the ``proxy_to`` setting), Lukko forward
+all incoming connections after the authentication phase to another
+server.  The connection to this target is authenticated using the SSH
+host key with the :ref:`"hostbased" method <hostbased>`.  Therefore,
+this server's host key must be in the other server's
+``authorized_host_keys`` file.
+
+Individual target hosts can be configured with a ``target_host``
+section::
+
+  target_host "foo" {
+    address "192.168.1.100"
+  }
+
+Known attributes:
+
+- ``address``: The host's address.  If not specified, then the name of
+  the section is parsed instead.
 
 
 Zeroconf cluster

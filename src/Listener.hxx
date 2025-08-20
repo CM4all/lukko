@@ -18,6 +18,7 @@
 #include <variant>
 
 struct ListenerConfig;
+struct TargetHostConfig;
 class Instance;
 class DelayedConnection;
 class Connection;
@@ -40,7 +41,7 @@ public:
 #ifdef HAVE_AVAHI
 				     ZeroconfCluster *,
 #endif
-				     SocketAddress>;
+				     const TargetHostConfig *>;
 
 private:
 	Instance &instance;

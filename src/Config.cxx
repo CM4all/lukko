@@ -75,6 +75,21 @@ Config::Check()
 class LukkoConfigParser final : public NestedConfigParser {
 	Config &config;
 
+	class TargetHost final : public ConfigParser {
+		Config &parent;
+		std::string name;
+		TargetHostConfig config;
+
+	public:
+		TargetHost(Config &_parent, const char *_name) noexcept
+			:parent(_parent), name(_name) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+
 #ifdef HAVE_AVAHI
 	class ZeroconfCluster final : public ConfigParser {
 		Config &parent;
@@ -141,6 +156,32 @@ protected:
 	/* virtual methods from class NestedConfigParser */
 	void ParseLine2(FileLineParser &line) override;
 };
+
+void
+LukkoConfigParser::TargetHost::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (StringIsEqual(word, "address"))
+		config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
+						    22, false);
+	else
+		throw LineParser::Error{"Unknown option"};
+}
+
+void
+LukkoConfigParser::TargetHost::Finish()
+{
+	if (config.address.IsNull())
+		config.address = ParseSocketAddress(name.c_str(), 22, false);
+
+	config.Check();
+
+	if (!parent.target_hosts.emplace(std::move(name), std::move(config)).second)
+		throw LineParser::Error{"Duplicate target_host name"};
+
+	ConfigParser::Finish();
+}
 
 #ifdef HAVE_AVAHI
 
@@ -222,8 +263,13 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 		if (!std::holds_alternative<std::monostate>(config.proxy_to))
 			throw LineParser::Error{"Duplicate 'proxy_to'"};
 
-		config.proxy_to = ParseSocketAddress(line.ExpectValueAndEnd(),
-						     22, false);
+		const std::string_view name = line.ExpectValueAndEnd();
+
+		if (const auto i = parent.target_hosts.find(name);
+		    i != parent.target_hosts.end())
+			config.proxy_to = &i->second;
+		else
+			throw LineParser::Error{"No such target_host"};
 #ifdef HAVE_AVAHI
 	} else if (StringIsEqual(word, "proxy_to_zeroconf")) {
 		if (!std::holds_alternative<std::monostate>(config.proxy_to))

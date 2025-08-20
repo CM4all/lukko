@@ -12,13 +12,19 @@
 #ifdef HAVE_AVAHI
 #include "lib/avahi/ExplorerConfig.hxx"
 #include "lib/avahi/ServiceConfig.hxx"
-#include <map>
 #endif // HAVE_AVAHI
 
 #include <cstddef>
 #include <forward_list>
+#include <map>
 #include <string>
 #include <variant>
+
+struct TargetHostConfig {
+	AllocatedSocketAddress address;
+
+	void Check() const {}
+};
 
 #ifdef HAVE_AVAHI
 
@@ -43,7 +49,7 @@ struct ListenerConfig : SocketConfig {
 #ifdef HAVE_AVAHI
 		     const ZeroconfClusterConfig *,
 #endif // HAVE_AVAHI
-		     AllocatedSocketAddress> proxy_to;
+		     const TargetHostConfig *> proxy_to;
 
 #ifdef HAVE_AVAHI
 	const ZeroconfClusterConfig *proxy_to_zeroconf_cluster = nullptr;
@@ -102,6 +108,8 @@ struct Config {
 #endif // ENABLE_CONTROL
 
 	std::forward_list<ListenerConfig> listeners;
+
+	std::map<std::string, TargetHostConfig, std::less<>> target_hosts;
 
 #ifdef HAVE_AVAHI
 	std::map<std::string, ZeroconfClusterConfig, std::less<>> zeroconf_clusters;
