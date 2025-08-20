@@ -171,9 +171,21 @@ protected:
 	virtual void HandlePacket(MessageNumber msg,
 				  std::span<const std::byte> payload);
 
+	/**
+	 * Returns a comma-separated list of available/supported host
+	 * key algorithms (for the KEXINIT packet).
+	 */
 	[[gnu::pure]]
 	virtual std::string_view GetServerHostKeyAlgorithms() const noexcept;
 
+	/**
+	 * Choose a host key (server mode only).
+	 *
+	 * @param algorithms a comma-separated list of key algorithms
+	 * supported by the client
+	 *
+	 * @return the host key and the algorithm name
+	 */
 	[[gnu::pure]]
 	virtual std::pair<const SecretKey *, std::string_view> ChooseHostKey([[maybe_unused]] std::string_view algorithms) const noexcept {
 		return {nullptr, {}};
