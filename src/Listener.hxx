@@ -24,6 +24,7 @@ class DelayedConnection;
 class Connection;
 class RootLogger;
 class ClientAccountingMap;
+class PublicKeySet;
 
 enum class Arch : uint_least8_t;
 
@@ -51,6 +52,8 @@ private:
 #endif // ENABLE_TRANSLATION
 
 	const ProxyTo proxy_to;
+
+	const PublicKeySet *const proxy_host_keys;
 
 #ifdef ENABLE_POND
 	const UniqueSocketDescriptor pond_socket;
@@ -84,6 +87,11 @@ public:
 	 * Throws on error.
 	 */
 	SocketAddress GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const;
+
+	[[gnu::pure]]
+	const PublicKeySet &GetProxyHostKeys() const noexcept {
+		return *proxy_host_keys;
+	}
 
 	bool GetVerboseErrors() const noexcept {
 		return verbose_errors;

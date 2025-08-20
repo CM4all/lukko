@@ -51,6 +51,19 @@ LoadProxyTo(Instance &instance, const ListenerConfig &config)
         }, config.proxy_to);
 }
 
+[[gnu::pure]]
+static const PublicKeySet *
+LoadProxyHostKeys(const ListenerConfig &config) noexcept
+{
+	return std::visit([](const auto &value) -> const PublicKeySet * {
+		using T = std::decay_t<decltype(value)>;
+		if constexpr (std::is_same_v<T, std::monostate>)
+			return nullptr;
+		else
+			return &value->host_keys;
+        }, config.proxy_to);
+}
+
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
 	 instance(_instance),
@@ -58,6 +71,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
 	 proxy_to(LoadProxyTo(instance, config)),
+	 proxy_host_keys(LoadProxyHostKeys(config)),
 #ifdef ENABLE_POND
 	 pond_socket(!config.pond_server.IsNull()
 		     ? CreateConnectDatagramSocket(config.pond_server)
@@ -67,6 +81,8 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 verbose_errors(config.verbose_errors),
 	 exec_reject_stderr(config.exec_reject_stderr)
 {
+	assert(proxy_host_keys == nullptr || !proxy_host_keys->empty());
+
 	if (config.max_connections_per_ip > 0 || config.tarpit)
 		client_accounting = std::make_unique<ClientAccountingMap>(_instance.GetEventLoop(),
 									  config.max_connections_per_ip,

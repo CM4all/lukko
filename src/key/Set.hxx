@@ -25,6 +25,10 @@ public:
 	PublicKeySet(PublicKeySet &&src) noexcept;
 	~PublicKeySet() noexcept;
 
+	bool empty() const noexcept {
+		return keys.empty();
+	}
+
 	void Add(std::span<const std::byte> blob,
 		 AuthorizedKeyOptions &&options) noexcept;
 	void Add(const PublicKey &key) noexcept;
@@ -34,4 +38,9 @@ public:
 
 	[[gnu::pure]]
 	const AuthorizedKeyOptions *Find(const PublicKey &key) const noexcept;
+
+	[[gnu::pure]]
+	bool Contains(const auto &key) const noexcept {
+		return Find(key) != nullptr;
+	}
 };

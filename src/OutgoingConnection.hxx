@@ -7,6 +7,7 @@
 #include "ssh/Connection.hxx"
 
 class SecretKey;
+class PublicKeySet;
 
 class OutgoingConnectionHandler {
 public:
@@ -25,6 +26,8 @@ public:
 class OutgoingConnection final
 	: public SSH::Connection
 {
+	const PublicKeySet &server_host_keys;
+
 	OutgoingConnectionHandler &handler;
 
 	enum class State : uint_least8_t {
@@ -36,7 +39,8 @@ class OutgoingConnection final
 	} state = State::INIT;
 
 public:
-	OutgoingConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
+	OutgoingConnection(EventLoop &event_loop, const PublicKeySet &_server_host_keys,
+			   UniqueSocketDescriptor &&fd,
 			   OutgoingConnectionHandler &_handler);
 	~OutgoingConnection() noexcept;
 

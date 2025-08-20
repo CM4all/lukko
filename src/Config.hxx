@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "key/Set.hxx"
 #include "spawn/Config.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketConfig.hxx"
@@ -23,13 +24,17 @@
 struct TargetHostConfig {
 	AllocatedSocketAddress address;
 
-	void Check() const {}
+	PublicKeySet host_keys;
+
+	void Check() const;
 };
 
 #ifdef HAVE_AVAHI
 
 struct ZeroconfClusterConfig {
 	Avahi::ServiceExplorerConfig zeroconf;
+
+	PublicKeySet host_keys;
 
 	void Check() const;
 };

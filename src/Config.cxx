@@ -4,11 +4,14 @@
 
 #include "Config.hxx"
 #include "DebugMode.hxx"
+#include "key/TextFile.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "net/IPv6Address.hxx"
 #include "net/Parser.hxx"
 #include "net/control/Protocol.hxx"
 #include "net/log/Protocol.hxx"
+#include "io/Open.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "io/config/FileLineParser.hxx"
 #include "io/config/ConfigParser.hxx"
 #include "util/StringAPI.hxx"
@@ -23,6 +26,13 @@ using std::string_view_literals::operator""sv;
 // not defaulting to 22 until this project is fully-featured
 static constexpr unsigned LUKKO_DEFAULT_PORT = 2200;
 
+void
+TargetHostConfig::Check() const
+{
+	if (host_keys.empty())
+		throw LineParser::Error{"No host key configured"};
+}
+
 #ifdef HAVE_AVAHI
 
 inline void
@@ -32,6 +42,9 @@ ZeroconfClusterConfig::Check() const
 		throw LineParser::Error{"Zeroconf service missing"};
 
 	zeroconf.Check();
+
+	if (host_keys.empty())
+		throw LineParser::Error{"No host key configured"};
 }
 
 #endif // HAVE_AVAHI
@@ -162,10 +175,14 @@ LukkoConfigParser::TargetHost::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (StringIsEqual(word, "address"))
+	if (StringIsEqual(word, "address")) {
 		config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
 						    22, false);
-	else
+	} else if (StringIsEqual(word, "host_key_file")) {
+		const char *path = line.ExpectValueAndEnd();
+
+		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path));
+	} else
 		throw LineParser::Error{"Unknown option"};
 }
 
@@ -190,7 +207,12 @@ LukkoConfigParser::ZeroconfCluster::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (!config.zeroconf.ParseLine(word, line))
+	if (config.zeroconf.ParseLine(word, line)) {
+	} else if (StringIsEqual(word, "host_key_file")) {
+		const char *path = line.ExpectValueAndEnd();
+
+		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path));
+	} else
 		throw LineParser::Error{"Unknown option"};
 }
 

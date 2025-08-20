@@ -1007,7 +1007,9 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
 
 		OutgoingConnectionHandler &handler = *this;
-		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(), std::move(s), handler);
+		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(),
+								listener.GetProxyHostKeys(),
+								std::move(s), handler);
 		outgoing_ready = false;
 	} else {
 		SetAuthenticated();

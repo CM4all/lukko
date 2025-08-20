@@ -5,6 +5,7 @@
 #include "OutgoingConnection.hxx"
 #include "ssh/ParsePacket.hxx"
 #include "key/Key.hxx"
+#include "key/Set.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/PacketSerializer.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -13,9 +14,12 @@
 
 using std::string_view_literals::operator""sv;
 
-OutgoingConnection::OutgoingConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
+OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
+				       const PublicKeySet &_server_host_keys,
+				       UniqueSocketDescriptor &&fd,
 				       OutgoingConnectionHandler &_handler)
 	:SSH::Connection(event_loop, std::move(fd), SSH::Role::CLIENT),
+	 server_host_keys(_server_host_keys),
 	 handler(_handler) {}
 
 OutgoingConnection::~OutgoingConnection() noexcept = default;
@@ -152,9 +156,7 @@ OutgoingConnection::HandlePacket(SSH::MessageNumber msg,
 bool
 OutgoingConnection::CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept
 {
-	// TODO do we trust server_host_key_blob?
-	(void)server_host_key_blob;
-	return true;
+	return server_host_keys.Contains(server_host_key_blob);
 }
 
 void

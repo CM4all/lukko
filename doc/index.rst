@@ -140,6 +140,9 @@ Known attributes:
 - ``address``: The host's address.  If not specified, then the name of
   the section is parsed instead.
 
+- ``host_key_file``: A text file containing the host public key (or many
+  keys, one per line).  This option may appear more than once.
+
 
 Zeroconf cluster
 ----------------
@@ -161,6 +164,9 @@ Known attributes:
 - ``zeroconf_interface`` (optional): Look up only on this network interface.
 
 - ``zeroconf_protocol`` (optional): Limit lookups to ``inet`` or ``inet6``.
+
+- ``host_key_file``: A text file containing the host public key (or many
+  keys, one per line).  This option may appear more than once.
 
 
 Control Listener
