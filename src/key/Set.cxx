@@ -4,8 +4,13 @@
 
 #include "Set.hxx"
 #include "Key.hxx"
+#include "Options.hxx"
 #include "ssh/Serializer.hxx"
 #include "util/SpanCast.hxx"
+
+PublicKeySet::PublicKeySet() noexcept = default;
+PublicKeySet::PublicKeySet(PublicKeySet &&src) noexcept = default;
+PublicKeySet::~PublicKeySet() noexcept = default;
 
 void
 PublicKeySet::Add(std::span<const std::byte> blob,

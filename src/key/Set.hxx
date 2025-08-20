@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include "Options.hxx"
-
 #include <cstddef>
 #include <map>
 #include <span>
 #include <string>
 
+struct AuthorizedKeyOptions;
 class PublicKey;
 
 /**
@@ -22,6 +21,10 @@ class PublicKeySet {
 	std::map<std::string, AuthorizedKeyOptions, std::less<>> keys;
 
 public:
+	PublicKeySet() noexcept;
+	PublicKeySet(PublicKeySet &&src) noexcept;
+	~PublicKeySet() noexcept;
+
 	void Add(std::span<const std::byte> blob,
 		 AuthorizedKeyOptions &&options) noexcept;
 	void Add(const PublicKey &key) noexcept;
