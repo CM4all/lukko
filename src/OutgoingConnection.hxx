@@ -52,6 +52,7 @@ protected:
 	void Destroy() noexcept override;
 	void HandlePacket(SSH::MessageNumber msg,
 			  std::span<const std::byte> payload) override;
+	bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept override;
 	void OnEncrypted() override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			     std::string_view msg) noexcept override;

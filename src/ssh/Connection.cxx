@@ -153,6 +153,12 @@ Connection::GetServerHostKeyAlgorithms() const noexcept
 	return all_public_key_algorithms;
 }
 
+bool
+Connection::CheckHostKey([[maybe_unused]] std::span<const std::byte> server_host_key_blob) const noexcept
+{
+	return false;
+}
+
 inline void
 Connection::SendKexInit()
 {
@@ -436,7 +442,11 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 
 	const auto p = ParseECDHKexInitReply(payload);
 
-	// TODO do we trust server_host_key_blob?
+	if (!CheckHostKey(p.server_host_key_blob))
+		throw Disconnect{
+			DisconnectReasonCode::HOST_KEY_NOT_VERIFIABLE,
+			"Host key not accepted"sv,
+		};
 
 	Serializer client_ephemeral_public_key_;
 	kex_algorithm->SerializeEphemeralPublicKey(client_ephemeral_public_key_);

@@ -149,6 +149,14 @@ OutgoingConnection::HandlePacket(SSH::MessageNumber msg,
 	}
 }
 
+bool
+OutgoingConnection::CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept
+{
+	// TODO do we trust server_host_key_blob?
+	(void)server_host_key_blob;
+	return true;
+}
+
 void
 OutgoingConnection::OnEncrypted()
 {

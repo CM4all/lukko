@@ -192,6 +192,15 @@ protected:
 	}
 
 	/**
+	 * Check whether the give host key is acceptable (client mode
+	 * only).
+	 *
+	 * @return true to accept the host key
+	 */
+	[[gnu::pure]]
+	virtual bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept;
+
+	/**
 	 * Called after key exchange (KEX) has completed successfully
 	 * and a cipher has been established for both directions.
 	 */
