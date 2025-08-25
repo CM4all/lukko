@@ -15,16 +15,24 @@ namespace SSH {
  */
 struct AuthMethods {
 	static constexpr bool publickey = true;
-	static constexpr bool hostbased = true;
+	bool hostbased = false;
 	bool password = false;
 
 	constexpr std::string_view ToString() const noexcept {
 		using std::string_view_literals::operator""sv;
 
-		if (password) {
-			return "publickey,hostbased,password"sv;
+		if (hostbased) {
+			if (password) {
+				return "publickey,hostbased,password"sv;
+			} else {
+				return "publickey,hostbased"sv;
+			}
 		} else {
-			return "publickey,hostbased"sv;
+			if (password) {
+				return "publickey,password"sv;
+			} else {
+				return "publickey"sv;
+			}
 		}
 	}
 };

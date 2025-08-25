@@ -50,6 +50,8 @@ struct ListenerConfig : SocketConfig {
 	std::string tag;
 #endif
 
+	PublicKeySet authorized_host_keys;
+
 	std::variant<std::monostate,
 #ifdef HAVE_AVAHI
 		     const ZeroconfClusterConfig *,

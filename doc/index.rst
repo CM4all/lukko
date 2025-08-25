@@ -98,6 +98,13 @@ Known attributes:
 - ``verbose_errors``: ``yes`` sends internal error messages to the
   client on ``stderr``.
 
+.. _authorized_host_key_file:
+
+- ``authorized_host_key_file``: Enable ``hostbased`` authentication on
+  this listener and load public keys from a text file that will be
+  authorized unconditionally (see :ref:`hostbased`).  This option may
+  appear more than once to load keys from multiple files.
+
 - ``exec_reject_stderr``: ``yes`` means when an ``exec`` request on a
   session channel is rejected (e.g. for SFTP-only accounts), Lukko
   pretends the request has succeeded, but prints an error message on
@@ -124,9 +131,7 @@ Proxy Mode Configuration
 When acting as a proxy (with the ``proxy_to`` setting), Lukko forward
 all incoming connections after the authentication phase to another
 server.  The connection to this target is authenticated using the SSH
-host key with the :ref:`"hostbased" method <hostbased>`.  Therefore,
-this server's host key must be in the other server's
-``authorized_host_keys`` file.
+host key with the :ref:`"hostbased" method <hostbased>`.
 
 Individual target hosts can be configured with a ``target_host``
 section::
@@ -306,6 +311,7 @@ translation server is configured.
 Host-Based Authentication
 -------------------------
 
-Public keys in :file:`/etc/cm4all/lukko/authorized_host_keys` are
-allowed to log in.  This authentication method is only implemented to
-allow a proxying/load-balancing feature that is planned for Lukko.
+Host-based authentication can be enabled on a listener with the
+:ref:`authorized_host_key_file <authorized_host_key_file>` setting.
+Authentication requests using one of these configured host keys are
+allowed to log in.

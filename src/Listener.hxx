@@ -51,6 +51,8 @@ private:
 	const std::string_view tag;
 #endif // ENABLE_TRANSLATION
 
+	const PublicKeySet &authorized_host_keys;
+
 	const ProxyTo proxy_to;
 
 	const PublicKeySet *const proxy_host_keys;
@@ -77,6 +79,10 @@ public:
 		return tag;
 	}
 #endif // ENABLE_TRANSLATION
+
+	const PublicKeySet &GetAuthorizedHostKeys() const noexcept {
+		return authorized_host_keys;
+	}
 
 	[[gnu::pure]]
 	bool HasProxyTo() const noexcept {

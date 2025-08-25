@@ -279,6 +279,10 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 #ifdef ENABLE_TRANSLATION
 		config.tag = line.ExpectValueAndEnd();
 #endif // ENABLE_TRANSLATION
+	} else if (StringIsEqual(word, "authorized_host_key_file")) {
+		const auto path = line.ExpectPathAndEnd();
+
+		LoadPublicKeysTextFile(config.authorized_host_keys, OpenReadOnly(path.c_str()));
 	} else if (StringIsEqual(word, "proxy_to")) {
 		// TODO experimental feature
 

@@ -34,12 +34,10 @@
 Instance::Instance(const Config &config,
 		   SecretKeyList &&_host_keys,
 		   PublicKeySet &&_global_authorized_keys,
-		   PublicKeySet &&_authorized_host_keys,
 		   UniqueSocketDescriptor spawner_socket,
 		   bool cgroup)
 	:host_keys(std::move(_host_keys)),
 	 global_authorized_keys(std::move(_global_authorized_keys)),
-	 authorized_host_keys(std::move(_authorized_host_keys)),
 #ifdef ENABLE_TRANSLATION
 	 translation_server(config.translation_server.empty() ? nullptr : config.translation_server.c_str()),
 #endif

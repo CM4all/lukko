@@ -526,7 +526,7 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 inline bool
 Connection::IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
-	if (const auto *options = instance.GetAuthorizedHostKeys().Find(public_key_blob)) {
+	if (const auto *options = listener.GetAuthorizedHostKeys().Find(public_key_blob)) {
 		authorized_key_options = *options;
 		return true;
 	}
@@ -736,6 +736,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	}
 
 	SSH::AuthMethods _auth_methods{
+		.hostbased = !listener.GetAuthorizedHostKeys().empty(),
 		.password = false,
 	};
 
