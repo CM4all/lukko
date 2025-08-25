@@ -16,6 +16,7 @@
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
 #include "key/Fingerprint.hxx"
+#include "ssh/AuthMethods.hxx"
 #include "ssh/Protocol.hxx"
 #include "ssh/MakePacket.hxx"
 #include "ssh/ParsePacket.hxx"
@@ -734,7 +735,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		};
 	}
 
-	std::string_view auth_methods = "publickey,hostbased"sv;
+	SSH::AuthMethods _auth_methods{
+		.password = false,
+	};
+
+	std::string_view auth_methods = _auth_methods.ToString();
 
 	Arch arch = Arch::NONE;
 	std::span<const std::byte> sticky_source = AsBytes(new_username);
@@ -743,7 +748,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	bool password_accepted = false;
 
 	if (const char *translation_server = instance.GetTranslationServer()) {
-		auth_methods = "publickey,hostbased,password"sv;
+		_auth_methods.password = true;
+		auth_methods = _auth_methods.ToString();
 
 		std::string_view password{};
 		if (method_name == "password"sv) {
