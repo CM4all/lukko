@@ -179,9 +179,9 @@ LukkoConfigParser::TargetHost::ParseLine(FileLineParser &line)
 		config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
 						    22, false);
 	} else if (StringIsEqual(word, "host_key_file")) {
-		const char *path = line.ExpectValueAndEnd();
+		const auto path = line.ExpectPathAndEnd();
 
-		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path));
+		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path.c_str()));
 	} else
 		throw LineParser::Error{"Unknown option"};
 }
@@ -209,9 +209,9 @@ LukkoConfigParser::ZeroconfCluster::ParseLine(FileLineParser &line)
 
 	if (config.zeroconf.ParseLine(word, line)) {
 	} else if (StringIsEqual(word, "host_key_file")) {
-		const char *path = line.ExpectValueAndEnd();
+		const auto path = line.ExpectPathAndEnd();
 
-		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path));
+		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path.c_str()));
 	} else
 		throw LineParser::Error{"Unknown option"};
 }
