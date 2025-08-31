@@ -70,6 +70,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 #ifdef ENABLE_TRANSLATION
 	 tag(config.tag.empty() ? std::string_view{} : config.tag),
 #endif
+	 host_keys(instance.GetHostKeys()),
 	 authorized_host_keys(config.authorized_host_keys),
 	 proxy_to(LoadProxyTo(instance, config)),
 	 proxy_host_keys(LoadProxyHostKeys(config)),

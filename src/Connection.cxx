@@ -1199,13 +1199,13 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 std::string_view
 Connection::GetServerHostKeyAlgorithms() const noexcept
 {
-	return instance.GetHostKeys().GetAlgorithms();
+	return listener.GetHostKeys().GetAlgorithms();
 }
 
 std::pair<const SecretKey *, std::string_view>
 Connection::ChooseHostKey(std::string_view algorithms) const noexcept
 {
-	return instance.GetHostKeys().Choose(algorithms);
+	return listener.GetHostKeys().Choose(algorithms);
 }
 
 void
@@ -1298,7 +1298,7 @@ Connection::OnOutgoingUserauthService()
 	assert(outgoing);
 	assert(!outgoing_ready);
 
-	const auto [key, algorithm] = instance.GetHostKeys().Choose("ssh-ed25519"sv); // TODO
+	const auto [key, algorithm] = listener.GetHostKeys().Choose("ssh-ed25519"sv); // TODO
 	if (key == nullptr)
 		throw std::runtime_error{"No host key"};
 

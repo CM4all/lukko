@@ -25,6 +25,7 @@ class Connection;
 class RootLogger;
 class ClientAccountingMap;
 class PublicKeySet;
+class SecretKeyList;
 
 enum class Arch : uint_least8_t;
 
@@ -51,6 +52,7 @@ private:
 	const std::string_view tag;
 #endif // ENABLE_TRANSLATION
 
+	const SecretKeyList &host_keys;
 	const PublicKeySet &authorized_host_keys;
 
 	const ProxyTo proxy_to;
@@ -79,6 +81,10 @@ public:
 		return tag;
 	}
 #endif // ENABLE_TRANSLATION
+
+	const SecretKeyList &GetHostKeys() const noexcept {
+		return host_keys;
+	}
 
 	const PublicKeySet &GetAuthorizedHostKeys() const noexcept {
 		return authorized_host_keys;
