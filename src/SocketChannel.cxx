@@ -37,6 +37,12 @@ SocketChannel::OnWindowAdjust(std::size_t nbytes)
 std::size_t
 SocketChannel::OnBufferedData(std::span<const std::byte> payload)
 {
+	/* since we're going to write manually now (upon caller's
+	   request), the pending EPOLLOUT has been handled already in
+	   this EventLoop iteration; clear this flag for now and skip
+	   the pending write */
+	socket.ClearReadyFlags(SocketEvent::WRITE);
+
 	const auto nbytes = socket.GetSocket().WriteNoWait(payload);
 	if (nbytes < 0) {
 		const auto e = GetSocketError();
