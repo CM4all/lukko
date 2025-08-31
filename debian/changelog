@@ -1,6 +1,7 @@
 cm4all-lukko (0.45) unstable; urgency=low
 
   * disable "hostbased" auth by default, per-listener configuration
+  * support per-listener host keys
   * proxy: verify the host key
 
  --   

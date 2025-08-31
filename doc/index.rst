@@ -98,6 +98,14 @@ Known attributes:
 - ``verbose_errors``: ``yes`` sends internal error messages to the
   client on ``stderr``.
 
+- ``host_key_file``: Load a SSH host (secret) key from a file.  This
+  option may appear more than once to load keys from multiple files to
+  load multiple host keys (with different key algorithms).  If no host
+  key is loaded, then the default host key files are used
+  (:file:`host_ed25519_key`, :file:`host_ecdsa_key`,
+  :file:`host_rsa_key`); this option is only needed if certain
+  listeners need a special non-standard host key.
+
 .. _authorized_host_key_file:
 
 - ``authorized_host_key_file``: Enable ``hostbased`` authentication on

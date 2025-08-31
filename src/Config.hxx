@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "key/List.hxx"
 #include "key/Set.hxx"
 #include "spawn/Config.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -49,6 +50,13 @@ struct ListenerConfig : SocketConfig {
 #ifdef ENABLE_TRANSLATION
 	std::string tag;
 #endif
+
+	/**
+	 * The host keys that are configured explicitly (via
+	 * "host_key_file").  If empty, then the default host keys are
+	 * used.
+	 */
+	SecretKeyList host_keys;
 
 	PublicKeySet authorized_host_keys;
 

@@ -4,6 +4,8 @@
 
 #include "Config.hxx"
 #include "DebugMode.hxx"
+#include "key/Key.hxx"
+#include "key/LoadFile.hxx"
 #include "key/TextFile.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "net/IPv6Address.hxx"
@@ -279,6 +281,10 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 #ifdef ENABLE_TRANSLATION
 		config.tag = line.ExpectValueAndEnd();
 #endif // ENABLE_TRANSLATION
+	} else if (StringIsEqual(word, "host_key_file")) {
+		const auto path = line.ExpectPathAndEnd();
+
+		config.host_keys.Add(LoadKeyFile(OpenReadOnly(path.c_str())));
 	} else if (StringIsEqual(word, "authorized_host_key_file")) {
 		const auto path = line.ExpectPathAndEnd();
 
