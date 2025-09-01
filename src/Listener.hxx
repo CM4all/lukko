@@ -70,6 +70,8 @@ private:
 	IntrusiveList<Connection> connections;
 	IntrusiveList<DelayedConnection> delayed_connections;
 
+	const bool send_client_address, accept_client_address;
+
 	const bool verbose_errors, exec_reject_stderr;
 
 public:
@@ -103,6 +105,14 @@ public:
 	[[gnu::pure]]
 	const PublicKeySet &GetProxyHostKeys() const noexcept {
 		return *proxy_host_keys;
+	}
+
+	bool GetSendClientAddress() const noexcept {
+		return send_client_address;
+	}
+
+	bool GetAcceptClientAddress() const noexcept {
+		return accept_client_address;
 	}
 
 	bool GetVerboseErrors() const noexcept {

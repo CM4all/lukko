@@ -184,6 +184,9 @@ LukkoConfigParser::TargetHost::ParseLine(FileLineParser &line)
 		const auto path = line.ExpectPathAndEnd();
 
 		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path.c_str()));
+	} else if (StringIsEqual(word, "send_client_address")) {
+		config.send_client_address = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error{"Unknown option"};
 }
@@ -214,6 +217,9 @@ LukkoConfigParser::ZeroconfCluster::ParseLine(FileLineParser &line)
 		const auto path = line.ExpectPathAndEnd();
 
 		LoadPublicKeysTextFile(config.host_keys, OpenReadOnly(path.c_str()));
+	} else if (StringIsEqual(word, "send_client_address")) {
+		config.send_client_address = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error{"Unknown option"};
 }
@@ -326,6 +332,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 	} else if (StringIsEqual(word, "exec_reject_stderr")) {
 		config.exec_reject_stderr = line.NextBool();
+		line.ExpectEnd();
+	} else if (StringIsEqual(word, "accept_client_address")) {
+		config.accept_client_address = line.NextBool();
 		line.ExpectEnd();
 #ifdef ENABLE_POND
 	} else if (StringIsEqual(word, "pond_server")) {

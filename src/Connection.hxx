@@ -45,11 +45,11 @@ class Connection final
 	Instance &instance;
 	Listener &listener;
 
-	const AllocatedSocketAddress peer_address;
+	AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
 
 #ifdef ENABLE_POND
-	const std::string peer_host;
+	std::string peer_host;
 #endif
 
 	AccountedClientConnection accounting;

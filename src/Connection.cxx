@@ -28,6 +28,9 @@
 #include "event/co/Sleep.hxx"
 #include "event/net/CoConnectSocket.hxx"
 #include "system/Arch.hxx"
+#include "net/FormatAddress.hxx"
+#include "net/Parser.hxx"
+#include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -65,6 +68,7 @@
 #include <fmt/core.h>
 
 #include <fcntl.h> // for O_*
+#include <netdb.h> // for struct addrinfo
 #include <pwd.h>
 #include <sys/stat.h>
 
@@ -982,6 +986,33 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 			co_return;
 		}
 
+		if (listener.GetAcceptClientAddress()) {
+			if (const auto [user_name, address] = Split(client_user_name, '@');
+			    !user_name.empty() && !address.empty()) {
+				try {
+					static constexpr struct addrinfo hints = {
+						.ai_family = AF_UNSPEC,
+						.ai_socktype = SOCK_STREAM,
+					};
+
+					peer_address = ParseSocketAddress(std::string{address}.c_str(),
+									  0, hints);
+
+					LogFmt("Accepted client address {:?} from proxy"sv, address);
+
+#ifdef ENABLE_POND
+					if (listener.GetPondSocket().IsDefined())
+						peer_host = HostToString(peer_address);
+#endif
+
+					logger = Logger{StringLoggerDomain{address}};
+				} catch (...) {
+					LogFmt("Failed to parse client address {:?}: {}"sv,
+					       address, std::current_exception());
+				}
+			}
+		}
+
 		++instance.counters.n_userauth_hostbased_accepted;
 		LogFmt("Accepted hostkey for {:?}: {} {}"sv,
 		       new_username,
@@ -1304,7 +1335,20 @@ Connection::OnOutgoingUserauthService()
 
 	// TODO
 	const std::string_view client_host_name = "localhost"sv;
-	const std::string_view client_user_name = "dummy"sv;
+
+	std::string_view client_user_name = "unknown"sv;
+
+	char user_buffer[1024];
+	if (listener.GetSendClientAddress()) {
+		std::span<char> w = user_buffer;
+
+		const std::string_view prefix = "unknown@"sv;
+		std::copy(prefix.begin(), prefix.end(), w.begin());
+		w = w.subspan(prefix.size());
+
+		if (ToString(w, GetPeerAddress()))
+			client_user_name = user_buffer;
+	}
 
 	outgoing->SendUserauthRequestHostbased(username, *key, algorithm,
 					       client_host_name, client_user_name);

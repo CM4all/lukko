@@ -27,6 +27,8 @@ struct TargetHostConfig {
 
 	PublicKeySet host_keys;
 
+	bool send_client_address = false;
+
 	void Check() const;
 };
 
@@ -36,6 +38,8 @@ struct ZeroconfClusterConfig {
 	Avahi::ServiceExplorerConfig zeroconf;
 
 	PublicKeySet host_keys;
+
+	bool send_client_address = false;
 
 	void Check() const;
 };
@@ -81,6 +85,8 @@ struct ListenerConfig : SocketConfig {
 	bool verbose_errors = false;
 
 	bool exec_reject_stderr = false;
+
+	bool accept_client_address = false;
 
 	ListenerConfig() noexcept {
 		listen = 256;

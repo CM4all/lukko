@@ -130,6 +130,11 @@ Known attributes:
   connections after the authentication phase to the specified Zeroconf
   cluster.
 
+- ``accept_client_address``: If enabled, then accept the real client
+  address from the client during ``hostbased`` authentication.  This
+  way, Lukko shows the real client address in the log and in
+  :env:`$SSH_CLIENT`.
+
 
 .. _proxy:
 
@@ -156,6 +161,10 @@ Known attributes:
 - ``host_key_file``: A text file containing the host public key (or many
   keys, one per line).  This option may appear more than once.
 
+- ``send_client_address``: If enabled, then send the real client
+  address to the target server.  This requires enable
+  ``accept_client_address`` on its listener.
+
 
 Zeroconf cluster
 ----------------
@@ -180,6 +189,10 @@ Known attributes:
 
 - ``host_key_file``: A text file containing the host public key (or many
   keys, one per line).  This option may appear more than once.
+
+- ``send_client_address``: If enabled, then send the real client
+  address to the target server.  This requires enable
+  ``accept_client_address`` on its listener.
 
 
 Control Listener

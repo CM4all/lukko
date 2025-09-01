@@ -64,6 +64,19 @@ LoadProxyHostKeys(const ListenerConfig &config) noexcept
         }, config.proxy_to);
 }
 
+[[gnu::pure]]
+static bool
+GetSendClientAddress(const ListenerConfig &config) noexcept
+{
+	return std::visit([](const auto &value) -> bool {
+		using T = std::decay_t<decltype(value)>;
+		if constexpr (std::is_same_v<T, std::monostate>)
+			return false;
+		else
+			return value->send_client_address;
+        }, config.proxy_to);
+}
+
 Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	:ServerSocket(_instance.GetEventLoop(), config.Create(SOCK_STREAM)),
 	 instance(_instance),
@@ -82,6 +95,8 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 		     : UniqueSocketDescriptor{}),
 #endif
 	 logger(instance.GetLogger()),
+	 send_client_address(::GetSendClientAddress(config)),
+	 accept_client_address(config.accept_client_address),
 	 verbose_errors(config.verbose_errors),
 	 exec_reject_stderr(config.exec_reject_stderr)
 {
