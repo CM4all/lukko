@@ -1302,7 +1302,12 @@ Connection::OnOutgoingUserauthService()
 	if (key == nullptr)
 		throw std::runtime_error{"No host key"};
 
-	outgoing->SendUserauthRequestHostbased(username, *key, algorithm);
+	// TODO
+	const std::string_view client_host_name = "localhost"sv;
+	const std::string_view client_user_name = "dummy"sv;
+
+	outgoing->SendUserauthRequestHostbased(username, *key, algorithm,
+					       client_host_name, client_user_name);
 }
 
 void

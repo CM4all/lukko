@@ -33,13 +33,11 @@ OutgoingConnection::Destroy() noexcept
 void
 OutgoingConnection::SendUserauthRequestHostbased(std::string_view username,
 						 const SecretKey &key,
-						 std::string_view key_algorithm)
+						 std::string_view key_algorithm,
+						 std::string_view client_host_name,
+						 std::string_view client_user_name)
 {
 	assert(state == State::SERVICE_SSH_USERAUTH);
-
-	// TODO
-	const std::string_view client_host_name = "localhost"sv;
-	const std::string_view client_user_name = "dummy"sv;
 
 	SSH::PacketSerializer s{SSH::MessageNumber::USERAUTH_REQUEST};
 	const auto to_be_signed_marker = s.Mark();

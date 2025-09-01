@@ -46,7 +46,9 @@ public:
 
 	void SendUserauthRequestHostbased(std::string_view username,
 					  const SecretKey &key,
-					  std::string_view key_algorithm);
+					  std::string_view key_algorithm,
+					  std::string_view client_host_name,
+					  std::string_view client_user_name);
 
 private:
 	void HandleServiceAccept(std::span<const std::byte> payload);
