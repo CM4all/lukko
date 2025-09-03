@@ -202,6 +202,13 @@ private:
 	void OnStdoutReady(unsigned events) noexcept;
 	void OnStderrReady(unsigned events) noexcept;
 
+	/**
+	 * Handle a request after the child process was already
+	 * started.
+	 */
+	bool OnLateRequest(std::string_view request_type,
+			   std::span<const std::byte> type_specific);
+
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;
 };

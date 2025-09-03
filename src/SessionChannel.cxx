@@ -551,9 +551,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 	logger.Fmt(1, "ChannelRequest {:?}"sv, request_type);
 
 	if (WasStarted())
-		/* the program was already started, and there's no
-		   point in handling further requests */
-		co_return false;
+		co_return OnLateRequest(request_type, type_specific);
 
 	if (request_type == "exec"sv) {
 		SSH::Deserializer d{type_specific};
@@ -668,6 +666,18 @@ SessionChannel::OnRequest(std::string_view request_type,
 		co_return false;
 
 	// TOOD "signal"
+}
+
+inline bool
+SessionChannel::OnLateRequest(std::string_view request_type,
+			      std::span<const std::byte> type_specific)
+{
+	/* the program was already started, and there's no point in
+	   handling further requests */
+
+	(void)request_type;
+	(void)type_specific;
+	return false;
 }
 
 void
