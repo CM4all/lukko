@@ -19,6 +19,7 @@ class AllocatorPtr;
 class ChildProcessHandle;
 class FdHolder;
 class Logger;
+class AgentForward;
 
 class SessionChannel final : public SSH::BufferedChannel, ExitListener
 {
@@ -31,6 +32,8 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	UniqueFileDescriptor slave_tty;
 
 	PipeEvent stdin_pipe, stdout_pipe, stderr_pipe, tty;
+
+	std::unique_ptr<AgentForward> agent_forward;
 
 	/**
 	 * Environment variables for the new process: a linked list of
@@ -52,11 +55,19 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	 */
 	bool stdin_deferred = false;
 
+	/**
+	 * Was agent-forwarding requested by an "agent-req" channel
+	 * request?
+	 */
+	bool enable_agent_forward = false;
+
 public:
 	SessionChannel(SSH::CConnection &_connection,
 		       SSH::ChannelInit init) noexcept;
 
 	~SessionChannel() noexcept override;
+
+	void OnAgentForwardError(std::exception_ptr &&error) noexcept;
 
 	/* virtual methods from class SSH::Channel */
 	void OnWindowAdjust(std::size_t nbytes) override;

@@ -285,7 +285,7 @@ inline void
 Connection::SendExtInfo()
 {
 	PacketSerializer s{MessageNumber::EXT_INFO};
-	s.WriteU32(1);
+	s.WriteU32(2);
 
 	/* sending this works around a OpenSSH client bug which causes
 	   it to ignore RSA keys; without EXT_INFO,
@@ -295,6 +295,9 @@ Connection::SendExtInfo()
 	   "rsa-sha2-*" */
 	s.WriteString("server-sig-algs"sv);
 	s.WriteString(all_public_key_algorithms);
+
+	s.WriteString("agent-forward"sv);
+	s.WriteString("0"sv);
 
 	SendPacket(std::move(s));
 }

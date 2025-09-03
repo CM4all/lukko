@@ -5,6 +5,7 @@
 #include "SessionChannel.hxx"
 #include "Connection.hxx"
 #include "Listener.hxx"
+#include "AgentForward.hxx"
 #include "DebugMode.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Mount.hxx"
@@ -39,6 +40,7 @@
 #include <fcntl.h>
 #include <pty.h> // for openpty()
 #include <signal.h>
+#include <sys/stat.h> // for chmod()
 #include <sys/wait.h> // for WCOREDUMP()
 #include <unistd.h>
 #include <utmp.h> // for login_tty()
@@ -235,7 +237,9 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    FdHolder &close_fds,
 				    SSH::Service service)
 {
-	const auto &c = static_cast<Connection &>(GetConnection());
+	assert(!agent_forward);
+
+	auto &c = static_cast<Connection &>(GetConnection());
 
 	const std::string_view username = c.GetUsername();
 	p.SetEnv("USER", username);
@@ -271,6 +275,27 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 	}
 
 	PrepareHome(alloc, p);
+
+	if (service == SSH::Service::SSH && enable_agent_forward) {
+		agent_forward = std::make_unique<AgentForward>(c, *this);
+
+		const char *source_path = agent_forward->GetPath();
+		const char *target_path = "/run/agent-forward.socket";
+
+		// TODO chown instead of chmod
+		chmod(source_path, 0666);
+
+		auto *m = alloc.New<Mount>(source_path + 1, target_path, true, false);
+		m->type = Mount::Type::BIND_FILE;
+
+		auto i = p.ns.mount.mounts.before_begin();
+		while (std::next(i) != p.ns.mount.mounts.end())
+			++i;
+
+		p.ns.mount.mounts.insert_after(i, *m);
+
+		p.SetEnv("SSH_AUTH_SOCK", target_path);
+	}
 }
 
 void
@@ -668,6 +693,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		SetEnv(name, value);
 		co_return true;
+	} else if (request_type == "agent-req"sv || request_type == "auth-agent-req@openssh.com"sv) {
+		enable_agent_forward = true;
+		co_return true;
 	} else
 		co_return false;
 
@@ -824,4 +852,13 @@ try {
 	CloseIfInactive();
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());
+}
+
+void
+SessionChannel::OnAgentForwardError(std::exception_ptr &&error) noexcept
+{
+	assert(agent_forward);
+	agent_forward.reset();
+
+	logger.Fmt(1, "Agent forwarding error: {}", error);
 }

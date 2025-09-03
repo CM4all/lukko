@@ -241,6 +241,7 @@ executable(
   'src/SessionChannel.cxx',
   'src/SocketChannel.cxx',
   'src/SocketForwardListener.cxx',
+  'src/AgentForward.cxx',
   'src/RConnect.cxx',
   'src/RBind.cxx',
   'src/Delegate.cxx',

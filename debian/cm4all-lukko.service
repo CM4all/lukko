@@ -24,6 +24,10 @@ RestartPreventExitStatus=USAGE CONFIG
 # run as non-root user so it can't read root-owned files
 User=cm4all-lukko
 
+# Create a runtime directory for AF_LOCAL listeners to be bind-mounted
+# into containers.
+RuntimeDirectory=cm4all/lukko
+
 # ... but keep all capabilities because some are needed for
 # initialization (dropped afterwards) and the others are needed by the
 # spawner

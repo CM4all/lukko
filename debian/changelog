@@ -5,6 +5,7 @@ cm4all-lukko (0.45) unstable; urgency=low
   * proxy: verify the host key
   * proxy: allow transmitting the real client address to target server
   * session: implement request "window-change"
+  * session: implement agent forwarding
 
  --   
 
