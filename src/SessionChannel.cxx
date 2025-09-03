@@ -678,12 +678,20 @@ inline bool
 SessionChannel::OnLateRequest(std::string_view request_type,
 			      std::span<const std::byte> type_specific)
 {
-	/* the program was already started, and there's no point in
-	   handling further requests */
+	if (request_type == "window-change"sv) {
+		if (!tty.IsDefined())
+			return false;
 
-	(void)request_type;
-	(void)type_specific;
-	return false;
+		SSH::Deserializer d{type_specific};
+		const auto ws = ReadWindowSize(d);
+		d.ExpectEnd();
+
+		if (ioctl(tty.GetFileDescriptor().Get(), TIOCSWINSZ, &ws) < 0)
+			throw MakeErrno("ioctl(TIOCSWINSZ) failed");
+
+		return true;
+	} else
+		return false;
 }
 
 void
