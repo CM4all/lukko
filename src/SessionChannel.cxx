@@ -542,6 +542,17 @@ SessionChannel::StartSftpServer()
 	}
 }
 
+static struct winsize
+ReadWindowSize(SSH::Deserializer &d)
+{
+	struct winsize ws{};
+	ws.ws_col = d.ReadU32();
+	ws.ws_row = d.ReadU32();
+	ws.ws_xpixel = d.ReadU32();
+	ws.ws_ypixel = d.ReadU32();
+	return ws;
+}
+
 Co::EagerTask<bool>
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
@@ -621,14 +632,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return false;
 		}
 
-		struct winsize ws{};
-
 		SSH::Deserializer d{type_specific};
 		const auto term = d.ReadString();
-		ws.ws_col = d.ReadU32();
-		ws.ws_row = d.ReadU32();
-		ws.ws_xpixel = d.ReadU32();
-		ws.ws_ypixel = d.ReadU32();
+		const auto ws = ReadWindowSize(d);
 		const auto encoded_terminal_modes = d.ReadLengthEncoded();
 		d.ExpectEnd();
 
