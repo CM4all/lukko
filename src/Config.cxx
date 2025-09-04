@@ -59,6 +59,10 @@ Config::Config()
 	if (debug_mode)
 		spawn.default_uid_gid.LoadEffective();
 
+	/* disable the PID namespace for the spawner process because
+	   it breaks PID_NAMESPACE_NAME */
+	spawn.pid_namespace = false;
+
 	// TODO implement SpawnConfig properly
 	spawn.allow_any_uid_gid = true;
 
