@@ -106,10 +106,9 @@ SpawnNsResolveBindTCPFunction(SpawnService &spawn_service,
 	p.exec_function = NsResolveBindTCPFunction;
 	p.args.push_back("dummy");
 	p.ns = {ShallowCopy{}, options.ns};
-	p.ns.enable_pid = false;
-	p.ns.enable_cgroup = false;
-	p.ns.enable_ipc = false;
-	p.ns.pid_namespace = nullptr;
+	p.ns.ClearPid();
+	p.ns.ClearCgroup();
+	p.ns.ClearIPC();
 	p.uid_gid = options.uid_gid;
 #ifdef HAVE_LIBSECCOMP
 	p.forbid_multicast = options.forbid_multicast;
