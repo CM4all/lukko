@@ -220,7 +220,7 @@ ResolveBindTCP(const Connection &ssh_connection,
 		// TODO switch uid/gid?
 
 		if (tr->execute_options != nullptr &&
-		    tr->execute_options->child_options.ns.network_namespace != nullptr)
+		    tr->execute_options->child_options.ns.network_namespace_name != nullptr)
 			return NsResolveBindTCP(ssh_connection.GetEventLoop(),
 						   ssh_connection.GetSpawnService(),
 						   tr->execute_options->child_options,
