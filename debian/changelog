@@ -4,7 +4,7 @@ cm4all-lukko (0.46) unstable; urgency=low
   * spawn: reassociate with existing user/IPC namespace (experimental)
   * spawn: hold a namespace lease
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 09 Sep 2025 19:31:48 +0200
 
 cm4all-lukko (0.45) unstable; urgency=low
 
