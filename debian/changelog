@@ -1,3 +1,9 @@
+cm4all-lukko (0.47) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-lukko (0.46) unstable; urgency=low
 
   * spawn: disable the PID namespace for the spawner process
