@@ -183,7 +183,7 @@ private:
 			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;
 
-	void OnControlError(std::exception_ptr ep) noexcept override;
+	void OnControlError(std::exception_ptr &&error) noexcept override;
 #endif // ENABLE_CONTROL
 
 #ifdef HAVE_AVAHI

@@ -84,7 +84,7 @@ Instance::OnControlPacket(BengControl::Command command,
 }
 
 void
-Instance::OnControlError(std::exception_ptr error) noexcept
+Instance::OnControlError(std::exception_ptr &&error) noexcept
 {
-	logger(1, error);
+	logger(1, std::move(error));
 }
