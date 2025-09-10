@@ -23,6 +23,7 @@
 #include "ssh/Deserializer.hxx"
 #include "ssh/Channel.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
+#include "lib/fmt/SocketAddressFormatter.hxx"
 #include "lib/fmt/ToBuffer.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/co/Sleep.hxx"
@@ -1043,6 +1044,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	if (const auto proxy_to = listener.GetProxyTo(arch, sticky_source);
 	    !proxy_to.IsNull()) {
 		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
+
+		LogFmt("Proxy to {}\n", proxy_to);
 
 		OutgoingConnectionHandler &handler = *this;
 		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(),
