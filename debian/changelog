@@ -1,6 +1,7 @@
 cm4all-lukko (0.47) unstable; urgency=low
 
   * log the proxy target address
+  * translation: add packet ALLOW_PTRACE
 
  --   
 
