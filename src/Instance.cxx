@@ -145,7 +145,8 @@ Instance::AddListener(const ListenerConfig &config)
 		    local_address.IsDefined()) {
 			avahi_services.emplace_front(config.zeroconf,
 						     config.interface.empty() ? nullptr : config.interface.c_str(),
-						     local_address, config.v6only);
+						     local_address, config.v6only,
+						     listener.IsArchSpecific());
 		}
 	}
 #endif // HAVE_AVAHI

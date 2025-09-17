@@ -1,6 +1,6 @@
 cm4all-lukko (0.48) unstable; urgency=low
 
-  * 
+  * zeroconf: omit the "arch" TXT record on proxy listeners
 
  --   
 

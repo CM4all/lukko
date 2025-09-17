@@ -97,6 +97,12 @@ public:
 		return !std::holds_alternative<std::monostate>(proxy_to);
 	}
 
+	bool IsArchSpecific() const noexcept {
+		/* if we are proxying somewhere else, we're not arch
+		   specific - our CPU architecture doesn't matter */
+		return !HasProxyTo();
+	}
+
 	/**
 	 * Throws on error.
 	 */
