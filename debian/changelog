@@ -1,5 +1,6 @@
 cm4all-lukko (0.48) unstable; urgency=low
 
+  * fix use-after-free bug with agent forwarding on second session
   * zeroconf: omit the "arch" TXT record on proxy listeners
 
  --   

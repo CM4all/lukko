@@ -285,6 +285,11 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 		// TODO chown instead of chmod
 		chmod(source_path, 0666);
 
+		/* copy the mount list before editing it, which is
+		   currently a shallow copy pointing to inside the
+		   Connection::Translation object */
+		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
+
 		auto *m = alloc.New<Mount>(source_path + 1, target_path, true, false);
 		m->type = Mount::Type::BIND_FILE;
 
