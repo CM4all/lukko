@@ -15,6 +15,7 @@
 #include <vector>
 
 enum class Arch : uint_least8_t;
+class SocketAddress;
 
 namespace Avahi {
 class Client;
@@ -69,7 +70,7 @@ private:
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
-			      SocketAddress address,
+			      const InetAddress &address,
 			      AvahiStringList *txt) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 };

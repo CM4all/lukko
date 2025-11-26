@@ -6,7 +6,7 @@
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerConfig.hxx"
 #include "lib/avahi/StringListCast.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/InetAddress.hxx"
 #include "system/Arch.hxx"
 #include "util/djb_hash.hxx"
 #include "util/FNVHash.hxx"
@@ -61,7 +61,7 @@ UintToDouble(const I i) noexcept
 }
 
 struct ZeroconfCluster::Member {
-	AllocatedSocketAddress address;
+	InetAddress address;
 
 	/**
 	 * The weight of this node (received in a Zeroconf TXT
@@ -86,13 +86,13 @@ struct ZeroconfCluster::Member {
 
 	Arch arch;
 
-	Member(Arch _arch, double _weight, SocketAddress _address) noexcept
+	Member(Arch _arch, double _weight, const InetAddress &_address) noexcept
 		:address(_address),
 		 negative_weight(-_weight),
 		 address_hash(RendezvousHashAlgorithm::BinaryHash(address.GetSteadyPart())),
 		 arch(_arch) {}
 
-	void Update(SocketAddress _address, Arch _arch, double _weight) noexcept {
+	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept {
 		arch = _arch;
 		negative_weight = -_weight;
 		address = _address;
@@ -192,7 +192,7 @@ GetWeightFromTxt(AvahiStringList *txt) noexcept
 
 void
 ZeroconfCluster::OnAvahiNewObject(const std::string &key,
-				  SocketAddress address,
+				  const InetAddress &address,
 				  AvahiStringList *txt) noexcept
 {
 	const auto arch = GetArchFromTxt(txt);
