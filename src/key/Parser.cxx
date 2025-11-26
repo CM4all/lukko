@@ -5,7 +5,7 @@
 #include "Parser.hxx"
 #include "Ed25519Key.hxx"
 #include "ssh/Deserializer.hxx"
-#include "lib/sodium/Base64.hxx"
+#include "lib/sodium/Base64Alloc.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"

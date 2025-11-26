@@ -5,7 +5,7 @@
 #include "Fingerprint.hxx"
 #include "Key.hxx"
 #include "ssh/Serializer.hxx"
-#include "lib/sodium/Base64.hxx"
+#include "lib/sodium/Base64Alloc.hxx"
 #include "lib/sodium/SHA256.hxx"
 #include "util/AllocatedString.hxx"
 

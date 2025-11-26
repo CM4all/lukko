@@ -4,7 +4,7 @@
 
 #include "TextFile.hxx"
 #include "Set.hxx"
-#include "lib/sodium/Base64.hxx"
+#include "lib/sodium/Base64Alloc.hxx"
 #include "io/BufferedReader.hxx"
 #include "io/FdReader.hxx"
 #include "util/AllocatedArray.hxx"
