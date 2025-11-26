@@ -3,7 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "TerminalMode.hxx"
-#include "util/PackedBigEndian.hxx"
+#include "util/UnalignedBigEndian.hxx"
 
 #include <cstdint>
 
@@ -136,7 +136,7 @@ ParseTerminalModes(struct termios &tio, std::span<const std::byte> src) noexcept
 		    static_cast<unsigned>(opcode) >= 160)
 			break;
 
-		const uint_least32_t arg = *(const PackedBE32 *)(src.data() + 1);
+		const uint_least32_t arg = ReadUnalignedBE32(src.subspan<1, 4>());
 		src = src.subspan(5);
 
 		switch (opcode) {
