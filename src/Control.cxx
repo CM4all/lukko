@@ -80,6 +80,11 @@ Instance::OnControlPacket(BengControl::Command command,
 			i.TerminateChildren(ToStringView(payload));
 #endif // ENABLE_TRANSLATION
 		break;
+
+	case Command::REJECT_CLIENT:
+	case Command::TARPIT_CLIENT:
+		// TODO implement
+		break;
 	}
 }
 
