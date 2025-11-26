@@ -285,7 +285,7 @@ private:
 	void HandleServiceRequest(std::span<const std::byte> payload);
 
 	Co::EagerInvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
-	void OnUserauthCompletion(std::exception_ptr error) noexcept;
+	void OnUserauthCompletion(std::exception_ptr &&error) noexcept;
 	void HandleUserauthRequest(std::span<const std::byte> payload);
 
 	void HandleChannelOpen(std::span<const std::byte> payload);

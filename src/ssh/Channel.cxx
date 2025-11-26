@@ -59,7 +59,7 @@ private:
 		success = co_await task;
 	}
 
-	void OnCompletion(std::exception_ptr error) noexcept {
+	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error)
 			success = false;
 

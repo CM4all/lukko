@@ -562,12 +562,12 @@ private:
 		socket = co_await ResolveConnectTCP(connection, host, port);
 	}
 
-	void OnCompletion(std::exception_ptr error) noexcept {
+	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
 			connection.AsyncChannelOpenFailure(init,
 							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							   GetFullMessage(error));
+							   GetFullMessage(std::move(error)));
 			delete this;
 		} else {
 			auto &_connection = connection;
@@ -606,12 +606,12 @@ private:
 		socket = UniqueSocketDescriptor{std::move(fd)};
 	}
 
-	void OnCompletion(std::exception_ptr error) noexcept {
+	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
 			connection.AsyncChannelOpenFailure(init,
 							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							   GetFullMessage(error));
+							   GetFullMessage(std::move(error)));
 			delete this;
 		} else {
 			auto &_connection = connection;
@@ -1059,11 +1059,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 }
 
 inline void
-Connection::OnUserauthCompletion(std::exception_ptr error) noexcept
+Connection::OnUserauthCompletion(std::exception_ptr &&error) noexcept
 {
 	if (error) {
 		try {
-			std::rethrow_exception(error);
+			std::rethrow_exception(std::move(error));
 		} catch (const Disconnect &d) {
 			DoDisconnect(d.reason_code, d.msg);
 		} catch (...) {
