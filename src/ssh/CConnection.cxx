@@ -222,9 +222,13 @@ CConnection::PopRequestedChannel(uint_least32_t local_channel)
 	return *static_cast<RequestedChannel *>(std::exchange(channels[local_channel], nullptr));
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#ifdef __GNUC__
 #pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wmissing-noreturn"
+#else
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 #endif
 
 std::unique_ptr<Channel>
@@ -239,7 +243,7 @@ CConnection::CreateChannel([[maybe_unused]] std::string_view channel_type,
 	};
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
 
