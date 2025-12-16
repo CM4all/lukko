@@ -8,6 +8,7 @@
 #include "util/AllocatedArray.hxx"
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
