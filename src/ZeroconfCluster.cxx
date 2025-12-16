@@ -193,7 +193,8 @@ GetWeightFromTxt(AvahiStringList *txt) noexcept
 void
 ZeroconfCluster::OnAvahiNewObject(const std::string &key,
 				  const InetAddress &address,
-				  AvahiStringList *txt) noexcept
+				  AvahiStringList *txt,
+				  [[maybe_unused]] Flags flags) noexcept
 {
 	const auto arch = GetArchFromTxt(txt);
 	const auto weight = GetWeightFromTxt(txt);
