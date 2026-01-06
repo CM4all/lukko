@@ -637,6 +637,12 @@ Connection::CreateChannel(std::string_view channel_type,
 		   channel_type, init.local_channel, init.peer_channel);
 
 	if (channel_type == "session"sv) {
+		if (no_more_sessions)
+			throw Disconnect{
+				SSH::DisconnectReasonCode::PROTOCOL_ERROR,
+				"Possible attack: attempt to open a session after additional sessions disabled",
+			};
+
 		CConnection &connection = *this;
 		return std::make_unique<SessionChannel>(connection, init);
 	} else if (channel_type == "direct-tcpip"sv) {
@@ -1152,6 +1158,9 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		co_return socket_forward_listeners.remove_and_dispose_if([bind_address, bind_port](const auto &l){
 			return l.IsBindAddress(bind_address, bind_port);
 		}, DeleteDisposer{}) > 0;
+	} else if (request_name == "no-more-sessions@openssh.com"sv) {
+		no_more_sessions = true;
+		co_return true;
 	} else
 		co_return false;
 }

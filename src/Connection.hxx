@@ -109,6 +109,11 @@ class Connection final
 
 	bool outgoing_ready;
 
+	/**
+	 * Was "no-more-sessions@openssh.com" received?
+	 */
+	bool no_more_sessions = false;
+
 public:
 	Connection(Instance &_instance, Listener &_listener,
 		   PerClientAccounting *per_client,
