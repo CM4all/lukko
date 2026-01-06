@@ -660,7 +660,7 @@ Connection::CreateChannel(std::string_view channel_type,
 		const auto originator_port = d.ReadU32();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  connect=[{}]:{} originator=[{}]:{}"sv,
+		logger.Fmt(1, "  connect={:?}:{} originator={:?}:{}"sv,
 			   connect_host, connect_port,
 			   originator_ip, originator_port);
 
@@ -1135,7 +1135,7 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		const auto bind_port = d.ReadU32();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  bind=[{}]:{}"sv, bind_address, bind_port);
+		logger.Fmt(1, "  bind={:?}:{}"sv, bind_address, bind_port);
 
 		// TODO support special strings according to RFC 4254 7.1
 		// TODO suport bind_port==0 (REQUEST_SUCCESS contains port number)
