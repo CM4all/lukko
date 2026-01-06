@@ -633,7 +633,7 @@ Connection::CreateChannel(std::string_view channel_type,
 			  std::span<const std::byte> payload,
 			  CancellablePointer &cancel_ptr)
 {
-	logger.Fmt(1, "ChannelOpen type={:?} local_channel={} peer_channel={}"sv,
+	logger.Fmt(2, "ChannelOpen type={:?} local_channel={} peer_channel={}"sv,
 		   channel_type, init.local_channel, init.peer_channel);
 
 	if (channel_type == "session"sv) {
@@ -660,7 +660,7 @@ Connection::CreateChannel(std::string_view channel_type,
 		const auto originator_port = d.ReadU32();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  connect={:?}:{} originator={:?}:{}"sv,
+		logger.Fmt(3, "  connect={:?}:{} originator={:?}:{}"sv,
 			   connect_host, connect_port,
 			   originator_ip, originator_port);
 
@@ -873,7 +873,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto public_key_algorithm = d.ReadString();
 		const auto public_key_blob = d.ReadLengthEncoded();
 
-		logger.Fmt(1, "  public_key_algorithm={:?}"sv,
+		logger.Fmt(2, "  public_key_algorithm={:?}"sv,
 			   public_key_algorithm);
 
 		accounting.UpdateTokenBucket(0.2);
@@ -948,7 +948,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		const auto signature = d.ReadLengthEncoded();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  hostbased public_key_algorithm={:?} client_host_name={:?} client_user_name={:?}"sv,
+		logger.Fmt(2, "  hostbased public_key_algorithm={:?} client_host_name={:?} client_user_name={:?}"sv,
 			   public_key_algorithm, client_host_name, client_user_name);
 
 		if (!IsAcceptedHostPublicKey(public_key_blob)) {
@@ -1122,7 +1122,7 @@ Co::EagerTask<bool>
 Connection::HandleGlobalRequest(std::string_view request_name,
 				std::span<const std::byte> request_specific_data)
 {
-	logger.Fmt(1, "GlobalRequest name={:?}"sv, request_name);
+	logger.Fmt(2, "GlobalRequest name={:?}"sv, request_name);
 
 	if (request_name == "tcpip-forward"sv) {
 		if (!IsBindingAllowed())
@@ -1135,7 +1135,7 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		const auto bind_port = d.ReadU32();
 		d.ExpectEnd();
 
-		logger.Fmt(1, "  bind={:?}:{}"sv, bind_address, bind_port);
+		logger.Fmt(3, "  bind={:?}:{}"sv, bind_address, bind_port);
 
 		// TODO support special strings according to RFC 4254 7.1
 		// TODO suport bind_port==0 (REQUEST_SUCCESS contains port number)
