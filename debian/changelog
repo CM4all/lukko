@@ -3,6 +3,7 @@ cm4all-lukko (0.49) unstable; urgency=low
   * implement global request "no-more-sessions@openssh.com"
   * quote TCP forwarding host names in the system log
   * do not log GLOBAL_REQUEST, CHANNEL_OPEN and CHANNEL_REQUEST by default
+  * translation: ignore CACHE_TAG packets
 
  --   
 
