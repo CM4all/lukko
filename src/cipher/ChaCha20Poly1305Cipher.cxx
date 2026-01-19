@@ -21,8 +21,8 @@ class ChaCha20Poly1305Key {
 	std::array<std::byte, crypto_onetimeauth_poly1305_KEYBYTES> key{};
 
 public:
-	ChaCha20Poly1305Key(std::span<const std::byte, crypto_stream_chacha20_NONCEBYTES> chacha20_nonce,
-			    std::span<const std::byte, crypto_stream_chacha20_KEYBYTES> chacha20_key) noexcept {
+	ChaCha20Poly1305Key(ChaCha20NonceView chacha20_nonce,
+			    ChaCha20KeyView chacha20_key) noexcept {
 		crypto_stream_chacha20_xor(key.data(), key, chacha20_nonce, chacha20_key);
 	}
 
@@ -40,9 +40,6 @@ namespace SSH {
 ChaCha20Poly1305Cipher::ChaCha20Poly1305Cipher(std::span<const std::byte> key)
 	:Cipher(8, 16, true)
 {
-	static_assert(sizeof(payload_key) == crypto_stream_chacha20_KEYBYTES);
-	static_assert(sizeof(header_key) == crypto_stream_chacha20_KEYBYTES);
-
 	if (key.size() != sizeof(payload_key) + sizeof(header_key))
 		throw std::invalid_argument{"Wrong key size"};
 

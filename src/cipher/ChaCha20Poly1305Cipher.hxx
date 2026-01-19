@@ -5,13 +5,12 @@
 #pragma once
 
 #include "Cipher.hxx"
-
-#include <array>
+#include "lib/sodium/ChaCha20Types.hxx"
 
 namespace SSH {
 
 class ChaCha20Poly1305Cipher final : public Cipher {
-	std::array<std::byte, 32> payload_key, header_key;
+	ChaCha20Key payload_key, header_key;
 
 public:
 	explicit ChaCha20Poly1305Cipher(std::span<const std::byte> key);
