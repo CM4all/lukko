@@ -1,6 +1,6 @@
 cm4all-lukko (0.50) unstable; urgency=low
 
-  * 
+  * call sodium_init() on startup (to select optimized cipher implementations)
 
  --   
 

@@ -40,7 +40,10 @@
 #include "key/RSAKey.hxx"
 #endif // HAVE_OPENSSL
 
+#include <sodium/core.h>
+
 #include <filesystem>
+#include <stdexcept>
 
 #include <stdlib.h>
 #include <sysexits.h> // for EX_*
@@ -104,6 +107,9 @@ LoadGlobalAuthorizedKeys(const std::filesystem::path &config_directory)
 int
 main(int argc, char **argv) noexcept
 try {
+	if (sodium_init() < 0)
+		throw std::runtime_error{"sodium_init() failed"};
+
 	const auto cmdline = ParseCommandLine(argc, argv);
 
 	InitProcessName(argc, argv);
