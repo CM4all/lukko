@@ -8,6 +8,7 @@
 #include "key/Key.hxx"
 #include "spawn/Client.hxx"
 #include "thread/Pool.hxx"
+#include "event/PrometheusStats.hxx"
 #include "event/net/PrometheusExporterListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -30,6 +31,8 @@
 
 #include <signal.h>
 #include <unistd.h>
+
+using std::string_view_literals::operator""sv;
 
 Instance::Instance(const Config &config,
 		   SecretKeyList &&_host_keys,
@@ -201,6 +204,8 @@ Instance::OnAvahiError(std::exception_ptr e) noexcept
 std::string
 Instance::OnPrometheusExporterRequest()
 {
+	constexpr auto process = "lukko"sv;
+
 	Listener::Stats listener_stats;
 	for (const auto &i : listeners)
 		listener_stats += i.GetStats();
@@ -208,6 +213,8 @@ Instance::OnPrometheusExporterRequest()
 	const auto &spawn_stats = spawn_service->GetStats();
 
 	return fmt::format(R"(
+{}
+
 # HELP lukko_children_spawned Total number of child processes spawned
 # TYPE lukko_children_spawned counter
 
@@ -288,6 +295,8 @@ lukko_packets_received {}
 lukko_packets_sent {}
 lukko_connections_active {}
 )",
+			   ToPrometheusString(event_loop.GetStats(), process),
+
 			   spawn_stats.spawned,
 			   spawn_stats.errors,
 			   spawn_stats.killed,

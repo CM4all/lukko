@@ -2,6 +2,7 @@ cm4all-lukko (0.50) unstable; urgency=low
 
   * add option "populate_io_buffers"
   * call sodium_init() on startup (to select optimized cipher implementations)
+  * prometheus: export event loop metrics
   * fix build with glibc 2.43
 
  --   

@@ -109,6 +109,7 @@ libmd = dependency('libmd', required: get_option('libmd'))
 
 inc = include_directories('.', 'src', 'libcommon/src')
 
+libcommon_enable_EventLoopStats = true
 libcommon_require_avahi = get_option('zeroconf')
 libcommon_require_cap = get_option('cap')
 libcommon_require_libcrypto = get_option('openssl')
