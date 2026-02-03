@@ -25,6 +25,10 @@ The following top-level settings are recognized:
   to configure child processes; must start with :file:`/` (absolute
   path) or :file:`@` (abstract socket).
 
+- ``populate_io_buffers``: ``yes`` populates all I/O buffers on
+  startup.  This reduces waits for Linux kernel VM
+  compaction/migration.
+
 
 Listener
 --------

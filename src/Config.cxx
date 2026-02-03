@@ -475,6 +475,9 @@ LukkoConfigParser::ParseLine2(FileLineParser &line)
 		line.ExpectSymbolAndEol('{');
 		SetChild(std::make_unique<Control>(config));
 #endif // ENABLE_CONTROL
+	} else if (StringIsEqual(word, "populate_io_buffers")) {
+		config.populate_io_buffers = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error("Unknown option");
 }

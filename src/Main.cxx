@@ -10,6 +10,7 @@
 #include "key/LoadFile.hxx"
 #include "key/TextFile.hxx"
 #include "memory/fb_pool.hxx"
+#include "memory/SlicePool.hxx"
 #include "spawn/Launch.hxx"
 #include "thread/Pool.hxx"
 #include "system/Error.hxx"
@@ -141,6 +142,8 @@ try {
 	auto spawner = LaunchSpawnServer(config.spawn, nullptr);
 
 	const ScopeFbPoolInit fb_pool_init;
+	if (config.populate_io_buffers)
+		fb_pool_get().Populate();
 
 	Instance instance{
 		config,

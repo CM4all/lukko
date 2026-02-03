@@ -140,6 +140,8 @@ struct Config {
 
 	SpawnConfig spawn;
 
+	bool populate_io_buffers = false;
+
 	Config();
 
 	void Check();
