@@ -80,7 +80,7 @@ using std::string_view_literals::operator""sv;
 struct Connection::Translation {
 	/**
 	 * A copy of the username.  We need this copy if
-	 * TranslateService() if called during the authentication
+	 * TranslateService() is called during the authentication
 	 * phase (e.g. by OpenInHome() / DelegateOpen()), when
 	 * #username is not yet set.
 	 */
@@ -1121,7 +1121,7 @@ Connection::HandleUserauthRequest(std::span<const std::byte> payload)
 	}
 
 	/* the payload is owned by the caller, therefore we need to
-	   duplicate it into an AllocatedArray onwed by the coroutine,
+	   duplicate it into an AllocatedArray owned by the coroutine,
 	   so the coroutine can keep using it after this method
 	   returns */
 	occupied_task = CoHandleUserauthRequest(AllocatedArray{payload});
@@ -1154,7 +1154,7 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		logger.Fmt(3, "  bind={:?}:{}"sv, bind_address, bind_port);
 
 		// TODO support special strings according to RFC 4254 7.1
-		// TODO suport bind_port==0 (REQUEST_SUCCESS contains port number)
+		// TODO support bind_port==0 (REQUEST_SUCCESS contains port number)
 
 		auto s = co_await ResolveBindTCP(*this, bind_address, bind_port);
 		if (!s.Listen(16))
