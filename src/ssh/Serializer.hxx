@@ -247,4 +247,4 @@ private:
 	}
 };
 
-} // namespace Mysql
+} // namespace SSH
