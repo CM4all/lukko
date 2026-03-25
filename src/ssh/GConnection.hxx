@@ -12,7 +12,7 @@ namespace Co { template<typename T> class EagerTask; }
 namespace SSH {
 
 /**
- * Add GLOBAL_REQUEST suport to to class #Connection.  Override method
+ * Add GLOBAL_REQUEST support to to class #Connection.  Override method
  * HandleGlobalRequest().
  */
 class GConnection : public Connection

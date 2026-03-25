@@ -78,7 +78,7 @@ GConnection::SubmitGlobalRequestResponses() noexcept
 		if (!request.IsDone())
 			break;
 
-		/* finished requests that want to reply have already
+		/* finished requests that want no reply have already
 		   been removed from the list */
 		assert(request.WantsReply());
 
@@ -166,7 +166,7 @@ GConnection::OnDisconnecting(DisconnectReasonCode reason_code,
 	Connection::OnDisconnecting(reason_code, msg);
 
 	/* cancel all pending requests so they don't try to do any I/O
-           while we're waiting for the DISCONNECT to be flushed */
+	   while we're waiting for the DISCONNECT to be flushed */
 	pending_global_requests.clear_and_dispose(DeleteDisposer{});
 }
 
