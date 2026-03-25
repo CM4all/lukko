@@ -92,7 +92,7 @@ OsslCipher::DecryptHeader([[maybe_unused]] uint_least64_t seqnr,
 		std::copy(src.begin(), src.end(), dest.begin());
 	} else {
 		int outl;
-		if (EVP_CipherUpdate(*ctx, dest.data(), &outl, src) < 0)
+		if (EVP_CipherUpdate(*ctx, dest.data(), &outl, src) != 1)
 			throw SslError{"EVP_CipherUpdate() failed"};
 
 		assert(outl == (int)dest.size());
