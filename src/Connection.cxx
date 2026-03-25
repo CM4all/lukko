@@ -147,7 +147,7 @@ CheckTranslateResponse(const TranslateResponse &response)
 	assert(response.status == HttpStatus{});
 
 	if (response.execute_options == nullptr)
-		throw std::invalid_argument{"Translation response contains spawner options"};
+		throw std::invalid_argument{"Translation response contains no spawner options"};
 
 	CheckExecuteOptions(*response.execute_options);
 }
