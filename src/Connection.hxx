@@ -197,24 +197,43 @@ public:
 	bool HasTag(std::string_view tag) const noexcept;
 #endif
 
+	/**
+	 * Is the client only allowed to use SFTP but nothing else?
+	 */
 	[[gnu::pure]]
 	bool IsSftpOnly() const noexcept {
 		return sftp_only;
 	}
 
+	/**
+	 * Is the client allowed to run rsync?  This is currently
+	 * always allowed, even for sftp-only accounts (because rsync
+	 * and SFTP are considered similar enough).
+	 */
 	[[gnu::pure]]
 	bool IsRsyncAllowed() const noexcept {
 		return true;
 	}
 
+	/**
+	 * Is the client allowed to spawn arbitrary processes?
+	 */
 	[[gnu::pure]]
 	bool IsExecAllowed() const noexcept {
 		return !IsSftpOnly();
 	}
 
+	/**
+	 * Is the client allowed to open TCP connections?  (channel
+	 * "direct-tcpip")
+	 */
 	[[gnu::pure]]
 	bool IsForwardingAllowed() const noexcept;
 
+	/**
+	 * Is the client allowed to bind TCP ports?  (global request
+	 * "tcpip-forward")
+	 */
 	[[gnu::pure]]
 	bool IsBindingAllowed() const noexcept {
 		return IsForwardingAllowed();
@@ -272,6 +291,10 @@ private:
 	 */
 	Co::Task<UniqueFileDescriptor> OpenInHome(const char *path) const noexcept;
 
+	/**
+	 * Should ~/.ssh/authorized_keys be used for key
+	 * authentication?
+	 */
 	[[gnu::pure]]
 	bool ShouldLoadHomeAuthorizedKeys() const noexcept;
 
