@@ -52,6 +52,7 @@ ChaCha20Poly1305Cipher::ChaCha20Poly1305Cipher(std::span<const std::byte> key)
 
 ChaCha20Poly1305Cipher::~ChaCha20Poly1305Cipher() noexcept
 {
+	sodium_memzero(&payload_key, sizeof(payload_key));
 	sodium_memzero(&header_key, sizeof(header_key));
 }
 
