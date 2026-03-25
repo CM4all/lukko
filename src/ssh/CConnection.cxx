@@ -540,6 +540,7 @@ CConnection::OnWriteUnblocked() noexcept
 		if (i != nullptr)
 			i->OnWriteUnblocked();
 }
+
 void
 CConnection::OnDisconnecting(DisconnectReasonCode reason_code,
 			     std::string_view msg) noexcept

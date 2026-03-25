@@ -109,14 +109,38 @@ private:
 			   std::exception_ptr error) noexcept;
 
 protected:
+	/**
+	 * Consume a portion of the channel receive window by
+	 * subtracting from #receive_window, to allow more data to be
+	 * received by the client.  Call this for data that was passed
+	 * to OnData() or OnExtendedData() after the data has really
+	 * been consumed.  These virtuel methods are allowed to
+	 * consume the data asynchronously; therefore, this method may
+	 * be called after these two methods have already returned.
+	 */
 	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept;
 
 public:
 	virtual void SerializeOpenConfirmation(Serializer &s) const;
 	virtual void OnWindowAdjust(std::size_t nbytes);
+
+	/**
+	 * Data was received on the channel.  As soon as data was
+	 * consumed, call ConsumeReceiveWindow().
+	 */
 	virtual void OnData(std::span<const std::byte> payload);
+
+	/**
+	 * Extended data was received on the channel (usually STDERR
+	 * of a #SessionChannel).  As soon as data was consumed, call
+	 * ConsumeReceiveWindow().
+	 */
 	virtual void OnExtendedData(ChannelExtendedDataType data_type,
 				    std::span<const std::byte> payload);
+
+	/**
+	 * The channel has ended and there will be no more data.
+	 */
 	virtual void OnEof() {}
 
 	[[nodiscard]]
