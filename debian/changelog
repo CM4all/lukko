@@ -1,5 +1,6 @@
 cm4all-lukko (0.51) unstable; urgency=low
 
+  * spawn: fix rlimits EPERM with PID_NAMESPACE_NAME
   * spawn: do not log spawn errors of killed processes
   * translation: add packet MOUNT_TMP_TMPFS_EXEC
   * keep at least one mmap with "populate_io_buffers" enabled
