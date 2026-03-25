@@ -76,6 +76,8 @@ OsslCipher::~OsslCipher() noexcept = default;
 inline void
 OsslCipher::IncrementIV()
 {
+	/* a minimal buffer for EVP_CTRL_GCM_IV_GEN; we will ignore
+	 * the contents, because we only want to increment the IV */
 	std::byte last_iv[1];
 	if (!EVP_CIPHER_CTX_ctrl(*ctx, EVP_CTRL_GCM_IV_GEN, last_iv))
 		throw SslError{"EVP_CTRL_GCM_IV_GEN failed"};
@@ -147,7 +149,7 @@ OsslCipher::Encrypt([[maybe_unused]] uint_least64_t seqnr,
 		    std::span<const std::byte> src,
 		    std::byte *dest)
 {
-	assert(src.size() >= HEADER_SIZE + GetAuthSize());
+	assert(src.size() >= HEADER_SIZE);
 	assert(IsHeaderExcludedFromPadding() || (src.size() % GetBlockSize()) == 0);
 
 	std::size_t dest_position = 0;
