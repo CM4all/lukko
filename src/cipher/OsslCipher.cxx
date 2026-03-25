@@ -62,7 +62,7 @@ OsslCipher::OsslCipher(const EVP_CIPHER &cipher,
 		throw SslError{"EVP_CTRL_GCM_SET_IV_FIXED failed"};
 
 	if (int key_length = EVP_CIPHER_CTX_get_key_length(ctx.get());
-	    key_length > 0 && static_cast<int>(key.size()) != key_length)
+	    key_length > 0 && !std::cmp_equal(key.size(), key_length))
 		throw std::invalid_argument{"Wrong key size"};
 
 	if (!EVP_CipherInit(ctx.get(), nullptr,
