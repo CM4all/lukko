@@ -310,7 +310,7 @@ CConnection::HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t peer_channel,
 			       uint_least32_t initial_window_size,
 			       std::span<const std::byte> payload)
-try {
+{
 	const uint_least32_t local_channel = AllocateChannelIndex();
 
 	const ChannelInit init{
@@ -322,8 +322,18 @@ try {
 	auto *opening = new OpeningChannel(*this, init, 0);
 	channels[local_channel] = opening;
 
-	auto channel = CreateChannel(channel_type, init, payload,
-				     opening->cancel_ptr);
+	std::unique_ptr<Channel> channel;
+
+	try {
+		channel = CreateChannel(channel_type, init, payload,
+					opening->cancel_ptr);
+	} catch (const ChannelOpenFailure &failure) {
+		SendPacket(MakeChannelOpenFailure(peer_channel,
+						  failure.reason_code,
+						  failure.description));
+		return;
+	}
+
 	if (!channel) {
 		// asynchronous open (or already failed)
 		assert(channels[local_channel] == nullptr ||
@@ -343,10 +353,6 @@ try {
 	assert(channels[local_channel] == opening);
 	channels[local_channel] = channel.release();
 	delete opening;
-} catch (const ChannelOpenFailure &failure) {
-	SendPacket(MakeChannelOpenFailure(peer_channel,
-					  failure.reason_code,
-					  failure.description));
 }
 
 inline void
