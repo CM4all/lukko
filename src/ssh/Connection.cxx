@@ -424,7 +424,7 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 	SendECDHKexInitReply(p.client_ephemeral_public_key);
 	SendNewKeys();
 
-	if (peer_wants_ext_info && role == Role::SERVER)
+	if (peer_wants_ext_info)
 		SendExtInfo();
 }
 
@@ -487,9 +487,6 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 	kex_algorithm.reset();
 
 	SendNewKeys();
-
-	if (peer_wants_ext_info && role == Role::SERVER)
-		SendExtInfo();
 }
 
 static constexpr bool
