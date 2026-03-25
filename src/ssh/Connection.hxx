@@ -64,7 +64,7 @@ class Connection : BufferedSocketHandler, InputHandler
 	bool authenticated = false;
 
 	/**
-	 * Did the peer announce "kex-info-c" or "kex-info-s"?
+	 * Did the peer announce "ext-info-c" or "ext-info-s"?
 	 */
 	bool peer_wants_ext_info = false;
 

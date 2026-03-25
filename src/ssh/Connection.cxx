@@ -115,9 +115,9 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 
 	if (output.IsEncrypted()) {
 		/* we have to wait for the worker thread to encrypt
-                   the the DISCONNECT packet before we can actually
-                   send it to the socket; therefore postpone the
-                   Destroy() call */
+		   the DISCONNECT packet before we can actually send
+		   it to the socket; therefore postpone the Destroy()
+		   call */
 		dead = true;
 
 		/* we now have very little patience with this
@@ -131,7 +131,7 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 
 	try {
 		/* attempt to flush the DISCONNECT packet immediately
-                   before we close the socket */
+		   before we close the socket */
 		switch (output.Flush()) {
 		case Output::FlushResult::DONE:
 		case Output::FlushResult::MORE:
