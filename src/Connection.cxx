@@ -398,6 +398,15 @@ Connection::IsForwardingAllowed() const noexcept
 	return true;
 }
 
+inline bool
+Connection::IsLocalForwardingAllowed() const noexcept
+{
+	if (IsSftpOnly())
+		return false;
+
+	return true;
+}
+
 inline const char *
 Connection::GetHome() const noexcept
 {
@@ -668,6 +677,13 @@ Connection::CreateChannel(std::string_view channel_type,
 		operation->Start(connect_host, connect_port, cancel_ptr);
 		return {};
 	} else if (channel_type == "direct-streamlocal@openssh.com") {
+		if (!IsLocalForwardingAllowed()) {
+			throw ChannelOpenFailure{
+				SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
+				"Local forwarding not allowed",
+			};
+		}
+
 		SSH::Deserializer d{payload};
 		const auto socket_path = d.ReadString();
 		// Ignore remaining "reserved" fields (string, u32):

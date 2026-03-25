@@ -240,6 +240,13 @@ public:
 	}
 
 	/**
+	 * Is the client allowed to open local connections?  (channel
+	 * "direct-streamlocal@openssh.com")
+	 */
+	[[gnu::pure]]
+	bool IsLocalForwardingAllowed() const noexcept;
+
+	/**
 	 * Do some preparations for spawning a child process for the
 	 * currently user.
 	 *

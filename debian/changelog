@@ -1,5 +1,6 @@
 cm4all-lukko (0.51) unstable; urgency=low
 
+  * don't allow sftp-only accounts to forward local socket connections
   * ssh: fix channel exhaustion after failed CHANNEL_OPEN
   * spawn: fix rlimits EPERM with PID_NAMESPACE_NAME
   * spawn: do not log spawn errors of killed processes
