@@ -68,9 +68,9 @@ RSAKey::Verify(std::span<const std::byte> message,
 	SSH::Deserializer d{signature};
 	const auto algorithm = d.ReadString();
 
-	signature = d.ReadLengthEncoded();
+	const auto raw_signature = d.ReadLengthEncoded();
 	return VerifyGeneric(*key, GetDigestAlgorithmRSA(algorithm),
-			     message, signature);
+			     message, raw_signature);
 }
 
 void
