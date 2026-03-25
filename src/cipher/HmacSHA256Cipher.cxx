@@ -31,6 +31,7 @@ HmacSHA256Cipher::HmacSHA256Cipher(std::unique_ptr<Cipher> _next,
 
 HmacSHA256Cipher::~HmacSHA256Cipher() noexcept
 {
+	sodium_memzero(&state, sizeof(state));
 	sodium_memzero(&key, sizeof(key));
 }
 
