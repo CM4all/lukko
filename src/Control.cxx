@@ -29,6 +29,7 @@ Instance::OnControlPacket(BengControl::Command command,
 		break;
 
 	case Command::TCACHE_INVALIDATE:
+	case Command::EXPIRE_TCACHE_TAG:
 	case Command::DUMP_POOLS:
 	case Command::ENABLE_NODE:
 	case Command::FADE_NODE:
