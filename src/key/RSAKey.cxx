@@ -10,7 +10,6 @@
 #include "openssl/Verify.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/openssl/EvpParam.hxx"
-#include "util/ScopeExit.hxx"
 
 #include <openssl/core_names.h> // for OSSL_PKEY_PARAM_RSA_*
 
