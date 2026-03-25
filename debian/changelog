@@ -1,5 +1,6 @@
 cm4all-lukko (0.51) unstable; urgency=low
 
+  * spawn: do not log spawn errors of killed processes
   * translation: add packet MOUNT_TMP_TMPFS_EXEC
   * keep at least one mmap with "populate_io_buffers" enabled
   * fix build failure after OpenSSL 4.0 API change
