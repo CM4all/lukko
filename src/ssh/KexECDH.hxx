@@ -2,6 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
+#pragma once
+
 #include "KexInterface.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 
