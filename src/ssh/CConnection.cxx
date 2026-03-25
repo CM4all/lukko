@@ -328,6 +328,10 @@ CConnection::HandleChannelOpen(std::string_view channel_type,
 		channel = CreateChannel(channel_type, init, payload,
 					opening->cancel_ptr);
 	} catch (const ChannelOpenFailure &failure) {
+		assert(channels[local_channel] == opening);
+		channels[local_channel] = nullptr;
+		delete opening;
+
 		SendPacket(MakeChannelOpenFailure(peer_channel,
 						  failure.reason_code,
 						  failure.description));
