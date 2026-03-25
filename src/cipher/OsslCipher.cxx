@@ -135,7 +135,7 @@ OsslCipher::DecryptPayload([[maybe_unused]] uint_least64_t seqnr,
 	dest_position += outl;
 
 	if (EVP_CipherFinal_ex(*ctx, dest.data() + dest_position, &outl) != 1)
-		throw SslError{"EVP_CipherUpdate() failed"};
+		throw SslError{"EVP_CipherFinal_ex() failed"};
 
 	dest_position += outl;
 
