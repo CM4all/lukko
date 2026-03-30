@@ -10,7 +10,7 @@ cm4all-lukko (0.51) unstable; urgency=low
   * keep at least one mmap with "populate_io_buffers" enabled
   * fix build failure after OpenSSL 4.0 API change
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 30 Mar 2026 14:35:23 +0200
 
 cm4all-lukko (0.50) unstable; urgency=low
 
