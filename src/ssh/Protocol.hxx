@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <utility> // for std::to_underlying()
 
 namespace SSH {
 
@@ -101,6 +102,13 @@ enum class MessageNumber : uint8_t {
 	CHANNEL_SUCCESS = 99,
 	CHANNEL_FAILURE = 100,
 };
+
+static constexpr bool
+IsKex(MessageNumber msg) noexcept
+{
+	const auto value = std::to_underlying(msg);
+	return value >= 30 && value < 50;
+}
 
 enum class DisconnectReasonCode : uint32_t {
 	HOST_NOT_ALLOWED_TO_CONNECT = 1,

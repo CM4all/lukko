@@ -322,6 +322,22 @@ StringListContains(std::string_view haystack, std::string_view needle) noexcept
 	return false;
 }
 
+static constexpr std::string_view
+FirstStringListItem(std::string_view list) noexcept
+{
+	return Split(list, ',').first;
+}
+
+static constexpr std::string_view
+FindCommonAlgorithm(std::string_view preferred, std::string_view supported) noexcept
+{
+	for (const std::string_view i : IterableSplitString(preferred, ','))
+		if (StringListContains(supported, i))
+			return i;
+
+	return {};
+}
+
 inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
@@ -368,6 +384,9 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 			};
 
 		SendKexInit();
+		ignore_next_kex_packet = p.first_kex_packet_follows &&
+			(FirstStringListItem(p.kex_algorithms) != FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms) ||
+			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
 		break;
 
 	case Role::CLIENT:
@@ -517,6 +536,11 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 
 			if (msg != MessageNumber::KEXINIT)
 				first_packet_was_kexinit = false;
+		} else if (ignore_next_kex_packet) {
+			ignore_next_kex_packet = false;
+
+			if (IsKex(msg))
+				return;
 		} else if (peer_wants_strict_key_exchange &&
 			   !IsAllowedKexMessage(msg, role)) {
 			throw Disconnect{

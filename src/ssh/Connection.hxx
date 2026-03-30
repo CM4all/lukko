@@ -80,6 +80,13 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool first_packet_was_kexinit = true;
 
+	/**
+	 * RFC 4253 section 7.1: if the peer set
+	 * "first_kex_packet_follows" and guessed the negotiated
+	 * algorithm wrong, then the next packet must be ignored.
+	 */
+	bool ignore_next_kex_packet = false;
+
 public:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
