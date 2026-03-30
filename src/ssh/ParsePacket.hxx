@@ -65,6 +65,7 @@ struct KexInit {
 	std::string_view encryption_algorithms_server_to_client;
 	std::string_view mac_algorithms_client_to_server;
 	std::string_view mac_algorithms_server_to_client;
+	bool first_kex_packet_follows;
 };
 
 inline auto
@@ -83,7 +84,7 @@ ParseKexInit(std::span<const std::byte> raw)
 	d.ReadString(); // compression_algorithms_server_to_client
 	d.ReadString(); // languages_client_to_server
 	d.ReadString(); // languages_server_to_client
-	d.ReadBool(); // first_kex_packet_follows
+	p.first_kex_packet_follows = d.ReadBool();
 	d.ReadU32(); // reserved
 	d.ExpectEnd();
 	return p;
