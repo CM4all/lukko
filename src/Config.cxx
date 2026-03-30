@@ -290,6 +290,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "tag")) {
 #ifdef ENABLE_TRANSLATION
 		config.tag = line.ExpectValueAndEnd();
+
+		if (config.tag.size() > 256)
+			throw LineParser::Error{"Value is too long"};
 #endif // ENABLE_TRANSLATION
 	} else if (StringIsEqual(word, "host_key_file")) {
 		const auto path = line.ExpectPathAndEnd();
