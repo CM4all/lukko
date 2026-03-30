@@ -84,8 +84,8 @@ HmacSHA256Cipher::DecryptPayload(uint_least64_t seqnr,
 	crypto_auth_hmacsha256_final(&state,
 				     reinterpret_cast<unsigned char *>(hmac_expected.data()));
 
-	if (!std::equal(hmac_received.begin(), hmac_received.end(),
-			hmac_expected.begin()))
+	if (sodium_memcmp(hmac_received.data(), hmac_expected.data(),
+			  hmac_received.size()) != 0)
 		throw std::invalid_argument{"Invalid HMAC"};
 
 	return result;
