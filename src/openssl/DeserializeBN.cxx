@@ -3,8 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "DeserializeBN.hxx"
-#include "BN.hxx"
-#include "lib/openssl/Error.hxx"
+#include "lib/openssl/BN.hxx"
 
 #include <stdexcept>
 

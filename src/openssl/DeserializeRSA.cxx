@@ -4,7 +4,7 @@
 
 #include "DeserializeRSA.hxx"
 #include "DeserializeBN.hxx"
-#include "BN.hxx"
+#include "lib/openssl/BN.hxx"
 #include "lib/openssl/Error.hxx"
 #include "util/ScopeExit.hxx"
 

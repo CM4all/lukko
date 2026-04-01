@@ -2,7 +2,7 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
-#include "openssl/BN.hxx"
+#include "lib/openssl/BN.hxx"
 #include "openssl/SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
 #include "lib/openssl/Error.hxx"
