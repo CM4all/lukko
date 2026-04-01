@@ -4,6 +4,7 @@
 
 #include "SerializeBN.hxx"
 #include "ssh/Serializer.hxx"
+#include "lib/openssl/BN.hxx"
 #include "lib/openssl/Error.hxx"
 
 #include <stdexcept>
@@ -18,7 +19,7 @@ Serialize(SSH::Serializer &s, const BIGNUM &bn)
 		throw std::invalid_argument{"Invalid BN size"};
 
 	auto dest = s.BeginWriteN(length);
-	if (BN_bn2bin(&bn, reinterpret_cast<unsigned char *>(dest.data())) != length)
+	if (BN_bn2bin(bn, dest.data()) != length)
 		throw SslError{};
 
 	s.CommitBignum2(length);
