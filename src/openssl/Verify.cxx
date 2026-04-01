@@ -6,6 +6,7 @@
 #include "Digest.hxx"
 #include "DeserializeBN.hxx"
 #include "ssh/Deserializer.hxx"
+#include "lib/openssl/EC.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/UniqueEC.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
@@ -68,17 +69,7 @@ DeserializeECDSA_SIG(std::span<const std::byte> src)
 	auto r = DeserializeBIGNUM(d.ReadLengthEncoded());
 	auto s = DeserializeBIGNUM(d.ReadLengthEncoded());
 
-	UniqueECDSA_SIG sig{ECDSA_SIG_new()};
-	if (!sig)
-		throw SslError{};
-
-	if (!ECDSA_SIG_set0(sig.get(), r.get(), s.get()))
-		throw SslError{};
-
-	r.release();
-	s.release();
-
-	return sig;
+	return NewUniqueECDSA_SIG(std::move(r), std::move(s));
 }
 
 bool
