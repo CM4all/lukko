@@ -59,6 +59,7 @@ ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexc
 
 void
 ZeroconfCluster::OnAvahiNewObject(const std::string &key,
+				  [[maybe_unused]] const char *host_name,
 				  const InetAddress &address,
 				  AvahiStringList *txt,
 				  Avahi::ObjectFlags flags) noexcept
