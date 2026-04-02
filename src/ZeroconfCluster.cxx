@@ -3,9 +3,10 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "ZeroconfCluster.hxx"
+#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerConfig.hxx"
-#include "lib/avahi/StringListCast.hxx"
+#include "lib/avahi/Weight.hxx"
 #include "net/InetAddress.hxx"
 #include "system/Arch.hxx"
 #include "util/djb_hash.hxx"
@@ -159,45 +160,14 @@ ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexc
 	return member_list.front()->second.address;
 }
 
-[[gnu::pure]]
-static Arch
-GetArchFromTxt(AvahiStringList *txt) noexcept
-{
-	constexpr std::string_view prefix = "arch="sv;
-	txt = avahi_string_list_find(txt, "arch");
-	return txt != nullptr
-		? ParseArch(Avahi::ToStringView(*txt).substr(prefix.size()))
-		: Arch::NONE;
-}
-
-[[gnu::pure]]
-static double
-GetWeightFromTxt(AvahiStringList *txt) noexcept
-{
-	constexpr std::string_view prefix = "weight="sv;
-	txt = avahi_string_list_find(txt, "weight");
-	if (txt == nullptr)
-		/* there's no "weight" record */
-		return 1.0;
-
-	const char *s = reinterpret_cast<const char *>(txt->text) + prefix.size();
-	char *endptr;
-	double value = strtod(s, &endptr);
-	if (endptr == s || *endptr != '\0' || value <= 0 || value > 1e6)
-		/* parser failed: fall back to default value */
-		return 1.0;
-
-	return value;
-}
-
 void
 ZeroconfCluster::OnAvahiNewObject(const std::string &key,
 				  const InetAddress &address,
 				  AvahiStringList *txt,
 				  [[maybe_unused]] Flags flags) noexcept
 {
-	const auto arch = GetArchFromTxt(txt);
-	const auto weight = GetWeightFromTxt(txt);
+	const auto arch = Avahi::GetArchFromTxt(txt);
+	const auto weight = Avahi::GetWeightFromTxt(txt);
 
 	auto [it, inserted] = member_map.try_emplace(key, arch, weight, address);
 	if (!inserted) {
