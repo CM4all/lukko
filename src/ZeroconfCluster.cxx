@@ -3,10 +3,8 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "ZeroconfCluster.hxx"
-#include "lib/avahi/Arch.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerConfig.hxx"
-#include "lib/avahi/Weight.hxx"
 #include "net/InetAddress.hxx"
 #include "net/rh/Node.hxx"
 
@@ -18,8 +16,8 @@ using std::string_view_literals::operator""sv;
 struct ZeroconfCluster::Member final : RendezvousHashing::Node {
 	InetAddress address;
 
-	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept {
-		RendezvousHashing::Node::Update(_address, _arch, _weight);
+	void Update(const InetAddress &_address, AvahiStringList *txt) noexcept {
+		RendezvousHashing::Node::Update(_address, txt);
 		address = _address;
 	}
 };
@@ -74,11 +72,8 @@ ZeroconfCluster::OnAvahiNewObject(const std::string &key,
 				  AvahiStringList *txt,
 				  [[maybe_unused]] Avahi::ObjectFlags flags) noexcept
 {
-	const auto arch = Avahi::GetArchFromTxt(txt);
-	const auto weight = Avahi::GetWeightFromTxt(txt);
-
 	auto [it, inserted] = member_map.try_emplace(key);
-	it->second.Update(address, arch, weight);
+	it->second.Update(address, txt);
 
 	dirty = true;
 }
