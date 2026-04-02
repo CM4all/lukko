@@ -5,23 +5,13 @@
 #include "ZeroconfCluster.hxx"
 #include "lib/avahi/Explorer.hxx"
 #include "lib/avahi/ExplorerConfig.hxx"
-#include "net/InetAddress.hxx"
 #include "net/rh/Node.hxx"
 
 #include <algorithm> // for std::sort()
-#include <cmath> // for std::log()
 
 using std::string_view_literals::operator""sv;
 
-struct ZeroconfCluster::Member final : RendezvousHashing::Node {
-	InetAddress address;
-
-	void Update(const InetAddress &_address, AvahiStringList *txt,
-		    Avahi::ObjectFlags _flags) noexcept {
-		RendezvousHashing::Node::Update(_address, txt, _flags);
-		address = _address;
-	}
-};
+struct ZeroconfCluster::Member final : RendezvousHashing::Node {};
 
 ZeroconfCluster::ZeroconfCluster(Avahi::Client &client,
 				 Avahi::ErrorHandler &error_handler,
@@ -64,7 +54,7 @@ ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexc
 			  return RendezvousHashing::Node::Compare(arch, a->second, b->second);
 		  });
 
-	return member_list.front()->second.address;
+	return member_list.front()->second.GetAddress();
 }
 
 void
