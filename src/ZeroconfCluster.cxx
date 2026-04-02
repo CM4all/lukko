@@ -18,10 +18,6 @@ using std::string_view_literals::operator""sv;
 struct ZeroconfCluster::Member final : RendezvousHashing::Node {
 	InetAddress address;
 
-	Member(Arch _arch, double _weight, const InetAddress &_address) noexcept
-		:RendezvousHashing::Node(_address, _arch, _weight),
-		 address(_address) {}
-
 	void Update(const InetAddress &_address, Arch _arch, double _weight) noexcept {
 		RendezvousHashing::Node::Update(_address, _arch, _weight);
 		address = _address;
@@ -81,11 +77,8 @@ ZeroconfCluster::OnAvahiNewObject(const std::string &key,
 	const auto arch = Avahi::GetArchFromTxt(txt);
 	const auto weight = Avahi::GetWeightFromTxt(txt);
 
-	auto [it, inserted] = member_map.try_emplace(key, arch, weight, address);
-	if (!inserted) {
-		/* update existing member */
-		it->second.Update(address, arch, weight);
-	}
+	auto [it, inserted] = member_map.try_emplace(key);
+	it->second.Update(address, arch, weight);
 
 	dirty = true;
 }
