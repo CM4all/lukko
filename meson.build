@@ -143,6 +143,12 @@ subdir('libcommon/src/lib/avahi')
 subdir('libcommon/src/memory')
 subdir('src/memory')
 
+if avahi_dep.found()
+  subdir('libcommon/src/net/rh')
+else
+  net_rh_dep = avahi_dep
+endif
+
 if libsystemd.found()
   subdir('libcommon/src/lib/dbus')
 
@@ -261,6 +267,7 @@ executable(
     io_dep,
     io_config_dep,
     avahi_dep,
+    net_rh_dep,
     spawn_dep,
     translation_dep,
     control_server_dep,
