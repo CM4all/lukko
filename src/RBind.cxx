@@ -187,7 +187,7 @@ NormalResolveBindTCP([[maybe_unused]] EventLoop &event_loop,
 #ifdef HAVE_NLOHMANN_JSON
 	// TODO use the other addresses as fallback?
 	const auto addresses = co_await Systemd::CoResolveHostname(event_loop, host, port);
-	const SocketAddress address = addresses.front();
+	const auto &address = addresses.front();
 #else
 	/* no systemd support - using the (blocking) standard
 	   resolver */
