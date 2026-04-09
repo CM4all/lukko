@@ -25,6 +25,7 @@ public:
 	 * Returns the SSH key type string, e.g. "ssh-ed25519" or
 	 * "ssh-rsa".
 	 */
+	[[gnu::pure]]
 	virtual std::string_view GetType() const noexcept = 0;
 
 	/**
@@ -34,6 +35,7 @@ public:
 	 * @see RFC 4253 6.6
 	 * @see RFC 4253 7.1
 	 */
+	[[gnu::pure]]
 	virtual std::string_view GetAlgorithms() const noexcept = 0;
 
 	/**
