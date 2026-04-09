@@ -7,6 +7,12 @@
 #include "Key.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 
+/**
+ * A #SecretKey implementation for RSA keys.
+ *
+ * @see RFC 4253 6.6
+ * @see RFC 8332
+ */
 class RSAKey final : public SecretKey {
 	UniqueEVP_PKEY key;
 

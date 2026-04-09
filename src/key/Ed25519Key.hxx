@@ -8,6 +8,11 @@
 
 #include <array>
 
+/**
+ * A #SecretKey implementation for Ed25519 keys.
+ *
+ * @see RFC 8709
+ */
 class Ed25519Key final : public SecretKey {
 	std::array<std::byte, 32> public_key;
 	std::array<std::byte, 64> secret_key;

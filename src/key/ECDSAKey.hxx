@@ -7,6 +7,11 @@
 #include "Key.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
 
+/**
+ * A #SecretKey implementation for ECDSA keys.
+ *
+ * @see RFC 5656 6.2
+ */
 class ECDSAKey final : public SecretKey {
 	UniqueEVP_PKEY key;
 
