@@ -16,9 +16,11 @@ test(
     'TestLukko',
     test_sources,
     'TestKeys.cxx',
+    'TestKexSignature.cxx',
     'TestAuthorizedKeys.cxx',
     'TestWriteBignum2.cxx',
     'TestCommitBignum2.cxx',
+    '../src/ssh/KexSignature.cxx',
     '../src/ssh/Serializer.cxx',
     include_directories: inc,
     dependencies: [

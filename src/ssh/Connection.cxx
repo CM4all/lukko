@@ -10,6 +10,7 @@
 #include "KexInterface.hxx"
 #include "KexFactory.hxx"
 #include "KexHash.hxx"
+#include "KexSignature.hxx"
 #include "KexProposal.hxx"
 #include "Sizes.hxx"
 #include "Protocol.hxx"
@@ -501,6 +502,19 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 					 hash_buffer);
 
 	const auto hash = std::span{hash_buffer}.first(hashlen);
+
+	bool valid_signature;
+	try {
+		valid_signature = VerifyKexSignature(p.server_host_key_blob, hash, p.signature);
+	} catch (...) {
+		valid_signature = false;
+	}
+
+	if (!valid_signature)
+		throw Disconnect{
+			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+			"Bad host key signature"sv,
+		};
 
 	kex_state.DeriveKeys(hash, shared_secret_, role, true);
 	kex_algorithm.reset();
