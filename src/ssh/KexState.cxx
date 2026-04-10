@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "KexState.hxx"
+#include "KexEnums.hxx"
 #include "cipher/Cipher.hxx"
 #include "cipher/Factory.hxx"
 

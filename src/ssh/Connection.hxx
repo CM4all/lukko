@@ -6,6 +6,7 @@
 
 #include "IHandler.hxx"
 #include "KexState.hxx"
+#include "KexEnums.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
 

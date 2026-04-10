@@ -15,16 +15,8 @@
 namespace SSH {
 
 class Cipher;
-
-enum class Role : uint_least8_t {
-	SERVER,
-	CLIENT,
-};
-
-enum class Direction : uint_least8_t {
-	INCOMING,
-	OUTGOING,
-};
+enum class Role : uint_least8_t;
+enum class Direction : uint_least8_t;
 
 struct KexState {
 	struct NewKey {
