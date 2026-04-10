@@ -244,7 +244,7 @@ protected:
 				    [[maybe_unused]] std::string_view msg) noexcept {}
 
 private:
-	const auto &GetServerKexinit() const {
+	const auto &GetServerKexinit() const noexcept {
 		return role == Role::SERVER
 			? my_kexinit
 			: peer_kexinit;
