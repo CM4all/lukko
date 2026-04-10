@@ -266,13 +266,24 @@ Connection::SendNewKeys()
 {
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
 
-	auto send_cipher = kex_state.MakeCipher(encryption_algorithms_server_to_client,
-						mac_algorithms_server_to_client,
+	const auto send_encryption_algorithm =
+		FindNegotiatedAlgorithm(role, Direction::OUTGOING,
+					all_encryption_algorithms,
+					encryption_algorithms_client_to_server,
+					encryption_algorithms_server_to_client);
+	const auto send_mac_algorithm =
+		FindNegotiatedAlgorithm(role, Direction::OUTGOING,
+					all_mac_algorithms,
+					mac_algorithms_client_to_server,
+					mac_algorithms_server_to_client);
+
+	auto send_cipher = kex_state.MakeCipher(send_encryption_algorithm,
+						send_mac_algorithm,
 						Direction::OUTGOING);
 	if (send_cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
-			"No client-to-server encryption algorithm"sv,
+			"No outgoing encryption algorithm"sv,
 		};
 
 	const bool was_encrypted = output.IsEncrypted();
@@ -382,13 +393,24 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 			"No session id"sv,
 		};
 
-	auto cipher = kex_state.MakeCipher(encryption_algorithms_client_to_server,
-					   mac_algorithms_client_to_server,
+	const auto receive_encryption_algorithm =
+		FindNegotiatedAlgorithm(role, Direction::INCOMING,
+				       all_encryption_algorithms,
+				       encryption_algorithms_client_to_server,
+				       encryption_algorithms_server_to_client);
+	const auto receive_mac_algorithm =
+		FindNegotiatedAlgorithm(role, Direction::INCOMING,
+				       all_mac_algorithms,
+				       mac_algorithms_client_to_server,
+				       mac_algorithms_server_to_client);
+
+	auto cipher = kex_state.MakeCipher(receive_encryption_algorithm,
+					   receive_mac_algorithm,
 					   Direction::INCOMING);
 	if (cipher == nullptr)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
-			"No client-to-server encryption algorithm"sv,
+			"No incoming encryption algorithm"sv,
 		};
 
 	const bool was_encrypted = input.IsEncrypted();

@@ -1,6 +1,7 @@
 cm4all-lukko (0.52) unstable; urgency=low
 
   * client: verify the KEX signature
+  * client: fix cipher negotiation
 
  --   
 
