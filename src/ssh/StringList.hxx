@@ -24,14 +24,4 @@ FirstStringListItem(std::string_view list) noexcept
 	return Split(list, ',').first;
 }
 
-static constexpr std::string_view
-FindCommonAlgorithm(std::string_view preferred, std::string_view supported) noexcept
-{
-	for (const std::string_view i : IterableSplitString(preferred, ','))
-		if (StringListContains(supported, i))
-			return i;
-
-	return {};
-}
-
 } // namespace SSH

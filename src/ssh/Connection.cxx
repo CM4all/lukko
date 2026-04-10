@@ -12,6 +12,7 @@
 #include "KexHash.hxx"
 #include "KexSignature.hxx"
 #include "KexProposal.hxx"
+#include "KexStrings.hxx"
 #include "Sizes.hxx"
 #include "StringList.hxx"
 #include "Protocol.hxx"
