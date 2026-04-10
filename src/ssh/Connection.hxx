@@ -95,6 +95,14 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool write_blocked = false;
 
+	/**
+	 * Are we currently rekeying?  This field is `true` between
+	 * sending #KEXINIT and #NEWKEYS.
+	 *
+	 * @see RFC 4253 9
+	 */
+	bool rekeying = false;
+
 public:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
@@ -224,6 +232,10 @@ protected:
 	/**
 	 * The (kernel) socket buffer is full and no more outgoing packets
 	 * should be submitted to SendPacket().
+	 *
+	 * Writing (of regular non-KEX packets) can also be blocked by
+	 * rekeying (after sending KEXINIT on a connection that is
+	 * already encrypted).
 	 */
 	virtual void OnWriteBlocked() noexcept {}
 

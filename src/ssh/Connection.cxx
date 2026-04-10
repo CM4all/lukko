@@ -290,8 +290,14 @@ Connection::SendNewKeys()
 
 	output.SetCipher(std::move(send_cipher));
 
+	const bool was_rekeying = rekeying;
+	rekeying = false;
+
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
+
+	if (was_rekeying && !write_blocked)
+		OnWriteUnblocked();
 }
 
 inline void
@@ -362,6 +368,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	}
 
 	switch (role) {
+		bool was_rekeying;
+
 	case Role::SERVER:
 		std::tie(host_key, host_key_algorithm) = ChooseHostKey(p.server_host_key_algorithms);
 		if (host_key == nullptr)
@@ -374,6 +382,12 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		ignore_next_kex_packet = p.first_kex_packet_follows &&
 			(FirstStringListItem(p.kex_algorithms) != FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms) ||
 			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
+
+		was_rekeying = rekeying;
+		rekeying = IsEncrypted();
+		if (!was_rekeying && rekeying && !write_blocked)
+			OnWriteBlocked();
+
 		break;
 
 	case Role::CLIENT:
@@ -660,7 +674,7 @@ Connection::OnBufferedWrite()
 {
 	const bool was_write_blocked = write_blocked;
 	write_blocked = false;
-	if (was_write_blocked)
+	if (was_write_blocked && !rekeying)
 		OnWriteUnblocked();
 
 	switch (output.Flush()) {
@@ -677,7 +691,8 @@ Connection::OnBufferedWrite()
 		socket.ScheduleWrite();
 
 		write_blocked = true;
-		OnWriteBlocked();
+		if (!rekeying)
+			OnWriteBlocked();
 		break;
 
 	case Output::FlushResult::DESTROYED:
