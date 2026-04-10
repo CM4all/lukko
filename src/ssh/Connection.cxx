@@ -13,6 +13,7 @@
 #include "KexSignature.hxx"
 #include "KexProposal.hxx"
 #include "Sizes.hxx"
+#include "StringList.hxx"
 #include "Protocol.hxx"
 #include "Serializer.hxx"
 #include "MakePacket.hxx"
@@ -26,7 +27,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "util/IterableSplitString.hxx"
 #include "util/SpanCast.hxx"
 #include "Digest.hxx"
 
@@ -311,32 +311,6 @@ Connection::HandleDisconnect(std::span<const std::byte> payload)
 
 	Destroy();
 	throw Destroyed{};
-}
-
-static constexpr bool
-StringListContains(std::string_view haystack, std::string_view needle) noexcept
-{
-	for (const std::string_view i : IterableSplitString(haystack, ','))
-		if (i == needle)
-			return true;
-
-	return false;
-}
-
-static constexpr std::string_view
-FirstStringListItem(std::string_view list) noexcept
-{
-	return Split(list, ',').first;
-}
-
-static constexpr std::string_view
-FindCommonAlgorithm(std::string_view preferred, std::string_view supported) noexcept
-{
-	for (const std::string_view i : IterableSplitString(preferred, ','))
-		if (StringListContains(supported, i))
-			return i;
-
-	return {};
 }
 
 inline void
