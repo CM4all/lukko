@@ -658,7 +658,10 @@ Connection::OnBufferedData()
 bool
 Connection::OnBufferedWrite()
 {
-	OnWriteUnblocked();
+	const bool was_write_blocked = write_blocked;
+	write_blocked = false;
+	if (was_write_blocked)
+		OnWriteUnblocked();
 
 	switch (output.Flush()) {
 	case Output::FlushResult::DONE:
@@ -672,6 +675,8 @@ Connection::OnBufferedWrite()
 
 	case Output::FlushResult::MORE:
 		socket.ScheduleWrite();
+
+		write_blocked = true;
 		OnWriteBlocked();
 		break;
 

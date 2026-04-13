@@ -88,6 +88,13 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool ignore_next_kex_packet = false;
 
+	/**
+	 * Is writing currently blocked (because the kernel socket is
+	 * full)?  This keeps track whether to call
+	 * OnWriteUnblocked().
+	 */
+	bool write_blocked = false;
+
 public:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
