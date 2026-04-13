@@ -5,7 +5,7 @@ cm4all-lukko (0.52) unstable; urgency=low
   * ssh: postpone CHANNEL_DATA while rekeying
   * ssh: determine "kex-strict" only in initial KEX
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 13 Apr 2026 14:45:18 +0200
 
 cm4all-lukko (0.51) unstable; urgency=low
 
