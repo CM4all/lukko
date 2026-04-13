@@ -354,11 +354,14 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	peer_wants_ext_info = StringListContains(p.kex_algorithms,
 						 role == Role::SERVER ? "ext-info-c"sv : "ext-info-s"sv);
 
-	peer_wants_strict_key_exchange =
-		StringListContains(p.kex_algorithms,
-				   role == Role::SERVER ? "kex-strict-c-v00@openssh.com"sv : "kex-strict-s-v00@openssh.com"sv);
-	if (peer_wants_strict_key_exchange) {
+	if (initial_kex)
+		/* kex-strict is only supposed to be passed in the
+		   initial KEX */
+		peer_wants_strict_key_exchange =
+			StringListContains(p.kex_algorithms,
+					   role == Role::SERVER ? "kex-strict-c-v00@openssh.com"sv : "kex-strict-s-v00@openssh.com"sv);
 
+	if (peer_wants_strict_key_exchange) {
 		if (!first_packet_was_kexinit)
 			throw Disconnect{
 				DisconnectReasonCode::KEY_EXCHANGE_FAILED,
