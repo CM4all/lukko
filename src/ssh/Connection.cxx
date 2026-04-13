@@ -334,6 +334,8 @@ Connection::HandleDisconnect(std::span<const std::byte> payload)
 inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
+	const bool initial_kex = !IsEncrypted();
+
 	peer_kexinit = payload;
 
 	const auto p = ParseKexInit(payload);
@@ -384,7 +386,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
 
 		was_rekeying = rekeying;
-		rekeying = IsEncrypted();
+		rekeying = !initial_kex;
 		if (!was_rekeying && rekeying && !write_blocked)
 			OnWriteBlocked();
 
