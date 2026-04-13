@@ -32,7 +32,9 @@ class Output final : ThreadJob {
 	std::unique_ptr<Cipher> cipher;
 
 	/**
-	 * The cipher to be used once #plain_queue runs empty; it will then 
+	 * The cipher to be used once #plain_queue runs empty; it will
+	 * then be moved to #cipher and #next_plain_queue will be
+	 * mvoed to #plain_queue.
 	 */
 	std::unique_ptr<Cipher> next_cipher;
 
