@@ -4,18 +4,16 @@
 
 #pragma once
 
-#include "util/IterableSplitString.hxx"
+#include "util/StringList.hxx"
+#include "util/StringSplit.hxx"
 
 namespace SSH {
 
-static constexpr bool
+[[gnu::pure]]
+static inline bool
 StringListContains(std::string_view haystack, std::string_view needle) noexcept
 {
-	for (const std::string_view i : IterableSplitString(haystack, ','))
-		if (i == needle)
-			return true;
-
-	return false;
+	return ::StringListContains(haystack, ',', needle);
 }
 
 static constexpr std::string_view

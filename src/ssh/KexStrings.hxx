@@ -6,6 +6,7 @@
 
 #include "KexEnums.hxx"
 #include "StringList.hxx"
+#include "util/IterableSplitString.hxx"
 
 namespace SSH {
 
