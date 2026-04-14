@@ -353,6 +353,7 @@ private:
 
 	/* virtual methods from class OutgoingConnectionHandler */
 	void OnOutgoingDestroy() noexcept override;
+	void OnOutgoingError(std::exception_ptr &&error) noexcept override;
 	void OnOutgoingUserauthService() override;
 	void OnOutgoingUserauthSuccess() override;
 	[[noreturn]]

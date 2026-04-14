@@ -1352,6 +1352,18 @@ Connection::OnOutgoingDestroy() noexcept
 }
 
 void
+Connection::OnOutgoingError(std::exception_ptr &&error) noexcept
+{
+	outgoing.reset();
+
+	LogFmt("Error on outgoing connection: {}"sv, std::move(error));
+
+	// TODO
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Error"sv);
+}
+
+void
 Connection::OnOutgoingUserauthService()
 {
 	assert(outgoing);

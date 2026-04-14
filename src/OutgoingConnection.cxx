@@ -185,6 +185,5 @@ OutgoingConnection::OnDisconnected(SSH::DisconnectReasonCode reason_code,
 void
 OutgoingConnection::OnBufferedError(std::exception_ptr e) noexcept
 {
-	PrintException(e);
-	SSH::Connection::OnBufferedError(std::move(e));
+	handler.OnOutgoingError(std::move(e));
 }

@@ -12,6 +12,14 @@ class PublicKeySet;
 class OutgoingConnectionHandler {
 public:
 	virtual void OnOutgoingDestroy() noexcept = 0;
+
+	/**
+	 * An error has occurred on the connection and it should be
+	 * closed.  This will be called instead of
+	 * OnOutgoingDestroy().
+	 */
+	virtual void OnOutgoingError(std::exception_ptr &&error) noexcept = 0;
+
 	virtual void OnOutgoingUserauthService() = 0;
 	virtual void OnOutgoingUserauthSuccess() = 0;
 	virtual void OnOutgoingUserauthFailure() = 0;
