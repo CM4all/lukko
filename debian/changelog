@@ -3,7 +3,7 @@ cm4all-lukko (0.53) unstable; urgency=low
   * fix hash collisions with "max_connections_per_ip" and "tarpit"
   * spawn: fix SYMLINK conflict in virtual directories
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 18 May 2026 18:38:18 +0200
 
 cm4all-lukko (0.52) unstable; urgency=low
 
