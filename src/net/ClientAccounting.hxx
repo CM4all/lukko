@@ -5,11 +5,10 @@
 #pragma once
 
 #include "event/FarTimerEvent.hxx"
+#include "net/BareInetAddress.hxx"
 #include "util/IntrusiveHashSet.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/TokenBucket.hxx"
-
-#include <cstdint>
 
 class SocketAddress;
 class PerClientAccounting;
@@ -51,11 +50,18 @@ class PerClientAccounting final
 
 	ClientAccountingMap &map;
 
-	const uint_least64_t address;
+	const BareInetAddress address;
 
 	struct GetKey {
-		constexpr uint_least64_t operator()(const PerClientAccounting &item) const noexcept {
+		constexpr const BareInetAddress &operator()(const PerClientAccounting &item) const noexcept {
 			return item.address;
+		}
+	};
+
+	struct Hash {
+		[[gnu::pure]]
+		std::size_t operator()(const BareInetAddress &address) const noexcept {
+			return address.Hash();
 		}
 	};
 
@@ -79,7 +85,7 @@ class PerClientAccounting final
 	TokenBucket token_bucket;
 
 public:
-	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
+	PerClientAccounting(ClientAccountingMap &_map, const BareInetAddress &_address) noexcept;
 
 	[[gnu::pure]]
 	bool Check() const noexcept;
@@ -106,8 +112,8 @@ class ClientAccountingMap {
 	using Map = IntrusiveHashSet<PerClientAccounting, 16384,
 				     IntrusiveHashSetOperators<PerClientAccounting,
 							       PerClientAccounting::GetKey,
-							       std::hash<uint_least64_t>,
-							       std::equal_to<uint_least64_t>>>;
+							       PerClientAccounting::Hash,
+							       std::equal_to<BareInetAddress>>>;
 	Map map;
 
 	FarTimerEvent cleanup_timer;
