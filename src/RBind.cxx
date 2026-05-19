@@ -216,15 +216,13 @@ ResolveBindTCP(const Connection &ssh_connection,
 	       std::string_view host, unsigned port) noexcept
 {
 #ifdef ENABLE_TRANSLATION
-	if (const auto *tr = ssh_connection.GetTranslationResponse()) {
+	if (const auto *child_options = ssh_connection.GetAnyChildOptions()) {
 		// TODO switch uid/gid?
 
-		if (tr->execute_options != nullptr &&
-		    tr->execute_options->child_options.ns.network_namespace_name != nullptr)
-			return NsResolveBindTCP(ssh_connection.GetEventLoop(),
-						   ssh_connection.GetSpawnService(),
-						   tr->execute_options->child_options,
-						   host, port);
+		return NsResolveBindTCP(ssh_connection.GetEventLoop(),
+					ssh_connection.GetSpawnService(),
+					*child_options,
+					host, port);
 	}
 #endif // ENABLE_TRANSLATION
 

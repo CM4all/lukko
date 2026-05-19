@@ -23,6 +23,7 @@
 namespace Co { template<typename T> class Task; }
 struct TranslateResponse;
 struct ExecuteOptions;
+struct ChildOptions;
 struct PreparedChildProcess;
 class FdHolder;
 class Instance;
@@ -177,6 +178,16 @@ public:
 	 */
 	[[gnu::pure]]
 	const TranslateResponse *GetTranslationResponse() const noexcept;
+
+	/**
+	 * Return any #ExecuteOptions instance that is available.
+	 * Returns nullptr if none is available; that can either mean
+	 * that the translation protocol is disabled or that the
+	 * #TranslateResponse contains no #ExecuteOptions instance
+	 * (which means that spawning processes is not possible).
+	 */
+	[[gnu::pure]]
+	const ChildOptions *GetAnyChildOptions() const noexcept;
 
 	/**
 	 * Return the #ExecuteOptions for a specific service.

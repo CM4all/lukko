@@ -325,6 +325,14 @@ Connection::GetTranslationResponse() const noexcept
 		: nullptr;
 }
 
+const ChildOptions *
+Connection::GetAnyChildOptions() const noexcept
+{
+	return translation && translation->response.execute_options
+		? &translation->response.execute_options->child_options
+		: nullptr;
+}
+
 Co::Task<const ExecuteOptions &>
 Connection::GetExecuteOptions(SSH::Service service) const
 {
