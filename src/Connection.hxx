@@ -93,8 +93,12 @@ class Connection final
 	std::unique_ptr<OutgoingConnection> outgoing;
 
 #ifdef ENABLE_TRANSLATION
+	bool allow_exec = true;
+	bool allow_sftp = true;
 	bool sftp_only = false;
 #else
+	static constexpr bool allow_exec = true;
+	static constexpr bool allow_sftp = true;
 	static constexpr bool sftp_only = false;
 #endif
 
@@ -225,7 +229,7 @@ public:
 	 */
 	[[gnu::pure]]
 	bool IsSftpAllowed() const noexcept {
-		return true;
+		return allow_sftp;
 	}
 
 	/**
@@ -251,7 +255,7 @@ public:
 	 */
 	[[gnu::pure]]
 	bool IsExecAllowed() const noexcept {
-		return !IsSftpOnly();
+		return allow_exec;
 	}
 
 	/**

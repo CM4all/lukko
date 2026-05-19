@@ -143,10 +143,8 @@ CheckTranslateResponse(const TranslateResponse &response)
 	// status must have been checked already
 	assert(response.status == HttpStatus{});
 
-	if (response.execute_options == nullptr)
-		throw std::invalid_argument{"Translation response contains no spawner options"};
-
-	CheckExecuteOptions(*response.execute_options);
+	if (response.execute_options != nullptr)
+		CheckExecuteOptions(*response.execute_options);
 }
 
 #endif // ENABLE_TRANSLATION
@@ -831,17 +829,25 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		}
 
 		if (response.token != nullptr &&
-		    StringIsEqual(response.token, "sftp-only"))
+		    StringIsEqual(response.token, "sftp-only")) {
+			allow_exec = false;
 			sftp_only = true;
+		}
+
+		if (response.execute_options == nullptr) {
+			allow_exec = false;
+			allow_sftp = translation->sftp_options != nullptr;
+		}
 
 		if (!password.empty())
 			password_accepted = true;
 		else if (response.no_password != nullptr) {
 			password_accepted = true;
 
-			if (StringIsEqual(response.no_password, "sftp"))
+			if (StringIsEqual(response.no_password, "sftp")) {
+				allow_exec = false;
 				sftp_only = true;
-			else if (!StringIsEmpty(response.no_password))
+			} else if (!StringIsEmpty(response.no_password))
 				/* unrecognized NO_PASSWORD payload;
                                    we can't accept the password that
                                    way */
