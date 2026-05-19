@@ -180,14 +180,15 @@ public:
 	const TranslateResponse *GetTranslationResponse() const noexcept;
 
 	/**
-	 * Return any #ExecuteOptions instance that is available.
+	 * Return an #ExecuteOptions instance that has access to the
+	 * same network namespace as the one used for "exec".
 	 * Returns nullptr if none is available; that can either mean
 	 * that the translation protocol is disabled or that the
-	 * #TranslateResponse contains no #ExecuteOptions instance
+	 * #TranslateResponse contains no such #ExecuteOptions instance
 	 * (which means that spawning processes is not possible).
 	 */
 	[[gnu::pure]]
-	const ChildOptions *GetAnyChildOptions() const noexcept;
+	const ChildOptions *GetNetworkChildOptions() const noexcept;
 
 	[[gnu::pure]]
 	const ExecuteOptions *GetSftpExecuteOptions() const noexcept;

@@ -181,7 +181,7 @@ ResolveConnectTCP(const Connection &ssh_connection,
 		  std::string_view host, unsigned port)
 {
 #ifdef ENABLE_TRANSLATION
-	if (const auto *child_options = ssh_connection.GetAnyChildOptions()) {
+	if (const auto *child_options = ssh_connection.GetNetworkChildOptions()) {
 		// TODO switch uid/gid?
 
 		return NsResolveConnectTCP(ssh_connection.GetEventLoop(),

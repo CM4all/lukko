@@ -289,7 +289,7 @@ Connection::GetTranslationResponse() const noexcept
 }
 
 const ChildOptions *
-Connection::GetAnyChildOptions() const noexcept
+Connection::GetNetworkChildOptions() const noexcept
 {
 	return translation && translation->response.execute_options
 		? &translation->response.execute_options->child_options
