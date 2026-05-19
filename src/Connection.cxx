@@ -114,10 +114,10 @@ Connection::Translation::Translation(std::string_view _user,
 	 alloc(std::move(_alloc)),
 	 response(std::move(_response))
 {
-	if (const auto *sftp = response.service_execute_options.Get("sftp"))
+	if (const auto *sftp = response.service_execute_options.Get("sftp"sv))
 		sftp_options.InjectValue(ShallowCopy{}, *sftp);
 
-	if (const auto *rsync = response.service_execute_options.Get("rsync"))
+	if (const auto *rsync = response.service_execute_options.Get("rsync"sv))
 		rsync_options.InjectValue(ShallowCopy{}, *rsync);
 }
 
@@ -294,7 +294,7 @@ Connection::TranslateService(std::string_view service) const
 		 * SERVICE-specific response and this function has
 		 * been reached, it means that the specified service
 		 * was not listed; therefore we disallow it */
-		assert(translation->response.service_execute_options.Get(std::string{service}.c_str()) == nullptr);
+		assert(translation->response.service_execute_options.Get(service) == nullptr);
 
 		throw std::runtime_error{"Service not allowed"};
 	}
