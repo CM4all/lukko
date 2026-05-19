@@ -153,11 +153,10 @@ private:
 	 */
 	static void PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
 
-	[[nodiscard]]
-	Co::Task<void> PrepareChildProcess(AllocatorPtr alloc,
-					   PreparedChildProcess &p,
-					   FdHolder &close_fds,
-					   SSH::Service service);
+	void PrepareChildProcess(AllocatorPtr alloc,
+				 PreparedChildProcess &p,
+				 FdHolder &close_fds,
+				 SSH::Service service);
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 

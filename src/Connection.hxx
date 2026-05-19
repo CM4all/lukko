@@ -201,11 +201,9 @@ public:
 	 * Calling this method is only allowed if a translation server
 	 * is used.  The method may suspend when the translation
 	 * server gets queried.
-	 *
-	 * Throws on error.
 	 */
 	[[gnu::pure]]
-	Co::Task<const ExecuteOptions &> GetExecuteOptions(SSH::Service service) const noexcept;
+	const ExecuteOptions &GetExecuteOptions(SSH::Service service) const noexcept;
 
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
@@ -282,10 +280,9 @@ public:
 	 * @param sftp is this for an SFTP process with an empty
 	 * rootfs?
 	 */
-	[[nodiscard]]
-	Co::Task<void> PrepareChildProcess(PreparedChildProcess &p,
-					   FdHolder &close_fds,
-					   SSH::Service service) const noexcept;
+	void PrepareChildProcess(PreparedChildProcess &p,
+				 FdHolder &close_fds,
+				 SSH::Service service) const noexcept;
 
 	using SSH::Connection::DoDisconnect;
 

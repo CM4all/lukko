@@ -231,7 +231,7 @@ SessionChannel::PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcep
 	}
 }
 
-Co::Task<void>
+void
 SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    PreparedChildProcess &p,
 				    FdHolder &close_fds,
@@ -262,7 +262,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 		p.SetEnv("SHELL", c.GetShell());
 	}
 
-	co_await c.PrepareChildProcess(p, close_fds, service);
+	c.PrepareChildProcess(p, close_fds, service);
 
 	if (tty.IsDefined()) {
 		assert(service == SSH::Service::SSH);
@@ -439,7 +439,7 @@ SessionChannel::Exec(const char *cmd)
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	co_await PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
+	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
 
 	const char *const shell = c.GetShell();
 
@@ -544,8 +544,8 @@ SessionChannel::StartSftpServer()
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	co_await PrepareChildProcess(alloc, p, close_fds,
-				     sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
+	PrepareChildProcess(alloc, p, close_fds,
+			    sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
 
 	if (sftp_server.IsDefined()) {
 		p.exec_fd = sftp_server;

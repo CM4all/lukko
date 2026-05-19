@@ -312,7 +312,7 @@ Connection::GetRsyncExecuteOptions() const noexcept
 		: nullptr;
 }
 
-Co::Task<const ExecuteOptions &>
+const ExecuteOptions &
 Connection::GetExecuteOptions(SSH::Service service) const noexcept
 {
 	assert(translation);
@@ -320,25 +320,25 @@ Connection::GetExecuteOptions(SSH::Service service) const noexcept
 	switch (service) {
 	case SSH::Service::SSH:
 		assert(translation->response.execute_options != nullptr);
-		co_return *translation->response.execute_options;
+		return *translation->response.execute_options;
 
 	case SSH::Service::SFTP:
 		assert(IsSftpAllowed());
 
 		if (translation->sftp_options != nullptr)
-			co_return *translation->sftp_options;
+			return *translation->sftp_options;
 
 		/* fall back to the top-level ExecuteOptions */
 		assert(translation->response.execute_options != nullptr);
-		co_return *translation->response.execute_options;
+		return *translation->response.execute_options;
 
 	case SSH::Service::RSYNC:
 		if (translation->rsync_options != nullptr)
-			co_return *translation->rsync_options;
+			return *translation->rsync_options;
 
 		/* fall back to the top-level ExecuteOptions */
 		assert(translation->response.execute_options != nullptr);
-		co_return *translation->response.execute_options;
+		return *translation->response.execute_options;
 	}
 
 	std::unreachable();
@@ -470,14 +470,14 @@ Connection::GetShell() const noexcept
 	return "/bin/sh";
 }
 
-Co::Task<void>
+void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				[[maybe_unused]] FdHolder &close_fds,
 				[[maybe_unused]] SSH::Service service) const noexcept
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
-		const auto &options = co_await GetExecuteOptions(service);
+		const auto &options = GetExecuteOptions(service);
 		PrepareChildProcess(p, close_fds, options);
 	} else {
 #endif // ENABLE_TRANSLATION
@@ -489,8 +489,6 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 #ifdef ENABLE_TRANSLATION
 	}
 #endif // ENABLE_TRANSLATION
-
-	co_return;
 }
 
 inline bool
