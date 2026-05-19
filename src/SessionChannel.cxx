@@ -417,6 +417,75 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	co_return true;
 }
 
+[[gnu::noinline]]
+[[gnu::pure]]
+static const char *
+ShellUnescapeOneSingleQuoted(AllocatorPtr alloc, const char *src) noexcept
+{
+	char *buffer = alloc.NewArray<char>(strlen(src) + 1), *dest = buffer;
+
+	bool quote = false;
+	while (true) {
+		char ch = *src++;
+
+		if (ch == '\0') {
+			if (quote)
+				return nullptr;
+
+			*dest = '\0';
+			return buffer;
+		} else if (ch == '\'') {
+			quote = !quote;
+		} else {
+			if (ch == '\\') {
+				ch = *src++;
+				if (ch == '\0')
+					return nullptr;
+			}
+
+			*dest++ = ch;
+		}
+	}
+}
+
+inline Co::Task<bool>
+SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
+			const char *arg,
+			const ExecuteOptions &execute_options)
+{
+	const auto &c = static_cast<Connection &>(GetConnection());
+
+	Allocator alloc;
+
+	const char *const unescaped_arg = ShellUnescapeOneSingleQuoted(alloc, arg);
+	if (unescaped_arg == nullptr)
+		co_return false;
+
+	/* throttle if the spawner is under pressure */
+	co_await CoEnqueueSpawner(c.GetSpawnService());
+
+	FdHolder close_fds;
+	PreparedChildProcess p;
+
+	c.PrepareChildProcess(p, close_fds, execute_options.child_options);
+	PreparePipes(p, close_fds);
+	PrepareHome(alloc, p);
+
+	p.exec_path = execute_options.execute != nullptr
+		? execute_options.execute
+		: default_exec_path,
+
+	p.Append(cmd);
+	p.Append(unescaped_arg);
+
+	SpawnChildProcess(alloc, std::move(p));
+
+	co_await CoWaitSpawnCompletion{*child};
+
+	EnableStdin();
+	co_return true;
+}
+
 #endif
 
 inline Co::Task<bool>
@@ -425,10 +494,29 @@ SessionChannel::Exec(const char *cmd)
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed()) {
 #ifdef ENABLE_TRANSLATION
+		/* "exec" is not allowed, but the translation server
+		   may have allowed a few exceptions: */
+
 		if (cmd != nullptr && c.IsRsyncAllowed() &&
 		    StringStartsWith(cmd, "rsync --server "sv)) {
 			if (const auto *execute_options = c.GetRsyncExecuteOptions()) {
 				co_return co_await ExecRsync(cmd, *execute_options);
+			}
+		}
+
+		if (cmd != nullptr) {
+			if (const char *arg = StringAfterPrefix(cmd, "git-receive-pack "sv)) {
+				if (const auto *execute_options = c.GetGitReceivePackExecuteOptions()) {
+					co_return co_await ExecGit("git-receive-pack", "/usr/bin/git-receive-pack",
+								   arg, *execute_options);
+				}
+			}
+
+			if (const char *arg = StringAfterPrefix(cmd, "git-upload-pack "sv)) {
+				if (const auto *execute_options = c.GetGitUploadPackExecuteOptions()) {
+					co_return co_await ExecGit("git-upload-pack", "/usr/bin/git-upload-pack",
+								   arg, *execute_options);
+				}
 			}
 		}
 #endif

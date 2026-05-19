@@ -200,6 +200,12 @@ public:
 	[[gnu::pure]]
 	const ExecuteOptions *GetRsyncExecuteOptions() const noexcept;
 
+	[[gnu::pure]]
+	const ExecuteOptions *GetGitReceivePackExecuteOptions() const noexcept;
+
+	[[gnu::pure]]
+	const ExecuteOptions *GetGitUploadPackExecuteOptions() const noexcept;
+
 	/**
 	 * Return the #ExecuteOptions for a specific service.
 	 * Calling this method is only allowed if a translation server

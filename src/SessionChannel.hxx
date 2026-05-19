@@ -220,6 +220,11 @@ private:
 				 const ExecuteOptions &execute_options);
 
 	[[nodiscard]]
+	Co::Task<bool> ExecGit(const char *cmd, const char *default_exec_path,
+			       const char *arg,
+			       const ExecuteOptions &execute_options);
+
+	[[nodiscard]]
 	Co::Task<bool> Exec(const char *cmd);
 
 	void CancelRead() noexcept {

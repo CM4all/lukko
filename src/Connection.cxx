@@ -68,6 +68,8 @@
 
 #include <fmt/core.h>
 
+#include <optional>
+
 #include <fcntl.h> // for O_*
 #include <netdb.h> // for struct addrinfo
 #include <pwd.h>
@@ -101,6 +103,20 @@ struct Connection::Translation {
 	 */
 	const ExecuteOptions *const rsync_options;
 
+	/**
+	 * The translation response for "SERVICE=git-receive-pack".
+	 * It is loaded from
+	 * TranslateResponse::service_execute_options.
+	 */
+	const ExecuteOptions *const git_receive_pack_options;
+
+	/**
+	 * The translation response for "SERVICE=git-upload-pack".
+	 * It is loaded from
+	 * TranslateResponse::service_execute_options.
+	 */
+	const ExecuteOptions *const git_upload_pack_options;
+
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
 		    TranslateResponse &&_response) noexcept;
@@ -114,7 +130,9 @@ Connection::Translation::Translation(std::string_view _user,
 	 alloc(std::move(_alloc)),
 	 response(std::move(_response)),
 	 sftp_options(response.service_execute_options.Get("sftp"sv)),
-	 rsync_options(response.service_execute_options.Get("rsync"sv))
+	 rsync_options(response.service_execute_options.Get("rsync"sv)),
+	 git_receive_pack_options(response.service_execute_options.Get("git-receive-pack"sv)),
+	 git_upload_pack_options(response.service_execute_options.Get("git-upload-pack"sv))
 {
 }
 
@@ -307,6 +325,22 @@ Connection::GetRsyncExecuteOptions() const noexcept
 {
 	return translation
 		? translation->rsync_options
+		: nullptr;
+}
+
+const ExecuteOptions *
+Connection::GetGitReceivePackExecuteOptions() const noexcept
+{
+	return translation
+		? translation->git_receive_pack_options
+		: nullptr;
+}
+
+const ExecuteOptions *
+Connection::GetGitUploadPackExecuteOptions() const noexcept
+{
+	return translation
+		? translation->git_upload_pack_options
 		: nullptr;
 }
 
