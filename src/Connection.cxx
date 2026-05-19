@@ -48,9 +48,10 @@
 #include "util/CharUtil.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/Exception.hxx" // for GetFullMessage()
-#include "util/IterableSplitString.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringList.hxx"
+#include "util/StringSplit.hxx"
 #include "util/StringVerify.hxx"
 
 #ifdef ENABLE_TRANSLATION
@@ -368,11 +369,7 @@ Connection::HasTag(std::string_view tag) const noexcept
 	if (translation == nullptr || translation->response.execute_options == nullptr)
 		return false;
 
-	for (std::string_view i : IterableSplitString(translation->response.execute_options->child_options.tag, '\0'))
-		if (i == tag)
-			return true;
-
-	return false;
+	return StringListContains(translation->response.execute_options->child_options.tag, '\0', tag);
 }
 
 #endif // ENABLE_TRANSLATION
