@@ -296,6 +296,14 @@ Connection::GetAnyChildOptions() const noexcept
 		: nullptr;
 }
 
+const ExecuteOptions *
+Connection::GetRsyncExecuteOptions() const noexcept
+{
+	return translation
+		? translation->rsync_options
+		: nullptr;
+}
+
 Co::Task<const ExecuteOptions &>
 Connection::GetExecuteOptions(SSH::Service service) const noexcept
 {

@@ -14,6 +14,7 @@
 #include <memory>
 
 namespace Co { template<typename T> class Task; }
+struct ExecuteOptions;
 struct PreparedChildProcess;
 class AllocatorPtr;
 class ChildProcessHandle;
@@ -181,7 +182,8 @@ private:
 	 * translation server has rejected rsync execution.
 	 */
 	[[nodiscard]]
-	Co::Task<bool> ExecRsync(const char *cmd);
+	Co::Task<bool> ExecRsync(const char *cmd,
+				 const ExecuteOptions &execute_options);
 
 	[[nodiscard]]
 	Co::Task<bool> Exec(const char *cmd);

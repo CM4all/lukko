@@ -372,7 +372,7 @@ SplitCmdline(PreparedChildProcess &p, std::forward_list<std::string> &strings,
 }
 
 inline Co::Task<bool>
-SessionChannel::ExecRsync(const char *cmd)
+SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options)
 {
 	assert(StringStartsWith(cmd, "rsync "sv));
 
@@ -386,14 +386,9 @@ SessionChannel::ExecRsync(const char *cmd)
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	try {
-		co_await PrepareChildProcess(alloc, p, close_fds, SSH::Service::RSYNC);
-	} catch (...) {
-		/* this is probably because the translation server has
-		   rejected the rsync execution */
-		// TODO log the error?  use it for the SSH response?
-		co_return false;
-	}
+	c.PrepareChildProcess(p, close_fds, execute_options);
+	PreparePipes(p, close_fds);
+	PrepareHome(alloc, p);
 
 	if (p.exec_path == nullptr)
 		throw std::runtime_error{"No EXECUTE"};
@@ -421,9 +416,12 @@ SessionChannel::Exec(const char *cmd)
 	if (!c.IsExecAllowed()) {
 #ifdef ENABLE_TRANSLATION
 		if (cmd != nullptr && c.IsRsyncAllowed() &&
-		    StringStartsWith(cmd, "rsync --server "sv) &&
-		    co_await ExecRsync(cmd))
-			co_return true;
+		    StringStartsWith(cmd, "rsync --server "sv)) {
+			if (const auto *execute_options = c.GetRsyncExecuteOptions()) {
+				co_await ExecRsync(cmd, *execute_options);
+				co_return true;
+			}
+		}
 #endif
 
 		if (c.IsSftpOnly() && c.GetListener().GetExecRejectStderr()) {

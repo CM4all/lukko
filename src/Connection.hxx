@@ -189,6 +189,9 @@ public:
 	[[gnu::pure]]
 	const ChildOptions *GetAnyChildOptions() const noexcept;
 
+	[[gnu::pure]]
+	const ExecuteOptions *GetRsyncExecuteOptions() const noexcept;
+
 	/**
 	 * Return the #ExecuteOptions for a specific service.
 	 * Calling this method is only allowed if a translation server
