@@ -160,6 +160,10 @@ private:
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 
+	void PrepareSftpServer(AllocatorPtr alloc,
+			       PreparedChildProcess &p,
+			       FdHolder &close_fds) noexcept;
+
 	/**
 	 * Start the SFTP server process.
 	 *
