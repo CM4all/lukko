@@ -383,7 +383,9 @@ Connection::IsForwardingAllowed() const noexcept
 	if (authorized_key_options.no_port_forwarding)
 		return false;
 
-	if (IsSftpOnly())
+	if (!IsExecAllowed())
+		/* if arbitrary exec is not allowed, this is a
+		   restricted account and we don't allow forwarding */
 		return false;
 
 #ifdef ENABLE_TRANSLATION
@@ -401,7 +403,9 @@ Connection::IsForwardingAllowed() const noexcept
 inline bool
 Connection::IsLocalForwardingAllowed() const noexcept
 {
-	if (IsSftpOnly())
+	if (!IsExecAllowed())
+		/* if arbitrary exec is not allowed, this is a
+		   restricted account and we don't allow forwarding */
 		return false;
 
 	return true;
