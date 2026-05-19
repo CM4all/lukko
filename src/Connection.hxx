@@ -197,8 +197,8 @@ public:
 	 *
 	 * Throws on error.
 	 */
-	[[nodiscard]]
-	Co::Task<const ExecuteOptions &> GetExecuteOptions(SSH::Service service) const;
+	[[gnu::pure]]
+	Co::Task<const ExecuteOptions &> GetExecuteOptions(SSH::Service service) const noexcept;
 
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
@@ -304,12 +304,6 @@ private:
 	Co::Task<const TranslateResponse &> LazyTranslate(const char *translation_server,
 							  std::string_view new_username,
 							  std::string_view password) noexcept;
-
-	/**
-	 * Perform a (secondary) translation with a different SERVICE,
-	 * e.g. "sftp".
-	 */
-	Co::Task<ExecuteOptions> TranslateService(std::string_view service) const;
 #endif
 
 	/**

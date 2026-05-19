@@ -1,6 +1,6 @@
 cm4all-lukko (0.54) unstable; urgency=low
 
-  * 
+  * translation: drop support for SERVICE=sftp requests
 
  --   
 

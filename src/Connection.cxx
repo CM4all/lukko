@@ -58,7 +58,6 @@
 #include "translation/LoginGlue.hxx"
 #include "translation/Response.hxx"
 #include "translation/ExecuteOptions.hxx"
-#include "co/MultiLoader.hxx"
 #include "AllocatorPtr.hxx"
 #endif // ENABLE_TRANSLATION
 
@@ -94,13 +93,13 @@ struct Connection::Translation {
 	 * The translation response for "SERVICE=sftp".  It is loaded
 	 * on demand.
 	 */
-	Co::MultiLoader<ExecuteOptions> sftp_options;
+	const ExecuteOptions *const sftp_options;
 
 	/**
 	 * The translation response for "SERVICE=rsync".  It is loaded
 	 * on demand.
 	 */
-	Co::MultiLoader<ExecuteOptions> rsync_options;
+	const ExecuteOptions *const rsync_options;
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
@@ -113,13 +112,10 @@ Connection::Translation::Translation(std::string_view _user,
 				     TranslateResponse &&_response) noexcept
 	:user(_user),
 	 alloc(std::move(_alloc)),
-	 response(std::move(_response))
+	 response(std::move(_response)),
+	 sftp_options(response.service_execute_options.Get("sftp"sv)),
+	 rsync_options(response.service_execute_options.Get("rsync"sv))
 {
-	if (const auto *sftp = response.service_execute_options.Get("sftp"sv))
-		sftp_options.InjectValue(ShallowCopy{}, *sftp);
-
-	if (const auto *rsync = response.service_execute_options.Get("rsync"sv))
-		rsync_options.InjectValue(ShallowCopy{}, *rsync);
 }
 
 static void
@@ -284,39 +280,6 @@ Connection::LazyTranslate(const char *translation_server,
 	co_return translation->response;
 }
 
-inline Co::Task<ExecuteOptions>
-Connection::TranslateService(std::string_view service) const
-{
-	assert(translation);
-	assert(!translation->user.empty());
-
-	if (!translation->response.service_execute_options.empty()) {
-		/* if the translation server has sent a
-		 * SERVICE-specific response and this function has
-		 * been reached, it means that the specified service
-		 * was not listed; therefore we disallow it */
-		assert(translation->response.service_execute_options.Get(service) == nullptr);
-
-		throw std::runtime_error{"Service not allowed"};
-	}
-
-	const char *const translation_server = instance.GetTranslationServer();
-	assert(translation_server != nullptr);
-
-	auto response = co_await TranslateLogin(GetEventLoop(), translation->alloc,
-						translation_server,
-						service, listener.GetTag(),
-						translation->user, {},
-						listener.HasProxyTo());
-
-	if (response.status != HttpStatus{})
-		throw std::runtime_error{"Translation server rejected LOGIN"};
-
-	CheckTranslateResponse(response);
-
-	co_return std::move(*response.execute_options);
-}
-
 const TranslateResponse *
 Connection::GetTranslationResponse() const noexcept
 {
@@ -334,7 +297,7 @@ Connection::GetAnyChildOptions() const noexcept
 }
 
 Co::Task<const ExecuteOptions &>
-Connection::GetExecuteOptions(SSH::Service service) const
+Connection::GetExecuteOptions(SSH::Service service) const noexcept
 {
 	assert(translation);
 
@@ -346,10 +309,20 @@ Connection::GetExecuteOptions(SSH::Service service) const
 	case SSH::Service::SFTP:
 		assert(IsSftpAllowed());
 
-		co_return co_await translation->sftp_options.get([this]{ return TranslateService("sftp"sv); });
+		if (translation->sftp_options != nullptr)
+			co_return *translation->sftp_options;
+
+		/* fall back to the top-level ExecuteOptions */
+		assert(translation->response.execute_options != nullptr);
+		co_return *translation->response.execute_options;
 
 	case SSH::Service::RSYNC:
-		co_return co_await translation->rsync_options.get([this]{ return TranslateService("rsync"sv); });
+		if (translation->rsync_options != nullptr)
+			co_return *translation->rsync_options;
+
+		/* fall back to the top-level ExecuteOptions */
+		assert(translation->response.execute_options != nullptr);
+		co_return *translation->response.execute_options;
 	}
 
 	std::unreachable();
