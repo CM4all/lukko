@@ -144,6 +144,8 @@ Delegate(const Connection &ssh_connection,
 Co::Task<UniqueFileDescriptor>
 DelegateOpen(const Connection &ssh_connection, std::string_view path)
 {
+	assert(ssh_connection.IsSftpAllowed());
+
 	// using SFTP mode because this (usually) mounts an empty rootfs; minimalism!
 	return Delegate(ssh_connection, path, OpenExec, true);
 }
@@ -151,6 +153,8 @@ DelegateOpen(const Connection &ssh_connection, std::string_view path)
 Co::Task<UniqueFileDescriptor>
 DelegateLocalConnect(const Connection &ssh_connection, std::string_view path)
 {
+	assert(ssh_connection.IsExecAllowed());
+
 	/* Don't use SFTP mode because we are most likely interested in connecting
 	 * to the sockets that will not be mounted in SFTP mode. */
 	return Delegate(ssh_connection, path, LocalConnectExec, false);

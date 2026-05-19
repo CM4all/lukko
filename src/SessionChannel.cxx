@@ -488,6 +488,9 @@ SessionChannel::StartSftpServer()
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 
+	if (!c.IsSftpAllowed())
+		co_return false;
+
 	if (tty.IsDefined())
 		/* refuse to run SFTP with a pty */
 		co_return false;

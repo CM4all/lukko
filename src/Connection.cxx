@@ -344,6 +344,8 @@ Connection::GetExecuteOptions(SSH::Service service) const
 		co_return *translation->response.execute_options;
 
 	case SSH::Service::SFTP:
+		assert(IsSftpAllowed());
+
 		co_return co_await translation->sftp_options.get([this]{ return TranslateService("sftp"sv); });
 
 	case SSH::Service::RSYNC:
@@ -453,10 +455,12 @@ Connection::OpenInHome(const char *path) const noexcept
 	/* the plain open failed with EACCES; try again while
 	   impersonating the target user */
 
-	try {
-		co_return co_await DelegateOpen(*this, path);
-	} catch (...) {
-		// TODO log error?
+	if (IsSftpAllowed()) {
+		try {
+			co_return co_await DelegateOpen(*this, path);
+		} catch (...) {
+			// TODO log error?
+		}
 	}
 
 	co_return UniqueFileDescriptor{};

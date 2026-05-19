@@ -209,6 +209,17 @@ public:
 #endif
 
 	/**
+	 * Is the client only allowed to use SFTP?
+	 *
+	 * This is also necessary for some operations like reading the
+	 * `authorized_keys` file.
+	 */
+	[[gnu::pure]]
+	bool IsSftpAllowed() const noexcept {
+		return true;
+	}
+
+	/**
 	 * Is the client only allowed to use SFTP but nothing else?
 	 */
 	[[gnu::pure]]
@@ -223,7 +234,7 @@ public:
 	 */
 	[[gnu::pure]]
 	bool IsRsyncAllowed() const noexcept {
-		return true;
+		return IsSftpAllowed();
 	}
 
 	/**
