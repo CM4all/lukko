@@ -297,6 +297,14 @@ Connection::GetAnyChildOptions() const noexcept
 }
 
 const ExecuteOptions *
+Connection::GetSftpExecuteOptions() const noexcept
+{
+	return translation
+		? translation->sftp_options
+		: nullptr;
+}
+
+const ExecuteOptions *
 Connection::GetRsyncExecuteOptions() const noexcept
 {
 	return translation

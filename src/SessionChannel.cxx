@@ -497,44 +497,42 @@ SessionChannel::StartSftpServer()
 	co_await CoEnqueueSpawner(c.GetSpawnService());
 
 #ifdef ENABLE_TRANSLATION
-	if (c.HasTranslation()) {
-		if (const auto &options = co_await c.GetExecuteOptions(SSH::Service::SFTP);
-		    options.execute != nullptr) {
-			try {
-				// TODO reduce code duplication in this block
+	if (const auto *execute_options = c.GetSftpExecuteOptions();
+	    execute_options != nullptr && execute_options->execute != nullptr) {
+		try {
+			// TODO reduce code duplication in this block
 
-				const auto sftp_server = OpenReadOnly(options.execute);
+			const auto sftp_server = OpenReadOnly(execute_options->execute);
 
-				Allocator alloc;
-				FdHolder close_fds;
-				PreparedChildProcess p;
+			Allocator alloc;
+			FdHolder close_fds;
+			PreparedChildProcess p;
 
-				/* sftp-server wants to know its own username */
-				p.SetEnv("USER", c.GetUsername());
+			/* sftp-server wants to know its own username */
+			p.SetEnv("USER", c.GetUsername());
 
-				c.PrepareChildProcess(p, close_fds, options);
-				PreparePipes(p, close_fds);
-				PrepareHome(alloc, p);
+			c.PrepareChildProcess(p, close_fds, *execute_options);
+			PreparePipes(p, close_fds);
+			PrepareHome(alloc, p);
 
-				p.exec_fd = sftp_server;
-				p.Append("sftp-server");
+			p.exec_fd = sftp_server;
+			p.Append("sftp-server");
 
-				SpawnChildProcess(alloc, std::move(p));
-				co_await CoWaitSpawnCompletion{*child};
-				EnableStdin();
+			SpawnChildProcess(alloc, std::move(p));
+			co_await CoWaitSpawnCompletion{*child};
+			EnableStdin();
 
+			co_return true;
+		} catch (...) {
+			logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
+
+			if (c.GetListener().GetVerboseErrors()) {
+				SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
+							    std::current_exception()));
 				co_return true;
-			} catch (...) {
-				logger.Fmt(1, "Failed to spawn SFTP server: {}", std::current_exception());
-
-				if (c.GetListener().GetVerboseErrors()) {
-					SetStderrString(fmt::format("Failed to spawn SFTP server: {}\r\n",
-								    std::current_exception()));
-					co_return true;
-				}
-
-				co_return false;
 			}
+
+			co_return false;
 		}
 	}
 #endif

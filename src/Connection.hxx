@@ -190,6 +190,9 @@ public:
 	const ChildOptions *GetAnyChildOptions() const noexcept;
 
 	[[gnu::pure]]
+	const ExecuteOptions *GetSftpExecuteOptions() const noexcept;
+
+	[[gnu::pure]]
 	const ExecuteOptions *GetRsyncExecuteOptions() const noexcept;
 
 	/**
