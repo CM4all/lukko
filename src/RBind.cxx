@@ -213,7 +213,7 @@ NormalResolveBindTCP([[maybe_unused]] EventLoop &event_loop,
 
 Co::Task<UniqueSocketDescriptor>
 ResolveBindTCP(const Connection &ssh_connection,
-	       std::string_view host, unsigned port) noexcept
+	       std::string_view host, unsigned port)
 {
 #ifdef ENABLE_TRANSLATION
 	if (const auto *child_options = ssh_connection.GetAnyChildOptions()) {
@@ -224,6 +224,11 @@ ResolveBindTCP(const Connection &ssh_connection,
 					*child_options,
 					host, port);
 	}
+
+	if (ssh_connection.HasTranslation())
+		/* the translation protocol is enabled but we have no
+		   ChildOptions: we cannot support this operation */
+		throw std::runtime_error{"Forbidden"};
 #endif // ENABLE_TRANSLATION
 
 	return NormalResolveBindTCP(ssh_connection.GetEventLoop(), host, port);

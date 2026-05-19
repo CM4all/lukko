@@ -18,4 +18,4 @@ class Connection;
 [[nodiscard]]
 Co::Task<UniqueSocketDescriptor>
 ResolveBindTCP(const Connection &ssh_connection,
-	       std::string_view host, unsigned port) noexcept;
+	       std::string_view host, unsigned port);
