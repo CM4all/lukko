@@ -386,7 +386,7 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	c.PrepareChildProcess(p, close_fds, execute_options);
+	c.PrepareChildProcess(p, close_fds, execute_options.child_options);
 	PreparePipes(p, close_fds);
 	PrepareHome(alloc, p);
 
@@ -499,7 +499,7 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 		/* sftp-server wants to know its own username */
 		p.SetEnv("USER", c.GetUsername());
 
-		c.PrepareChildProcess(p, close_fds, *execute_options);
+		c.PrepareChildProcess(p, close_fds, execute_options->child_options);
 		PreparePipes(p, close_fds);
 		PrepareHome(alloc, p);
 

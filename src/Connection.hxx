@@ -207,6 +207,10 @@ public:
 
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
+					const ChildOptions &options) noexcept;
+
+	static void PrepareChildProcess(PreparedChildProcess &p,
+					FdHolder &close_fds,
 					const ExecuteOptions &options) noexcept;
 
 	[[gnu::pure]]

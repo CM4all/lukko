@@ -347,10 +347,9 @@ Connection::GetExecuteOptions(SSH::Service service) const noexcept
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				FdHolder &close_fds,
-				const ExecuteOptions &options) noexcept
+				const ChildOptions &options) noexcept
 {
-	options.child_options.CopyTo(p, close_fds);
-	p.exec_path = options.execute;
+	options.CopyTo(p, close_fds);
 
 	if (p.cgroup != nullptr && p.cgroup->IsDefined() &&
 	    p.cgroup_session == nullptr) {
@@ -360,6 +359,16 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 		p.strings.emplace_front(fmt::format("session-{}", ++session_id_counter));
 		p.cgroup_session = p.strings.front().c_str();
 	}
+}
+
+void
+Connection::PrepareChildProcess(PreparedChildProcess &p,
+				FdHolder &close_fds,
+				const ExecuteOptions &options) noexcept
+{
+	PrepareChildProcess(p, close_fds, options.child_options);
+
+	p.exec_path = options.execute;
 }
 
 bool
