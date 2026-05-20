@@ -9,7 +9,6 @@ namespace SSH {
 enum class Service {
 	SSH,
 	SFTP,
-	RSYNC,
 };
 
 }

@@ -331,14 +331,6 @@ Connection::GetExecuteOptions(SSH::Service service) const noexcept
 		/* fall back to the top-level ExecuteOptions */
 		assert(translation->response.execute_options != nullptr);
 		return *translation->response.execute_options;
-
-	case SSH::Service::RSYNC:
-		if (translation->rsync_options != nullptr)
-			return *translation->rsync_options;
-
-		/* fall back to the top-level ExecuteOptions */
-		assert(translation->response.execute_options != nullptr);
-		return *translation->response.execute_options;
 	}
 
 	std::unreachable();
