@@ -512,7 +512,17 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  FdHolder &close_fds,
 				  const char *path) noexcept
 {
-	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
+	const auto &c = static_cast<Connection &>(GetConnection());
+	assert(c.IsSftpAllowed());
+
+	const std::string_view username = c.GetUsername();
+	p.SetEnv("USER", username);
+	p.SetEnv("LOGNAME", username);
+
+	c.PrepareChildProcess(p, close_fds, SSH::Service::SSH);
+	PreparePipes(p, close_fds);
+	PrepareHome(alloc, p);
+
 	p.Append(path);
 }
 
