@@ -389,6 +389,9 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	const auto &c = static_cast<Connection &>(GetConnection());
 	assert(c.IsRsyncAllowed());
 
+	if (execute_options.execute == nullptr)
+		throw std::runtime_error{"No EXECUTE"};
+
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner(c.GetSpawnService());
 
@@ -400,8 +403,7 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	PreparePipes(p, close_fds);
 	PrepareHome(alloc, p);
 
-	if (p.exec_path == nullptr)
-		throw std::runtime_error{"No EXECUTE"};
+	assert(p.exec_path != nullptr);
 
 	const UniqueFileDescriptor exec_fd = OpenPath(p.exec_path);
 	p.exec_fd = exec_fd;
