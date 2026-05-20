@@ -509,6 +509,16 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 inline void
 SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  PreparedChildProcess &p,
+				  FdHolder &close_fds,
+				  const char *path) noexcept
+{
+	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
+	p.Append(path);
+}
+
+inline void
+SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
+				  PreparedChildProcess &p,
 				  FdHolder &close_fds) noexcept
 {
 	assert(!tty.IsDefined());
@@ -536,8 +546,7 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 	}
 #endif
 
-	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
-	p.Append("/usr/lib/openssh/sftp-server");
+	PrepareSftpServer(alloc, p, close_fds, "/usr/lib/openssh/sftp-server");
 }
 
 inline Co::EagerTask<bool>

@@ -171,6 +171,15 @@ private:
 			       const ChildOptions &child_options,
 			       UniqueFileDescriptor &&exec_fd) noexcept;
 
+	/**
+	 * Prepare "sftp-server" execution in the default container
+	 * using the specified path.
+	 */
+	void PrepareSftpServer(AllocatorPtr alloc,
+			       PreparedChildProcess &p,
+			       FdHolder &close_fds,
+			       const char *path) noexcept;
+
 	void PrepareSftpServer(AllocatorPtr alloc,
 			       PreparedChildProcess &p,
 			       FdHolder &close_fds) noexcept;
