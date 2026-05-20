@@ -79,7 +79,7 @@ OpenExec(PreparedChildProcess &&)
 static std::pair<UniqueSocketDescriptor, std::unique_ptr<ChildProcessHandle>>
 SpawnOpen(const Connection &ssh_connection,
 	  int (*exec_function)(PreparedChildProcess &&p),
-	  bool sftp_mode)
+	  SSH::Service service)
 {
 	// TODO this is a horrible and inefficient kludge
 	auto [control_socket, control_socket_for_child] = CreateSocketPair(SOCK_SEQPACKET);
@@ -91,8 +91,7 @@ SpawnOpen(const Connection &ssh_connection,
 	p.exec_function = exec_function;
 	p.args.push_back("dummy");
 
-	ssh_connection.PrepareChildProcess(p, close_fds,
-					   sftp_mode ? SSH::Service::SFTP : SSH::Service::SSH);
+	ssh_connection.PrepareChildProcess(p, close_fds, service);
 
 	if (p.chdir == nullptr)
 		if (const char *home = p.ToContainerPath(alloc, p.GetHome()))
@@ -118,13 +117,13 @@ static Co::Task<UniqueFileDescriptor>
 Delegate(const Connection &ssh_connection,
 	 std::string_view path,
 	 int (*exec_function)(PreparedChildProcess &&p),
-	 bool sftp_mode)
+	 SSH::Service service)
 {
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner{ssh_connection.GetSpawnService()};
 
 	auto [control_socket, child_handle] =
-		SpawnOpen(ssh_connection, exec_function, sftp_mode);
+		SpawnOpen(ssh_connection, exec_function, service);
 
 	/* wait for spawner completion and rethrow errors */
 	co_await CoWaitSpawnCompletion{*child_handle};
@@ -147,7 +146,7 @@ DelegateOpen(const Connection &ssh_connection, std::string_view path)
 	assert(ssh_connection.IsSftpAllowed());
 
 	// using SFTP mode because this (usually) mounts an empty rootfs; minimalism!
-	return Delegate(ssh_connection, path, OpenExec, true);
+	return Delegate(ssh_connection, path, OpenExec, SSH::Service::SFTP);
 }
 
 Co::Task<UniqueFileDescriptor>
@@ -157,5 +156,5 @@ DelegateLocalConnect(const Connection &ssh_connection, std::string_view path)
 
 	/* Don't use SFTP mode because we are most likely interested in connecting
 	 * to the sockets that will not be mounted in SFTP mode. */
-	return Delegate(ssh_connection, path, LocalConnectExec, false);
+	return Delegate(ssh_connection, path, LocalConnectExec, SSH::Service::SSH);
 }
