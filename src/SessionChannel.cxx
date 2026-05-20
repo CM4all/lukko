@@ -196,6 +196,25 @@ LoginShellName(const char *shell) noexcept
 }
 
 inline void
+SessionChannel::PrepareAddressEnv(PreparedChildProcess &p) noexcept
+{
+	auto &c = static_cast<Connection &>(GetConnection());
+
+	const auto peer_address = c.GetPeerAddress();
+	const auto local_address = c.GetLocalAddress();
+	const auto peer_host = HostToString(peer_address);
+	const auto local_host = HostToString(c.GetLocalAddress());
+
+	p.PutEnv(fmt::format("SSH_CLIENT={} {} {}"sv,
+			     peer_host, peer_address.GetPort(),
+			     local_address.GetPort()));
+
+	p.PutEnv(fmt::format("SSH_CONNECTION={} {} {} {}"sv,
+			     peer_host, peer_address.GetPort(),
+			     local_host, local_address.GetPort()));
+}
+
+inline void
 SessionChannel::PreparePipes(PreparedChildProcess &p,
 			     FdHolder &close_fds)
 {
@@ -231,7 +250,37 @@ SessionChannel::PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcep
 	}
 }
 
-void
+inline void
+SessionChannel::PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p) noexcept
+{
+	auto &c = static_cast<Connection &>(GetConnection());
+
+	agent_forward = std::make_unique<AgentForward>(c, *this);
+
+	const char *source_path = agent_forward->GetPath();
+	const char *target_path = "/run/agent-forward.socket";
+
+	// TODO chown instead of chmod
+	chmod(source_path, 0666);
+
+	/* copy the mount list before editing it, which is
+	   currently a shallow copy pointing to inside the
+	   Connection::Translation object */
+	p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
+
+	auto *m = alloc.New<Mount>(source_path + 1, target_path, true, false);
+	m->type = Mount::Type::BIND_FILE;
+
+	auto i = p.ns.mount.mounts.before_begin();
+	while (std::next(i) != p.ns.mount.mounts.end())
+		++i;
+
+	p.ns.mount.mounts.insert_after(i, *m);
+
+	p.SetEnv("SSH_AUTH_SOCK", target_path);
+}
+
+inline void
 SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 				    PreparedChildProcess &p,
 				    FdHolder &close_fds,
@@ -246,18 +295,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 	p.SetEnv("LOGNAME", username);
 
 	if (service == SSH::Service::SSH) {
-		const auto peer_address = c.GetPeerAddress();
-		const auto local_address = c.GetLocalAddress();
-		const auto peer_host = HostToString(peer_address);
-		const auto local_host = HostToString(c.GetLocalAddress());
-
-		p.PutEnv(fmt::format("SSH_CLIENT={} {} {}"sv,
-				     peer_host, peer_address.GetPort(),
-				     local_address.GetPort()));
-
-		p.PutEnv(fmt::format("SSH_CONNECTION={} {} {} {}"sv,
-				     peer_host, peer_address.GetPort(),
-				     local_host, local_address.GetPort()));
+		PrepareAddressEnv(p);
 
 		p.SetEnv("SHELL", c.GetShell());
 	}
@@ -277,29 +315,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 	PrepareHome(alloc, p);
 
 	if (service == SSH::Service::SSH && enable_agent_forward) {
-		agent_forward = std::make_unique<AgentForward>(c, *this);
-
-		const char *source_path = agent_forward->GetPath();
-		const char *target_path = "/run/agent-forward.socket";
-
-		// TODO chown instead of chmod
-		chmod(source_path, 0666);
-
-		/* copy the mount list before editing it, which is
-		   currently a shallow copy pointing to inside the
-		   Connection::Translation object */
-		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
-
-		auto *m = alloc.New<Mount>(source_path + 1, target_path, true, false);
-		m->type = Mount::Type::BIND_FILE;
-
-		auto i = p.ns.mount.mounts.before_begin();
-		while (std::next(i) != p.ns.mount.mounts.end())
-			++i;
-
-		p.ns.mount.mounts.insert_after(i, *m);
-
-		p.SetEnv("SSH_AUTH_SOCK", target_path);
+		PrepareAgentForward(alloc, p);
 	}
 }
 

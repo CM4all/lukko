@@ -142,6 +142,12 @@ private:
 	void SetEnv(std::string_view name, std::string_view value);
 
 	/**
+	 * Set the environment variables "SSH_CLIENT" and
+	 * "SSH_CONNECTION".
+	 */
+	void PrepareAddressEnv(PreparedChildProcess &p) noexcept;
+
+	/**
 	 * Create pipes for stdin, stdout, stderr and install one side
 	 * in this object and the other in the specified
 	 * #PreparedChildProcess.
@@ -153,6 +159,11 @@ private:
 	 * and set the HOME environment variable.
 	 */
 	static void PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
+
+	/**
+	 * Create and install an #AgentForward instance.
+	 */
+	void PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
 
 	void PrepareChildProcess(AllocatorPtr alloc,
 				 PreparedChildProcess &p,
