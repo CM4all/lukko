@@ -399,13 +399,11 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	c.PrepareChildProcess(p, close_fds, execute_options);
+	c.PrepareChildProcess(p, close_fds, execute_options.child_options);
 	PreparePipes(p, close_fds);
 	PrepareHome(alloc, p);
 
-	assert(p.exec_path != nullptr);
-
-	const UniqueFileDescriptor exec_fd = OpenPath(p.exec_path);
+	const UniqueFileDescriptor exec_fd = OpenPath(execute_options.execute);
 	p.exec_fd = exec_fd;
 
 	std::forward_list<std::string> strings;
