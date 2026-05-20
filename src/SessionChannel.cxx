@@ -396,7 +396,7 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	c.PrepareChildProcess(p, close_fds, execute_options.child_options);
+	c.PrepareChildProcess(p, close_fds, execute_options);
 	PreparePipes(p, close_fds);
 	PrepareHome(alloc, p);
 
