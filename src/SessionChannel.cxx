@@ -428,8 +428,7 @@ SessionChannel::Exec(const char *cmd)
 		if (cmd != nullptr && c.IsRsyncAllowed() &&
 		    StringStartsWith(cmd, "rsync --server "sv)) {
 			if (const auto *execute_options = c.GetRsyncExecuteOptions()) {
-				co_await ExecRsync(cmd, *execute_options);
-				co_return true;
+				co_return co_await ExecRsync(cmd, *execute_options);
 			}
 		}
 #endif
