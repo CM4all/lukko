@@ -165,10 +165,10 @@ private:
 	 */
 	void PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
 
-	void PrepareChildProcess(AllocatorPtr alloc,
-				 PreparedChildProcess &p,
-				 FdHolder &close_fds,
-				 SSH::Service service);
+	void PrepareExec(AllocatorPtr alloc,
+			 PreparedChildProcess &p,
+			 FdHolder &close_fds) noexcept;
+
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
 

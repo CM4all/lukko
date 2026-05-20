@@ -281,10 +281,9 @@ SessionChannel::PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p)
 }
 
 inline void
-SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
-				    PreparedChildProcess &p,
-				    FdHolder &close_fds,
-				    SSH::Service service)
+SessionChannel::PrepareExec(AllocatorPtr alloc,
+			    PreparedChildProcess &p,
+			    FdHolder &close_fds) noexcept
 {
 	assert(!agent_forward);
 
@@ -293,18 +292,13 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 	const std::string_view username = c.GetUsername();
 	p.SetEnv("USER", username);
 	p.SetEnv("LOGNAME", username);
+	p.SetEnv("SHELL", c.GetShell());
 
-	if (service == SSH::Service::SSH) {
-		PrepareAddressEnv(p);
+	PrepareAddressEnv(p);
 
-		p.SetEnv("SHELL", c.GetShell());
-	}
-
-	c.PrepareChildProcess(p, close_fds, service);
+	c.PrepareChildProcess(p, close_fds, SSH::Service::SSH);
 
 	if (tty.IsDefined()) {
-		assert(service == SSH::Service::SSH);
-
 		p.stdin_fd = p.stdout_fd = p.stderr_fd = close_fds.Insert(std::move(slave_tty));
 		p.tty = true;
 		p.ns.mount.mount_pts = !debug_mode;
@@ -314,7 +308,7 @@ SessionChannel::PrepareChildProcess(AllocatorPtr alloc,
 
 	PrepareHome(alloc, p);
 
-	if (service == SSH::Service::SSH && enable_agent_forward) {
+	if (enable_agent_forward) {
 		PrepareAgentForward(alloc, p);
 	}
 }
@@ -455,7 +449,7 @@ SessionChannel::Exec(const char *cmd)
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
+	PrepareExec(alloc, p, close_fds);
 
 	const char *const shell = c.GetShell();
 
