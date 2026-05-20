@@ -518,25 +518,26 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 
 #ifdef ENABLE_TRANSLATION
 	if (const auto *execute_options = c.GetSftpExecuteOptions();
-	    execute_options != nullptr && execute_options->execute != nullptr) {
-		PrepareSftpServer(alloc, p, close_fds,
-				  execute_options->child_options,
-				  OpenReadOnly(execute_options->execute));
-		return;
+	    execute_options != nullptr) {
+		if (execute_options->execute != nullptr) {
+			PrepareSftpServer(alloc, p, close_fds,
+					  execute_options->child_options,
+					  OpenReadOnly(execute_options->execute));
+			return;
+		}
+
+		if (UniqueFileDescriptor sftp_server;
+		    sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server")) {
+			PrepareSftpServer(alloc, p, close_fds,
+					  execute_options->child_options,
+					  std::move(sftp_server));
+			return;
+		}
 	}
 #endif
 
-	UniqueFileDescriptor sftp_server;
-	(void)sftp_server.OpenReadOnly("/usr/lib/cm4all/openssh/libexec/sftp-server");
-
-	PrepareChildProcess(alloc, p, close_fds,
-			    sftp_server.IsDefined() ? SSH::Service::SFTP : SSH::Service::SSH);
-
-	if (sftp_server.IsDefined()) {
-		p.exec_fd = close_fds.Insert(std::move(sftp_server));
-		p.Append("sftp-server");
-	} else
-		p.Append("/usr/lib/openssh/sftp-server");
+	PrepareChildProcess(alloc, p, close_fds, SSH::Service::SSH);
+	p.Append("/usr/lib/openssh/sftp-server");
 }
 
 inline Co::EagerTask<bool>
