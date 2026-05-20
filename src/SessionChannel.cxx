@@ -481,6 +481,31 @@ ApplyTerminalModes(FileDescriptor fd, std::span<const std::byte> src) noexcept
 	tcsetattr(fd.Get(), TCSANOW, &tio);
 }
 
+#ifdef ENABLE_TRANSLATION
+
+inline void
+SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
+				  PreparedChildProcess &p,
+				  FdHolder &close_fds,
+				  const ChildOptions &child_options,
+				  UniqueFileDescriptor &&exec_fd) noexcept
+{
+	const auto &c = static_cast<Connection &>(GetConnection());
+	assert(c.IsSftpAllowed());
+
+	/* sftp-server wants to know its own username */
+	p.SetEnv("USER", c.GetUsername());
+
+	c.PrepareChildProcess(p, close_fds, child_options);
+	PreparePipes(p, close_fds);
+	PrepareHome(alloc, p);
+
+	p.exec_fd = close_fds.Insert(std::move(exec_fd));
+	p.Append("sftp-server");
+}
+
+#endif // ENABLE_TRANSLATION
+
 inline void
 SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  PreparedChildProcess &p,
@@ -494,17 +519,9 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 #ifdef ENABLE_TRANSLATION
 	if (const auto *execute_options = c.GetSftpExecuteOptions();
 	    execute_options != nullptr && execute_options->execute != nullptr) {
-		auto sftp_server = OpenReadOnly(execute_options->execute);
-
-		/* sftp-server wants to know its own username */
-		p.SetEnv("USER", c.GetUsername());
-
-		c.PrepareChildProcess(p, close_fds, execute_options->child_options);
-		PreparePipes(p, close_fds);
-		PrepareHome(alloc, p);
-
-		p.exec_fd = close_fds.Insert(std::move(sftp_server));
-		p.Append("sftp-server");
+		PrepareSftpServer(alloc, p, close_fds,
+				  execute_options->child_options,
+				  OpenReadOnly(execute_options->execute));
 		return;
 	}
 #endif

@@ -14,6 +14,7 @@
 #include <memory>
 
 namespace Co { template<typename T> class Task; }
+struct ChildOptions;
 struct ExecuteOptions;
 struct PreparedChildProcess;
 class AllocatorPtr;
@@ -159,6 +160,16 @@ private:
 				 SSH::Service service);
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
+
+	/**
+	 * Prepare "sftp-server" execution from a statically linked
+	 * executable pointed to by a file descriptor.
+	 */
+	void PrepareSftpServer(AllocatorPtr alloc,
+			       PreparedChildProcess &p,
+			       FdHolder &close_fds,
+			       const ChildOptions &child_options,
+			       UniqueFileDescriptor &&exec_fd) noexcept;
 
 	void PrepareSftpServer(AllocatorPtr alloc,
 			       PreparedChildProcess &p,
