@@ -9,7 +9,7 @@ cm4all-lukko (0.54) unstable; urgency=low
   * prometheus: add "lukko_total_spawn_duration", "lukko_spawn_pending"
   * apply "populate_io_buffers" only to the first memory area
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 12 Jun 2026 21:19:26 +0200
 
 cm4all-lukko (0.53) unstable; urgency=low
 
