@@ -4,6 +4,7 @@ cm4all-lukko (0.54) unstable; urgency=low
   * translation: disallow "exec" if response has no execute options
   * support "git-receive-pack" and "git-upload-pack"
   * spawn: eliminate epoll_wait() roundtrip
+  * prometheus: add "lukko_total_spawn_duration"
 
  --   
 

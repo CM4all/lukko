@@ -12,6 +12,7 @@
 #include "event/net/PrometheusExporterListener.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "time/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
 #ifdef ENABLE_CONTROL
@@ -218,6 +219,9 @@ Instance::OnPrometheusExporterRequest()
 # HELP lukko_children_spawned Total number of child processes spawned
 # TYPE lukko_children_spawned counter
 
+# HELP lukko_total_spawn_duration Total duration for spawning child processes
+# TYPE lukko_total_spawn_duration counter
+
 # HELP lukko_spawn_errors Total number of child processes that failed to spawn
 # TYPE lukko_spawn_errors counter
 
@@ -268,6 +272,7 @@ Instance::OnPrometheusExporterRequest()
 # TYPE lukko_connections_active gauge
 
 lukko_children_spawned {}
+lukko_total_spawn_duration {:e}
 lukko_spawn_errors {}
 lukko_children_killed {}
 lukko_children_exited {}
@@ -298,6 +303,7 @@ lukko_connections_active {}
 			   ToPrometheusString(event_loop.GetStats(), process),
 
 			   spawn_stats.spawned,
+			   ToFloatSeconds(spawn_stats.total_spawn_duration),
 			   spawn_stats.errors,
 			   spawn_stats.killed,
 			   spawn_stats.exited,
