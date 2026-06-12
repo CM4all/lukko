@@ -3,6 +3,7 @@ cm4all-lukko (0.54) unstable; urgency=low
   * translation: drop support for SERVICE=sftp requests
   * translation: disallow "exec" if response has no execute options
   * support "git-receive-pack" and "git-upload-pack"
+  * spawn: eliminate epoll_wait() roundtrip
 
  --   
 
