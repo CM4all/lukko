@@ -216,6 +216,9 @@ Instance::OnPrometheusExporterRequest()
 	return fmt::format(R"(
 {}
 
+# HELP lukko_spawn_pending Number of child processes being spawned currently
+# TYPE lukko_spawn_pending gauge
+
 # HELP lukko_children_spawned Total number of child processes spawned
 # TYPE lukko_children_spawned counter
 
@@ -271,6 +274,7 @@ Instance::OnPrometheusExporterRequest()
 # HELP lukko_connections_active Number of active SSH connections
 # TYPE lukko_connections_active gauge
 
+lukko_spawn_pending {}
 lukko_children_spawned {}
 lukko_total_spawn_duration {:e}
 lukko_spawn_errors {}
@@ -302,6 +306,7 @@ lukko_connections_active {}
 )",
 			   ToPrometheusString(event_loop.GetStats(), process),
 
+			   spawn_stats.pending,
 			   spawn_stats.spawned,
 			   ToFloatSeconds(spawn_stats.total_spawn_duration),
 			   spawn_stats.errors,
