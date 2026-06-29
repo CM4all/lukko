@@ -9,7 +9,7 @@
 #include "lib/sodium/SHA256.hxx"
 #include "util/AllocatedString.hxx"
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 using std::string_view_literals::operator""sv;
 
