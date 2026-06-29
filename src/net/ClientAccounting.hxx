@@ -60,8 +60,8 @@ class PerClientAccounting final
 
 	struct Hash {
 		[[gnu::pure]]
-		std::size_t operator()(const BareInetAddress &address) const noexcept {
-			return address.Hash();
+		std::size_t operator()(const BareInetAddress &_address) const noexcept {
+			return _address.Hash();
 		}
 	};
 
