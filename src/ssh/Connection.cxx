@@ -372,9 +372,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		output.AutoResetSeq();
 	}
 
+	bool was_rekeying;
 	switch (role) {
-		bool was_rekeying;
-
 	case Role::SERVER:
 		std::tie(host_key, host_key_algorithm) = ChooseHostKey(p.server_host_key_algorithms);
 		if (host_key == nullptr)
