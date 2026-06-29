@@ -176,6 +176,7 @@ Instance::OnExit() noexcept
 #endif
 
 #ifdef HAVE_AVAHI
+	zeroconf_clusters.clear();
 	DisableZeroconf();
 	avahi_client.reset();
 #endif // HAVE_AVAHI
