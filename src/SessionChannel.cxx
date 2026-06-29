@@ -473,7 +473,7 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 
 	p.exec_path = execute_options.execute != nullptr
 		? execute_options.execute
-		: default_exec_path,
+		: default_exec_path;
 
 	p.Append(cmd);
 	p.Append(unescaped_arg);
