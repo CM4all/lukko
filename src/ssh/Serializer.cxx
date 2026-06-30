@@ -20,7 +20,7 @@ Serializer::Serializer() noexcept
 
 Serializer::~Serializer() noexcept
 {
-	if (area != nullptr)
+	if (buffer.data() != nullptr)
 		fb_pool_get().Free(*area, buffer.data());
 }
 
