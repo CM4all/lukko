@@ -7,6 +7,7 @@
 #include "OutgoingConnection.hxx"
 #include "Service.hxx"
 #include "ssh/CConnection.hxx"
+#include "ssh/HostKeyChooser.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -40,6 +41,7 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
+	  public SSH::HostKeyChooser,
 	  public SSH::CConnection,
 	  OutgoingConnectionHandler
 {
@@ -371,12 +373,14 @@ private:
 						    std::span<const std::byte> payload,
 						    CancellablePointer &cancel_ptr) override;
 
+	/* virtual methods from class SSH::HostKeyChooser */
+	std::string_view GetServerHostKeyAlgorithms() const noexcept override;
+	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
+
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(SSH::MessageNumber msg,
 			  std::span<const std::byte> payload) override;
 
-	std::string_view GetServerHostKeyAlgorithms() const noexcept override;
-	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			     std::string_view msg) noexcept override;
 	void OnDisconnected(SSH::DisconnectReasonCode reason_code,

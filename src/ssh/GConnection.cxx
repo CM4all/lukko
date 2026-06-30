@@ -62,8 +62,8 @@ private:
 };
 
 GConnection::GConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
-			 Role _role)
-	:Connection(event_loop, std::move(fd), _role) {}
+			 HostKeyChooser &_host_key_chooser)
+	:Connection(event_loop, std::move(fd), _host_key_chooser) {}
 
 GConnection::~GConnection() noexcept
 {

@@ -23,12 +23,15 @@ class PacketSerializer;
 class Input;
 class Output;
 class Kex;
+class HostKeyChooser;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
 enum class KexAlgorithm : uint_least8_t;
 
 class Connection : BufferedSocketHandler, InputHandler
 {
+	HostKeyChooser *const host_key_chooser = nullptr;
+
 	const SecretKey *host_key;
 	std::string host_key_algorithm;
 
@@ -120,8 +123,15 @@ public:
 	struct Destroyed {};
 
 public:
-	Connection(EventLoop &event_loop, UniqueSocketDescriptor fd,
-		   Role _role);
+	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		   Role _role,
+		   HostKeyChooser *_host_key_chooser=nullptr);
+
+	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		   HostKeyChooser &_host_key_chooser)
+		:Connection(event_loop, std::move(fd), Role::SERVER, &_host_key_chooser) {}
+
+
 	~Connection() noexcept;
 
 	auto &GetEventLoop() const noexcept {
@@ -193,26 +203,6 @@ protected:
 
 	virtual void HandlePacket(MessageNumber msg,
 				  std::span<const std::byte> payload);
-
-	/**
-	 * Returns a comma-separated list of available/supported host
-	 * key algorithms (for the KEXINIT packet).
-	 */
-	[[gnu::pure]]
-	virtual std::string_view GetServerHostKeyAlgorithms() const noexcept;
-
-	/**
-	 * Choose a host key (server mode only).
-	 *
-	 * @param algorithms a comma-separated list of key algorithms
-	 * supported by the client
-	 *
-	 * @return the host key and the algorithm name
-	 */
-	[[gnu::pure]]
-	virtual std::pair<const SecretKey *, std::string_view> ChooseHostKey([[maybe_unused]] std::string_view algorithms) const noexcept {
-		return {nullptr, {}};
-	}
 
 	/**
 	 * Check whether the give host key is acceptable (client mode

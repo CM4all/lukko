@@ -13,6 +13,7 @@
 #include "KexSignature.hxx"
 #include "KexProposal.hxx"
 #include "KexStrings.hxx"
+#include "HostKeyChooser.hxx"
 #include "Sizes.hxx"
 #include "StringList.hxx"
 #include "Protocol.hxx"
@@ -45,9 +46,11 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 	s.WriteU32(0); // reserved
 }
 
-Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor _fd,
-		       Role _role)
-	:socket(event_loop),
+Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
+		       Role _role,
+		       HostKeyChooser *_host_key_chooser)
+	:host_key_chooser(_host_key_chooser),
+	 socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
 	 role(_role)
@@ -149,12 +152,6 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 	Destroy();
 }
 
-std::string_view
-Connection::GetServerHostKeyAlgorithms() const noexcept
-{
-	return all_public_key_algorithms;
-}
-
 bool
 Connection::CheckHostKey([[maybe_unused]] std::span<const std::byte> server_host_key_blob) const noexcept
 {
@@ -168,7 +165,7 @@ Connection::SendKexInit()
 
 	const KexProposal proposal{
 		.kex_algorithms = role == Role::SERVER ? all_server_kex_algorithms : all_client_kex_algorithms,
-		.server_host_key_algorithms = GetServerHostKeyAlgorithms(),
+		.server_host_key_algorithms = host_key_chooser ? host_key_chooser->GetServerHostKeyAlgorithms() : all_public_key_algorithms,
 		.encryption_algorithms_client_to_server = all_encryption_algorithms,
 		.encryption_algorithms_server_to_client = all_encryption_algorithms,
 		.mac_algorithms_client_to_server = all_mac_algorithms,
@@ -375,7 +372,9 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	bool was_rekeying;
 	switch (role) {
 	case Role::SERVER:
-		std::tie(host_key, host_key_algorithm) = ChooseHostKey(p.server_host_key_algorithms);
+		assert(host_key_chooser != nullptr);
+
+		std::tie(host_key, host_key_algorithm) = host_key_chooser->ChooseHostKey(p.server_host_key_algorithms);
 		if (host_key == nullptr)
 			throw Disconnect{
 				DisconnectReasonCode::KEY_EXCHANGE_FAILED,

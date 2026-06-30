@@ -29,7 +29,7 @@ class GConnection : public Connection
 
 public:
 	GConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
-		    Role _role);
+		    HostKeyChooser &_host_key_chooser);
 	~GConnection() noexcept;
 
 private:

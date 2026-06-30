@@ -171,7 +171,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
-			  SSH::Role::SERVER),
+			  *this),
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
