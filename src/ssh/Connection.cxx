@@ -14,6 +14,7 @@
 #include "KexProposal.hxx"
 #include "KexStrings.hxx"
 #include "HostKeyChooser.hxx"
+#include "Handler.hxx"
 #include "Sizes.hxx"
 #include "StringList.hxx"
 #include "Protocol.hxx"
@@ -35,6 +36,8 @@
 using std::string_view_literals::operator""sv;
 
 namespace SSH {
+
+struct Connection::HandlerHookTraits : IntrusiveListMemberHookTraits<&ConnectionHandler::connection_handler_siblings> {};
 
 static void
 SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
@@ -68,6 +71,12 @@ Connection::~Connection() noexcept
 {
 	output.Destroy();
 	input.Destroy();
+}
+
+void
+Connection::AddHandler(ConnectionHandler &handler) noexcept
+{
+	handlers.push_front(handler);
 }
 
 bool
@@ -156,6 +165,36 @@ bool
 Connection::CheckHostKey([[maybe_unused]] std::span<const std::byte> server_host_key_blob) const noexcept
 {
 	return false;
+}
+
+void
+Connection::OnWriteBlocked() noexcept
+{
+	for (auto &i : handlers)
+		i.OnWriteBlocked();
+}
+
+void
+Connection::OnWriteUnblocked() noexcept
+{
+	for (auto &i : handlers)
+		i.OnWriteBlocked();
+}
+
+void
+Connection::OnDisconnecting(DisconnectReasonCode reason_code,
+			    std::string_view msg) noexcept
+{
+	for (auto &i : handlers)
+		i.OnDisconnecting(reason_code, msg);
+}
+
+void
+Connection::OnDisconnected(DisconnectReasonCode reason_code,
+			   std::string_view msg) noexcept
+{
+	for (auto &i : handlers)
+		i.OnDisconnected(reason_code, msg);
 }
 
 inline void
@@ -577,6 +616,10 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 			};
 		}
 	}
+
+	for (auto &i : handlers)
+		if (i.HandlePacket(msg, payload))
+			return;
 
 	switch (msg) {
 	case MessageNumber::DISCONNECT:

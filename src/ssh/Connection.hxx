@@ -9,6 +9,7 @@
 #include "KexEnums.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <cstdint>
 #include <span>
@@ -24,6 +25,7 @@ class Input;
 class Output;
 class Kex;
 class HostKeyChooser;
+class ConnectionHandler;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
 enum class KexAlgorithm : uint_least8_t;
@@ -52,6 +54,9 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	Input &input;
 	Output &output;
+
+	struct HandlerHookTraits;
+	IntrusiveList<ConnectionHandler, HandlerHookTraits> handlers;
 
 	Metrics *metrics = nullptr;
 
@@ -137,6 +142,8 @@ public:
 	auto &GetEventLoop() const noexcept {
 		return socket.GetEventLoop();
 	}
+
+	void AddHandler(ConnectionHandler &handler) noexcept;
 
 	void SetMetrics(Metrics &_metrics) noexcept {
 		metrics = &_metrics;
@@ -227,7 +234,7 @@ protected:
 	 * rekeying (after sending KEXINIT on a connection that is
 	 * already encrypted).
 	 */
-	virtual void OnWriteBlocked() noexcept {}
+	virtual void OnWriteBlocked() noexcept;
 
 	/**
 	 * The (kernel) socket buffer is no longer full and
@@ -235,23 +242,23 @@ protected:
 	 * method; this method shall only schedule events to produce
 	 * more data).
 	 */
-	virtual void OnWriteUnblocked() noexcept {}
+	virtual void OnWriteUnblocked() noexcept;
 
 	/**
 	 * Called right before sending a DISCONNECT packet to the
 	 * peer.  This may be used for logging (but not for I/O or for
 	 * actually disconnecting).
 	 */
-	virtual void OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
-				    [[maybe_unused]] std::string_view msg) noexcept {}
+	virtual void OnDisconnecting(DisconnectReasonCode reason_code,
+				     std::string_view msg) noexcept;
 
 	/**
 	 * Called before handling a DISCONNECT packet received from
 	 * the peer.  This may be used for logging (but not for I/O or
 	 * for actually disconnecting).
 	 */
-	virtual void OnDisconnected([[maybe_unused]] DisconnectReasonCode reason_code,
-				    [[maybe_unused]] std::string_view msg) noexcept {}
+	virtual void OnDisconnected(DisconnectReasonCode reason_code,
+				    std::string_view msg) noexcept;
 
 private:
 	const auto &GetServerKexinit() const noexcept {
