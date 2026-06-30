@@ -43,9 +43,9 @@ public:
 
 	void Open() {
 		// TODO "auth-agent@openssh.com" or "agent-connect"?
-		connection.OpenChannel("auth-agent@openssh.com"sv,
-				       SocketChannel::RECEIVE_WINDOW,
-				       *this, cancel_ptr);
+		connection.GetChannels().OpenChannel("auth-agent@openssh.com"sv,
+						     SocketChannel::RECEIVE_WINDOW,
+						     *this, cancel_ptr);
 	}
 
 	/* virtual methods from class SSH::ChannelFactory */
@@ -72,10 +72,10 @@ AgentForward::Factory::CreateChannel(SSH::ChannelInit init)
 	assert(cancel_ptr);
 	cancel_ptr = {};
 
-	auto &_connection = connection;
+	auto &_channels = connection.GetChannels();
 	UniqueSocketDescriptor _socket{AdoptTag{}, socket.ReleaseSocket()};
 	delete this;
-	return std::make_unique<SocketChannel>(_connection, init, std::move(_socket));
+	return std::make_unique<SocketChannel>(_channels, init, std::move(_socket));
 }
 
 void

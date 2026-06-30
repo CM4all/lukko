@@ -4,15 +4,15 @@
 
 #include "SocketChannel.hxx"
 #include "Connection.hxx"
-#include "ssh/CConnection.hxx"
+#include "ssh/Connection.hxx"
 #include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
-SocketChannel::SocketChannel(SSH::CConnection &_connection,
+SocketChannel::SocketChannel(SSH::ChannelSupport &_parent,
 			     SSH::ChannelInit init,
 			     UniqueSocketDescriptor _socket) noexcept
-	:SSH::BufferedChannel(_connection, init, RECEIVE_WINDOW),
-	 socket(_connection.GetEventLoop(), BIND_THIS_METHOD(OnSocketReady),
+	:SSH::BufferedChannel(_parent, init, RECEIVE_WINDOW),
+	 socket(GetConnection().GetEventLoop(), BIND_THIS_METHOD(OnSocketReady),
 		_socket.Release())
 {
 	socket.ScheduleRead();

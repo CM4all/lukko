@@ -53,9 +53,9 @@ public:
 	}
 
 	void Open() {
-		connection.OpenChannel("forwarded-tcpip"sv,
-				       SocketChannel::RECEIVE_WINDOW,
-				       *this, cancel_ptr);
+		connection.GetChannels().OpenChannel("forwarded-tcpip"sv,
+						     SocketChannel::RECEIVE_WINDOW,
+						     *this, cancel_ptr);
 	}
 
 	/* virtual methods from class SSH::ChannelFactory */
@@ -85,10 +85,10 @@ SocketForwardListener::Factory::CreateChannel(SSH::ChannelInit init)
 	assert(cancel_ptr);
 	cancel_ptr = {};
 
-	auto &_connection = connection;
+	auto &_channels = connection.GetChannels();
 	UniqueSocketDescriptor _socket{AdoptTag{}, socket.ReleaseSocket()};
 	delete this;
-	return std::make_unique<SocketChannel>(_connection, init, std::move(_socket));
+	return std::make_unique<SocketChannel>(_channels, init, std::move(_socket));
 }
 
 void

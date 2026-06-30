@@ -17,7 +17,8 @@ namespace Co { template<typename T> class EagerTask; }
 namespace SSH {
 
 enum class ChannelExtendedDataType : uint32_t;
-class CConnection;
+class Connection;
+class ChannelSupport;
 class Serializer;
 
 /**
@@ -31,7 +32,8 @@ struct ChannelInit {
 };
 
 class Channel {
-	CConnection &connection;
+	ChannelSupport &parent;
+	Connection &connection;
 
 	const uint_least32_t local_channel, peer_channel;
 
@@ -58,12 +60,12 @@ class Channel {
 	IntrusiveList<PendingRequest> pending_requests;
 
 public:
-	Channel(CConnection &_connection, ChannelInit init,
+	Channel(ChannelSupport &_parent, ChannelInit init,
 		std::size_t _receive_window) noexcept;
 
 	virtual ~Channel() noexcept;
 
-	CConnection &GetConnection() noexcept {
+	Connection &GetConnection() noexcept {
 		return connection;
 	}
 

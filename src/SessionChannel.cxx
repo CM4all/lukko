@@ -14,7 +14,6 @@
 #include "spawn/CoEnqueue.hxx"
 #include "spawn/CoWaitSpawnCompletion.hxx"
 #include "ssh/Deserializer.hxx"
-#include "ssh/CConnection.hxx"
 #include "ssh/TerminalMode.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "co/Task.hxx"
@@ -47,14 +46,14 @@
 
 using std::string_view_literals::operator""sv;
 
-SessionChannel::SessionChannel(SSH::CConnection &_connection,
+SessionChannel::SessionChannel(SSH::ChannelSupport &_parent,
 			       SSH::ChannelInit init) noexcept
-	:SSH::BufferedChannel(_connection, init, RECEIVE_WINDOW),
+	:SSH::BufferedChannel(_parent, init, RECEIVE_WINDOW),
 	 logger(static_cast<Connection &>(GetConnection()).GetLogger()),
-	 stdin_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdinReady)),
-	 stdout_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
-	 stderr_pipe(_connection.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
-	 tty(_connection.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
+	 stdin_pipe(GetConnection().GetEventLoop(), BIND_THIS_METHOD(OnStdinReady)),
+	 stdout_pipe(stdin_pipe.GetEventLoop(), BIND_THIS_METHOD(OnStdoutReady)),
+	 stderr_pipe(stdin_pipe.GetEventLoop(), BIND_THIS_METHOD(OnStderrReady)),
+	 tty(stdin_pipe.GetEventLoop(), BIND_THIS_METHOD(OnTtyReady))
 {
 }
 

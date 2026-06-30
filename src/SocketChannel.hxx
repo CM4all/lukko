@@ -19,7 +19,7 @@ class SocketChannel final : public SSH::BufferedChannel
 public:
 	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
 
-	SocketChannel(SSH::CConnection &_connection,
+	SocketChannel(SSH::ChannelSupport &_parent,
 		      SSH::ChannelInit init,
 		      UniqueSocketDescriptor _socket) noexcept;
 

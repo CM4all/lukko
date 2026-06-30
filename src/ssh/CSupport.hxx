@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "GConnection.hxx"
+#include "Handler.hxx"
 
 #include <array>
 #include <cstdint>
@@ -14,6 +14,8 @@ class CancellablePointer;
 
 namespace SSH {
 
+class Connection;
+class PacketSerializer;
 enum class ChannelOpenFailureReasonCode : uint32_t;
 struct ChannelInit;
 class Channel;
@@ -33,7 +35,7 @@ public:
 };
 
 /**
- * Handler class for class #CConnection.
+ * Handler class for class #ChannelSupport.
  */
 class ChannelHandler {
 public:
@@ -61,20 +63,24 @@ public:
  * Add SSH channel support to class #Connection.  Override method
  * CreateChannel().
  */
-class CConnection : public GConnection
+class ChannelSupport : ConnectionHandler
 {
 	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
 
+	Connection &connection;
 	ChannelHandler &channel_handler;
 
 	std::array<Channel *, 64> channels{};
 
 public:
-	CConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
-		    HostKeyChooser &_host_key_chooser,
-		    ChannelHandler &_handler);
+	ChannelSupport(Connection &_connection, ChannelHandler &_handler) noexcept;
+	~ChannelSupport() noexcept;
 
-	~CConnection() noexcept;
+	Connection &GetConnection() noexcept {
+		return connection;
+	}
+
+	void SendPacket(PacketSerializer &&s) noexcept;
 
 	/**
 	 * Send a CHANNEL_OPEN to the peer.  As soon as the peer
@@ -106,13 +112,13 @@ public:
 
 	/**
 	 * If SendPacket() fails, then this method destroys the
-	 * #CConnection.
+	 * #ChannelSupport.
 	 */
 	void AsyncChannelOpenSuccess(Channel &channel) noexcept;
 
 	/**
 	 * If SendPacket() fails, then this method destroys the
-	 * #CConnection.
+	 * #ChannelSupport.
 	 */
 	void AsyncChannelOpenFailure(ChannelInit init,
 				     ChannelOpenFailureReasonCode reason_code,
@@ -148,14 +154,14 @@ private:
 	void HandleChannelClose(std::span<const std::byte> payload);
 	void HandleChannelRequest(std::span<const std::byte> payload);
 
-protected:
-	/* virtual methods from class SSH::Connection */
-	void HandlePacket(MessageNumber msg,
-			  std::span<const std::byte> payload) override;
-	void OnWriteBlocked() noexcept override;
-	void OnWriteUnblocked() noexcept override;
+private:
+	/* virtual methods from class SSH::ConnectionHandler */
+	bool HandlePacket(MessageNumber msg,
+			  std::span<const std::byte> payload) final;
+	void OnWriteBlocked() noexcept final;
+	void OnWriteUnblocked() noexcept final;
 	void OnDisconnecting(DisconnectReasonCode reason_code,
-			     std::string_view msg) noexcept override;
+			     std::string_view msg) noexcept final;
 };
 
 } // namespace SSH

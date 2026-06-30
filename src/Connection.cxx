@@ -170,8 +170,8 @@ CheckTranslateResponse(const TranslateResponse &response)
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
-	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
-			  *this, *this),
+	:SSH::GConnection(_instance.GetEventLoop(), std::move(_fd),
+			  *this),
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
@@ -611,15 +611,15 @@ private:
 	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
-			connection.AsyncChannelOpenFailure(init,
-							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							   GetFullMessage(std::move(error)));
+			connection.channels.AsyncChannelOpenFailure(init,
+								    SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+								    GetFullMessage(std::move(error)));
 			delete this;
 		} else {
-			auto &_connection = connection;
-			auto *channel = new SocketChannel(_connection, init, std::move(socket));
+			auto &_channels = connection.channels;
+			auto *channel = new SocketChannel(_channels, init, std::move(socket));
 			delete this;
-			_connection.AsyncChannelOpenSuccess(*channel);
+			_channels.AsyncChannelOpenSuccess(*channel);
 		}
 	}
 
@@ -659,15 +659,15 @@ private:
 	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
-			connection.AsyncChannelOpenFailure(init,
-							   SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-							   GetFullMessage(std::move(error)));
+			connection.channels.AsyncChannelOpenFailure(init,
+								    SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+								    GetFullMessage(std::move(error)));
 			delete this;
 		} else {
-			auto &_connection = connection;
-			auto *channel = new SocketChannel(_connection, init, std::move(socket));
+			auto &_channels = connection.channels;
+			auto *channel = new SocketChannel(_channels, init, std::move(socket));
 			delete this;
-			_connection.AsyncChannelOpenSuccess(*channel);
+			_channels.AsyncChannelOpenSuccess(*channel);
 		}
 	}
 
@@ -693,11 +693,10 @@ Connection::CreateChannel(std::string_view channel_type,
 				"Possible attack: attempt to open a session after additional sessions disabled",
 			};
 
-		CConnection &connection = *this;
-		return std::make_unique<SessionChannel>(connection, init);
+		return std::make_unique<SessionChannel>(channels, init);
 	} else if (channel_type == "direct-tcpip"sv) {
 		if (!IsForwardingAllowed()) {
-			throw ChannelOpenFailure{
+			throw SSH::ChannelSupport::ChannelOpenFailure{
 				SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
 				"TCP forwarding not allowed",
 			};
@@ -719,7 +718,7 @@ Connection::CreateChannel(std::string_view channel_type,
 		return {};
 	} else if (channel_type == "direct-streamlocal@openssh.com") {
 		if (!IsLocalForwardingAllowed()) {
-			throw ChannelOpenFailure{
+			throw SSH::ChannelSupport::ChannelOpenFailure{
 				SSH::ChannelOpenFailureReasonCode::ADMINISTRATIVELY_PROHIBITED,
 				"Local forwarding not allowed",
 			};
@@ -736,7 +735,7 @@ Connection::CreateChannel(std::string_view channel_type,
 		operation->Start(socket_path, cancel_ptr);
 		return {};
 	} else
-		throw ChannelOpenFailure{
+		throw SSH::ChannelSupport::ChannelOpenFailure{
 			SSH::ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
 			"Unknown channel type"sv,
 		};
@@ -1260,7 +1259,7 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
 	if (!IsEncrypted())
-		return CConnection::HandlePacket(msg, payload);
+		return GConnection::HandlePacket(msg, payload);
 
 	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
 		throw Disconnect{
@@ -1302,7 +1301,7 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 		break;
 
 	default:
-		SSH::CConnection::HandlePacket(msg, payload);
+		SSH::GConnection::HandlePacket(msg, payload);
 	}
 }
 
@@ -1322,7 +1321,7 @@ void
 Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept
 {
-	CConnection::OnDisconnecting(reason_code, msg);
+	GConnection::OnDisconnecting(reason_code, msg);
 
 	/* some manual shutdown just in case the Destroy() is
            postponed */
@@ -1376,7 +1375,7 @@ void
 Connection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	logger(1, e);
-	SSH::CConnection::OnBufferedError(std::move(e));
+	SSH::GConnection::OnBufferedError(std::move(e));
 }
 
 void

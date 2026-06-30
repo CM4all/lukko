@@ -2,7 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
-#include "CConnection.hxx"
+#include "CSupport.hxx"
+#include "Connection.hxx"
 #include "Channel.hxx"
 #include "Serializer.hxx"
 #include "MakePacket.hxx"
@@ -18,16 +19,24 @@ namespace SSH {
 
 class Channel;
 
-CConnection::CConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
-			 HostKeyChooser &_host_key_chooser,
-			 ChannelHandler &_handler)
-	:GConnection(event_loop, std::move(fd), _host_key_chooser),
-	 channel_handler(_handler) {}
+ChannelSupport::ChannelSupport(Connection &_connection,
+			       ChannelHandler &_handler) noexcept
+	:connection(_connection),
+	 channel_handler(_handler)
+{
+	connection.AddHandler(*this);
+}
 
-CConnection::~CConnection() noexcept
+ChannelSupport::~ChannelSupport() noexcept
 {
 	for (auto *i : channels)
 		delete i;
+}
+
+void
+ChannelSupport::SendPacket(PacketSerializer &&s) noexcept
+{
+	connection.SendPacket(std::move(s));
 }
 
 /**
@@ -40,7 +49,7 @@ class RequestedChannel final : public Channel, Cancellable {
 	bool canceled = false;
 
 public:
-	RequestedChannel(CConnection &_connection,
+	RequestedChannel(ChannelSupport &_connection,
 			 uint_least32_t _local_channel,
 			 ChannelFactory &_factory,
 			 CancellablePointer &cancel_ptr) noexcept
@@ -97,7 +106,7 @@ IsRequestedChannel(const Channel &channel) noexcept
 }
 
 void
-CConnection::OpenChannel(std::string_view channel_type,
+ChannelSupport::OpenChannel(std::string_view channel_type,
 			 uint_least32_t initial_window_size,
 			 ChannelFactory &factory,
 			 CancellablePointer &cancel_ptr)
@@ -112,7 +121,7 @@ CConnection::OpenChannel(std::string_view channel_type,
 		s.WriteU32(initial_window_size);
 		s.WriteU32(MAXIMUM_PACKET_SIZE);
 		factory.SerializeOpen(s);
-		SendPacket(std::move(s));
+		connection.SendPacket(std::move(s));
 	}
 
 	auto *requested = new RequestedChannel(*this, local_channel,
@@ -160,7 +169,7 @@ IsOpeningChannel(const Channel &channel) noexcept
 }
 
 void
-CConnection::CloseChannel(Channel &channel) noexcept
+ChannelSupport::CloseChannel(Channel &channel) noexcept
 {
 	assert(!IsTombstoneChannel(channel));
 	assert(!IsOpeningChannel(channel));
@@ -185,7 +194,7 @@ CConnection::CloseChannel(Channel &channel) noexcept
 }
 
 inline uint_least32_t
-CConnection::AllocateChannelIndex()
+ChannelSupport::AllocateChannelIndex()
 {
 	for (uint_least32_t i = 0; i < channels.size(); ++i)
 		if (channels[i] == nullptr)
@@ -198,13 +207,13 @@ CConnection::AllocateChannelIndex()
 }
 
 Channel &
-CConnection::GetChannel(uint_least32_t local_channel)
+ChannelSupport::GetChannel(uint_least32_t local_channel)
 {
 	if (local_channel >= channels.size() ||
 	    channels[local_channel] == nullptr ||
 	    IsRequestedChannel(*channels[local_channel]) ||
 	    IsOpeningChannel(*channels[local_channel])) {
-		throw Disconnect{
+		throw Connection::Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"Bad channel"sv,
 		};
@@ -214,12 +223,12 @@ CConnection::GetChannel(uint_least32_t local_channel)
 }
 
 RequestedChannel &
-CConnection::PopRequestedChannel(uint_least32_t local_channel)
+ChannelSupport::PopRequestedChannel(uint_least32_t local_channel)
 {
 	if (local_channel >= channels.size() ||
 	    channels[local_channel] == nullptr ||
 	    !IsRequestedChannel(*channels[local_channel])) {
-		throw Disconnect{
+		throw Connection::Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"Bad channel"sv,
 		};
@@ -247,7 +256,7 @@ MakeChannelOpenConfirmation(uint_least32_t peer_channel,
 }
 
 void
-CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
+ChannelSupport::AsyncChannelOpenSuccess(Channel &channel) noexcept
 {
 	assert(!IsTombstoneChannel(channel));
 	assert(!IsOpeningChannel(channel));
@@ -270,7 +279,7 @@ CConnection::AsyncChannelOpenSuccess(Channel &channel) noexcept
 }
 
 void
-CConnection::AsyncChannelOpenFailure(ChannelInit init,
+ChannelSupport::AsyncChannelOpenFailure(ChannelInit init,
 				     ChannelOpenFailureReasonCode reason_code,
 				     std::string_view description) noexcept
 {
@@ -287,7 +296,7 @@ CConnection::AsyncChannelOpenFailure(ChannelInit init,
 }
 
 inline void
-CConnection::HandleChannelOpen(std::string_view channel_type,
+ChannelSupport::HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t peer_channel,
 			       uint_least32_t initial_window_size,
 			       std::span<const std::byte> payload)
@@ -341,7 +350,7 @@ CConnection::HandleChannelOpen(std::string_view channel_type,
 }
 
 inline void
-CConnection::HandleChannelOpen(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelOpen(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelOpen(payload);
 
@@ -350,7 +359,7 @@ CConnection::HandleChannelOpen(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelOpenConfirmation(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelOpenConfirmation(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelOpenConfirmation(payload);
 	auto &requested_channel = PopRequestedChannel(p.local_channel);
@@ -378,7 +387,7 @@ CConnection::HandleChannelOpenConfirmation(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelOpenFailure(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelOpenFailure(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelOpenFailure(payload);
 	auto &channel = PopRequestedChannel(p.local_channel);
@@ -387,7 +396,7 @@ CConnection::HandleChannelOpenFailure(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelWindowAdjust(payload);
 
@@ -399,7 +408,7 @@ CConnection::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelData(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelData(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelData(payload);
 
@@ -411,7 +420,7 @@ CConnection::HandleChannelData(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelExtendedData(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelExtendedData(payload);
 
@@ -423,7 +432,7 @@ CConnection::HandleChannelExtendedData(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelEof(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelEof(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelEof(payload);
 
@@ -432,7 +441,7 @@ CConnection::HandleChannelEof(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelClose(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelClose(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelClose(payload);
 
@@ -445,7 +454,7 @@ CConnection::HandleChannelClose(std::span<const std::byte> payload)
 }
 
 inline void
-CConnection::HandleChannelRequest(std::span<const std::byte> payload)
+ChannelSupport::HandleChannelRequest(std::span<const std::byte> payload)
 {
 	const auto p = ParseChannelRequest(payload);
 
@@ -453,81 +462,75 @@ CConnection::HandleChannelRequest(std::span<const std::byte> payload)
 	channel.HandleRequest(p.request_type, p.type_specific_data, p.want_reply);
 }
 
-void
-CConnection::HandlePacket(MessageNumber msg,
-			  std::span<const std::byte> payload)
+bool
+ChannelSupport::HandlePacket(MessageNumber msg,
+			     std::span<const std::byte> payload)
 {
-	if (!IsEncrypted() || !IsAuthenticated())
-		return GConnection::HandlePacket(msg, payload);
+	if (!connection.IsEncrypted() || !connection.IsAuthenticated())
+		return false;
 
 	switch (msg) {
 	case MessageNumber::CHANNEL_OPEN:
 		HandleChannelOpen(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_OPEN_CONFIRMATION:
 		HandleChannelOpenConfirmation(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_OPEN_FAILURE:
 		HandleChannelOpenFailure(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_WINDOW_ADJUST:
 		HandleChannelWindowAdjust(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_DATA:
 		HandleChannelData(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_EXTENDED_DATA:
 		HandleChannelExtendedData(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_EOF:
 		HandleChannelEof(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_CLOSE:
 		HandleChannelClose(payload);
-		break;
+		return true;
 
 	case MessageNumber::CHANNEL_REQUEST:
 		HandleChannelRequest(payload);
-		break;
+		return true;
 
 	default:
-		GConnection::HandlePacket(msg, payload);
+		return false;
 	}
 }
 
 void
-CConnection::OnWriteBlocked() noexcept
+ChannelSupport::OnWriteBlocked() noexcept
 {
-	GConnection::OnWriteBlocked();
-
 	for (auto *i : channels)
 		if (i != nullptr)
 			i->OnWriteBlocked();
 }
 
 void
-CConnection::OnWriteUnblocked() noexcept
+ChannelSupport::OnWriteUnblocked() noexcept
 {
-	GConnection::OnWriteUnblocked();
-
 	for (auto *i : channels)
 		if (i != nullptr)
 			i->OnWriteUnblocked();
 }
 
 void
-CConnection::OnDisconnecting(DisconnectReasonCode reason_code,
-			     std::string_view msg) noexcept
+ChannelSupport::OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
+				[[maybe_unused]] std::string_view msg) noexcept
 {
-	GConnection::OnDisconnecting(reason_code, msg);
-
 	/* delete all channels so they don't try to do any I/O while
            we're waiting for the DISCONNECT to be flushed */
 	for (auto &i : channels) {

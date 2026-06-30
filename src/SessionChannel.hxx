@@ -63,7 +63,7 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	bool enable_agent_forward = false;
 
 public:
-	SessionChannel(SSH::CConnection &_connection,
+	SessionChannel(SSH::ChannelSupport &_parent,
 		       SSH::ChannelInit init) noexcept;
 
 	~SessionChannel() noexcept override;

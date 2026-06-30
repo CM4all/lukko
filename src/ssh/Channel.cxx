@@ -3,7 +3,8 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Channel.hxx"
-#include "CConnection.hxx"
+#include "CSupport.hxx"
+#include "Connection.hxx"
 #include "Serializer.hxx"
 #include "MakePacket.hxx"
 #include "co/InvokeTask.hxx"
@@ -67,9 +68,9 @@ private:
 	}
 };
 
-Channel::Channel(CConnection &_connection, ChannelInit init,
+Channel::Channel(ChannelSupport &_parent, ChannelInit init,
 		 std::size_t _receive_window) noexcept
-	:connection(_connection),
+	:parent(_parent), connection(parent.GetConnection()),
 	 local_channel(init.local_channel),
 	 peer_channel(init.peer_channel),
 	 receive_window(_receive_window),
@@ -83,7 +84,7 @@ Channel::~Channel() noexcept
 void
 Channel::Close() noexcept
 {
-	connection.CloseChannel(*this);
+	parent.CloseChannel(*this);
 }
 
 std::size_t

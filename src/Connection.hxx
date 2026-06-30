@@ -6,7 +6,8 @@
 
 #include "OutgoingConnection.hxx"
 #include "Service.hxx"
-#include "ssh/CConnection.hxx"
+#include "ssh/GConnection.hxx"
+#include "ssh/CSupport.hxx"
 #include "ssh/HostKeyChooser.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
@@ -42,7 +43,7 @@ class PacketSerializer;
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  public SSH::HostKeyChooser,
-	  public SSH::CConnection,
+	  public SSH::GConnection,
 	  public SSH::ChannelHandler,
 	  OutgoingConnectionHandler
 {
@@ -55,6 +56,8 @@ class Connection final
 #ifdef ENABLE_POND
 	std::string peer_host;
 #endif
+
+	SSH::ChannelSupport channels{*this, *this};
 
 	AccountedClientConnection accounting;
 
@@ -153,6 +156,10 @@ public:
 
 	[[gnu::const]]
 	SpawnService &GetSpawnService() const noexcept;
+
+	auto &GetChannels() noexcept {
+		return channels;
+	}
 
 	Listener &GetListener() const noexcept {
 		return listener;
