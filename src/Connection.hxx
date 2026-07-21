@@ -6,7 +6,8 @@
 
 #include "OutgoingConnection.hxx"
 #include "Service.hxx"
-#include "ssh/GConnection.hxx"
+#include "ssh/Connection.hxx"
+#include "ssh/GSupport.hxx"
 #include "ssh/CSupport.hxx"
 #include "ssh/HostKeyChooser.hxx"
 #include "key/Options.hxx"
@@ -43,7 +44,8 @@ class PacketSerializer;
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  public SSH::HostKeyChooser,
-	  public SSH::GConnection,
+	  public SSH::Connection,
+	  public SSH::GlobalRequestHandler,
 	  public SSH::ChannelHandler,
 	  OutgoingConnectionHandler
 {
@@ -57,6 +59,7 @@ class Connection final
 	std::string peer_host;
 #endif
 
+	SSH::GlobalRequestSupport global_requests{*this, *this};
 	SSH::ChannelSupport channels{*this, *this};
 
 	AccountedClientConnection accounting;
@@ -374,7 +377,7 @@ private:
 
 	void OnAuthTimeout() noexcept;
 
-	/* virtual methods from class SSH::GConnection */
+	/* virtual methods from class SSH::GlobalRequestHandler */
 	Co::EagerTask<bool> HandleGlobalRequest(std::string_view request_name,
 						std::span<const std::byte> request_specific_data) override;
 

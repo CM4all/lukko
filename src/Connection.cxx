@@ -170,8 +170,8 @@ CheckTranslateResponse(const TranslateResponse &response)
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
-	:SSH::GConnection(_instance.GetEventLoop(), std::move(_fd),
-			  *this),
+	:SSH::Connection(_instance.GetEventLoop(), std::move(_fd),
+			 *this),
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
@@ -1259,7 +1259,7 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
 	if (!IsEncrypted())
-		return GConnection::HandlePacket(msg, payload);
+		return SSH::Connection::HandlePacket(msg, payload);
 
 	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
 		throw Disconnect{
@@ -1301,7 +1301,7 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 		break;
 
 	default:
-		SSH::GConnection::HandlePacket(msg, payload);
+		SSH::Connection::HandlePacket(msg, payload);
 	}
 }
 
@@ -1321,7 +1321,7 @@ void
 Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept
 {
-	GConnection::OnDisconnecting(reason_code, msg);
+	SSH::Connection::OnDisconnecting(reason_code, msg);
 
 	/* some manual shutdown just in case the Destroy() is
            postponed */
@@ -1375,7 +1375,7 @@ void
 Connection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	logger(1, e);
-	SSH::GConnection::OnBufferedError(std::move(e));
+	SSH::Connection::OnBufferedError(std::move(e));
 }
 
 void

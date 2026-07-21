@@ -2,7 +2,8 @@
 // Copyright CM4all GmbH
 // author: Max Kellermann <max.kellermann@ionos.com>
 
-#include "GConnection.hxx"
+#include "GSupport.hxx"
+#include "Connection.hxx"
 #include "PacketSerializer.hxx"
 #include "ParsePacket.hxx"
 #include "co/InvokeTask.hxx"
@@ -14,8 +15,8 @@
 
 namespace SSH {
 
-class GConnection::PendingGlobalRequest : public IntrusiveListHook<> {
-	GConnection &connection;
+class GlobalRequestSupport::PendingGlobalRequest : public IntrusiveListHook<> {
+	GlobalRequestSupport &connection;
 
 	Co::EagerInvokeTask invoke_task;
 
@@ -24,7 +25,7 @@ class GConnection::PendingGlobalRequest : public IntrusiveListHook<> {
 	bool success;
 
 public:
-	PendingGlobalRequest(GConnection &_connection, bool _want_reply,
+	PendingGlobalRequest(GlobalRequestSupport &_connection, bool _want_reply,
 			     Co::EagerTask<bool> &&_task)
 		:connection(_connection),
 		 invoke_task(Run(std::move(_task))),
@@ -61,17 +62,20 @@ private:
 	}
 };
 
-GConnection::GConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
-			 HostKeyChooser &_host_key_chooser)
-	:Connection(event_loop, std::move(fd), _host_key_chooser) {}
+GlobalRequestSupport::GlobalRequestSupport(Connection &_connection,
+					   GlobalRequestHandler &_handler) noexcept
+	:connection(_connection), handler(_handler)
+{
+	connection.AddHandler(*this);
+}
 
-GConnection::~GConnection() noexcept
+GlobalRequestSupport::~GlobalRequestSupport() noexcept
 {
 	pending_global_requests.clear_and_dispose(DeleteDisposer{});
 }
 
 void
-GConnection::SubmitGlobalRequestResponses() noexcept
+GlobalRequestSupport::SubmitGlobalRequestResponses() noexcept
 {
 	while (!pending_global_requests.empty()) {
 		const auto &request = pending_global_requests.front();
@@ -85,14 +89,14 @@ GConnection::SubmitGlobalRequestResponses() noexcept
 		const bool success = request.WasSuccessful();
 		pending_global_requests.pop_front_and_dispose(DeleteDisposer{});
 
-		SendPacket(PacketSerializer{success
+		connection.SendPacket(PacketSerializer{success
 				? MessageNumber::REQUEST_SUCCESS
 				: MessageNumber::REQUEST_FAILURE});
 	}
 }
 
 inline void
-GConnection::OnGlobalRequestDone(PendingGlobalRequest &request,
+GlobalRequestSupport::OnGlobalRequestDone(PendingGlobalRequest &request,
 				 std::exception_ptr error) noexcept
 {
 	assert(request.IsDone());
@@ -112,28 +116,21 @@ GConnection::OnGlobalRequestDone(PendingGlobalRequest &request,
 	SubmitGlobalRequestResponses();
 }
 
-Co::EagerTask<bool>
-GConnection::HandleGlobalRequest([[maybe_unused]] std::string_view request_name,
-				 [[maybe_unused]] std::span<const std::byte> request_specific_data)
-{
-	co_return false;
-}
-
 bool
-GConnection::OnGlobalRequestError(std::exception_ptr error) noexcept
+GlobalRequestSupport::OnGlobalRequestError(std::exception_ptr error) noexcept
 {
-	CloseError(std::move(error));
+	connection.CloseError(std::move(error));
 	return false;
 }
 
 inline void
-GConnection::HandleGlobalRequest(std::span<const std::byte> payload)
+GlobalRequestSupport::HandleGlobalRequest(std::span<const std::byte> payload)
 {
 	const auto p = ParseGlobalRequest(payload);
 
 	auto *request = new PendingGlobalRequest(*this, p.want_reply,
-						 HandleGlobalRequest(p.request_name,
-								     p.request_specific_data));
+						 handler.HandleGlobalRequest(p.request_name,
+									     p.request_specific_data));
 	pending_global_requests.push_back(*request);
 
 	if (request->IsDone())
@@ -142,29 +139,27 @@ GConnection::HandleGlobalRequest(std::span<const std::byte> payload)
 		request->Start();
 }
 
-void
-GConnection::HandlePacket(MessageNumber msg,
+bool
+GlobalRequestSupport::HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload)
 {
-	if (!IsEncrypted() || !IsAuthenticated())
-		return Connection::HandlePacket(msg, payload);
+	if (!connection.IsEncrypted() || !connection.IsAuthenticated())
+		return false;
 
 	switch (msg) {
 	case MessageNumber::GLOBAL_REQUEST:
 		HandleGlobalRequest(payload);
-		break;
+		return true;
 
 	default:
-		Connection::HandlePacket(msg, payload);
+		return false;
 	}
 }
 
 void
-GConnection::OnDisconnecting(DisconnectReasonCode reason_code,
-			     std::string_view msg) noexcept
+GlobalRequestSupport::OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
+				      [[maybe_unused]] std::string_view msg) noexcept
 {
-	Connection::OnDisconnecting(reason_code, msg);
-
 	/* cancel all pending requests so they don't try to do any I/O
 	   while we're waiting for the DISCONNECT to be flushed */
 	pending_global_requests.clear_and_dispose(DeleteDisposer{});
