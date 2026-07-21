@@ -611,12 +611,12 @@ private:
 	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
-			connection.channels.AsyncChannelOpenFailure(init,
-								    SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-								    GetFullMessage(std::move(error)));
+			connection.channels->AsyncChannelOpenFailure(init,
+								     SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+								     GetFullMessage(std::move(error)));
 			delete this;
 		} else {
-			auto &_channels = connection.channels;
+			auto &_channels = *connection.channels;
 			auto *channel = new SocketChannel(_channels, init, std::move(socket));
 			delete this;
 			_channels.AsyncChannelOpenSuccess(*channel);
@@ -659,12 +659,12 @@ private:
 	void OnCompletion(std::exception_ptr &&error) noexcept {
 		if (error) {
 			// TODO log error?
-			connection.channels.AsyncChannelOpenFailure(init,
-								    SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
-								    GetFullMessage(std::move(error)));
+			connection.channels->AsyncChannelOpenFailure(init,
+								     SSH::ChannelOpenFailureReasonCode::CONNECT_FAILED,
+								     GetFullMessage(std::move(error)));
 			delete this;
 		} else {
-			auto &_channels = connection.channels;
+			auto &_channels = *connection.channels;
 			auto *channel = new SocketChannel(_channels, init, std::move(socket));
 			delete this;
 			_channels.AsyncChannelOpenSuccess(*channel);
@@ -693,7 +693,7 @@ Connection::CreateChannel(std::string_view channel_type,
 				"Possible attack: attempt to open a session after additional sessions disabled",
 			};
 
-		return std::make_unique<SessionChannel>(channels, init);
+		return std::make_unique<SessionChannel>(*channels, init);
 	} else if (channel_type == "direct-tcpip"sv) {
 		if (!IsForwardingAllowed()) {
 			throw SSH::ChannelSupport::ChannelOpenFailure{
@@ -768,6 +768,7 @@ inline Co::EagerInvokeTask
 Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 {
 	assert(!IsAuthenticated());
+	assert(!channels);
 
 	/* this object aims to prevent timing-based guesses by
 	   delaying all error responses until 100ms have elapsed since
@@ -1127,6 +1128,8 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	} else {
 		SetAuthenticated();
 		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
+
+		channels = std::make_unique<SSH::ChannelSupport>(*this, *this);
 	}
 }
 

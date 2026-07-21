@@ -19,6 +19,7 @@
 #include "util/IntrusiveList.hxx"
 #include "config.h"
 
+#include <cassert>
 #include <memory>
 
 #include <sys/types.h> // for uid_t, gid_t
@@ -60,7 +61,7 @@ class Connection final
 #endif
 
 	SSH::GlobalRequestSupport global_requests{*this, *this};
-	SSH::ChannelSupport channels{*this, *this};
+	std::unique_ptr<SSH::ChannelSupport> channels;
 
 	AccountedClientConnection accounting;
 
@@ -161,7 +162,8 @@ public:
 	SpawnService &GetSpawnService() const noexcept;
 
 	auto &GetChannels() noexcept {
-		return channels;
+		assert(channels);
+		return *channels;
 	}
 
 	Listener &GetListener() const noexcept {
