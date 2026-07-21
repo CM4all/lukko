@@ -3,6 +3,7 @@ cm4all-lukko (0.55) unstable; urgency=low
   * fix use-after-free crash bug with socket forwarding
   * fix assertion failure during shutdown with `proxy_to`
   * support libfmt 12.2.0
+  * debian: add source/format file
 
  --   
 
