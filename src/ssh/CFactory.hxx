@@ -21,8 +21,28 @@ class Serializer;
  */
 class ChannelFactory {
 public:
+	/**
+	 * Serialize the CHANNEL_OPEN payload.
+	 */
 	virtual void SerializeOpen(Serializer &s) const = 0;
+
+	/**
+	 * The peer has agreed to open the channel.  This method
+	 * creates the #Channel instance for the new channel.
+	 *
+	 * Throws on error.
+	 *
+	 * After returning, the #ChannelFactory is no longer used by
+	 * the #ChannelSupport object.
+	 */
 	virtual std::unique_ptr<Channel> CreateChannel(ChannelInit init) = 0;
+
+	/**
+	 * The peer has refused to open the channel.
+	 *
+	 * After returning, the #ChannelFactory is no longer used by
+	 * the #ChannelSupport object.
+	 */
 	virtual void OnChannelOpenFailure(ChannelOpenFailureReasonCode code,
 					  std::string_view description) noexcept = 0;
 };
