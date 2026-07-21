@@ -581,7 +581,7 @@ Connection::IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) 
 	return false;
 }
 
-class ResolveSocketChannelOperation final : Cancellable {
+class Connection::ResolveSocketChannelOperation final : Cancellable {
 	Connection &connection;
 	const SSH::ChannelInit init;
 	Co::InvokeTask invoke_task;
@@ -629,7 +629,7 @@ private:
 	}
 };
 
-class LocalConnectSocketChannelOperation final : Cancellable {
+class Connection::LocalConnectSocketChannelOperation final : Cancellable {
 	Connection &connection;
 	const SSH::ChannelInit init;
 	Co::InvokeTask invoke_task;

@@ -122,6 +122,9 @@ class Connection final
 	 */
 	bool no_more_sessions = false;
 
+	class ResolveSocketChannelOperation;
+	class LocalConnectSocketChannelOperation;
+
 public:
 	Connection(Instance &_instance, Listener &_listener,
 		   PerClientAccounting *per_client,
