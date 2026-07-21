@@ -595,12 +595,16 @@ public:
 	void Start(std::string_view host, unsigned port,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
-		invoke_task = Start(host, port);
+
+		/* copy the host because the coroutine might outlive
+		   the path parameter */
+		invoke_task = Start(std::string{host}, port);
+
 		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
 	}
 
 private:
-	Co::InvokeTask Start(std::string_view host, unsigned port) {
+	Co::InvokeTask Start(std::string host, unsigned port) {
 		socket = co_await ResolveConnectTCP(connection, host, port);
 	}
 
@@ -638,12 +642,16 @@ public:
 
 	void Start(std::string_view path, CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
-		invoke_task = Start(path);
+
+		/* copy the path because the coroutine might outlive
+		   the path parameter */
+		invoke_task = Start(std::string{path});
+
 		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
 	}
 
 private:
-	Co::InvokeTask Start(std::string_view path) {
+	Co::InvokeTask Start(std::string path) {
 		auto fd = co_await DelegateLocalConnect(connection, path);
 		socket = UniqueSocketDescriptor{std::move(fd)};
 	}
