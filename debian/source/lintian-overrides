@@ -1,0 +1,3 @@
+# this package uses debhelper 14 features, and currently it's not
+# possible to enable this with debhelper-compat dependency
+no-versioned-debhelper-prerequisite
