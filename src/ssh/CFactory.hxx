@@ -45,6 +45,16 @@ public:
 	 */
 	virtual void OnChannelOpenFailure(ChannelOpenFailureReasonCode code,
 					  std::string_view description) noexcept = 0;
+
+	/**
+	 * Creating the channel has been canceled by the
+	 * #ChannelSupport object, e.g. because the SSH connection is
+	 * being closed.
+	 *
+	 * After returning, the #ChannelFactory is no longer used by
+	 * the #ChannelSupport object.
+	 */
+	virtual void OnChannelCancel() noexcept = 0;
 };
 
 } // namespace SSH

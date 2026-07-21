@@ -62,6 +62,11 @@ public:
 		cancel_ptr = *this;
 	}
 
+	~RequestedChannel() noexcept override {
+		if (!canceled)
+			factory.OnChannelCancel();
+	}
+
 	std::unique_ptr<Channel> OnChannelOpenConfirmation(const ChannelOpenConfirmation &p) {
 		assert(p.local_channel == GetLocalChannel());
 

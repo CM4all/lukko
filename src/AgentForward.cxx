@@ -54,6 +54,7 @@ public:
 	std::unique_ptr<SSH::Channel> CreateChannel(SSH::ChannelInit init) override;
 	void OnChannelOpenFailure(SSH::ChannelOpenFailureReasonCode code,
 				  std::string_view description) noexcept override;
+	void OnChannelCancel() noexcept override;
 
 private:
 	void OnSocketReady(unsigned) noexcept {
@@ -90,6 +91,15 @@ AgentForward::Factory::OnChannelOpenFailure(SSH::ChannelOpenFailureReasonCode co
 				   description, static_cast<unsigned>(code));
 
 	(void)code;
+	delete this;
+}
+
+void
+AgentForward::Factory::OnChannelCancel() noexcept
+{
+	assert(cancel_ptr);
+	cancel_ptr = {};
+
 	delete this;
 }
 
