@@ -61,7 +61,7 @@ private:
 	}
 };
 
-GConnection::GConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
+GConnection::GConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 			 HostKeyChooser &_host_key_chooser)
 	:Connection(event_loop, std::move(fd), _host_key_chooser) {}
 

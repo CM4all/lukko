@@ -28,7 +28,7 @@ class GConnection : public Connection
 	IntrusiveList<PendingGlobalRequest> pending_global_requests;
 
 public:
-	GConnection(EventLoop &event_loop, UniqueSocketDescriptor fd,
+	GConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		    HostKeyChooser &_host_key_chooser);
 	~GConnection() noexcept;
 
