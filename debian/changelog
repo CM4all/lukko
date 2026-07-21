@@ -8,7 +8,7 @@ cm4all-lukko (0.55) unstable; urgency=low
   * debian: add lintian override "no-manual-page"
   * debian/control: set "Priority: optional"
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 21 Jul 2026 12:44:08 +0200
 
 cm4all-lukko (0.54) unstable; urgency=low
 
