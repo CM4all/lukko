@@ -1,5 +1,7 @@
 [Unit]
 Description=CM4all Lukko
+Documentation=https://lukko.readthedocs.io/
+
 Wants=network.target
 After=network.target
 
