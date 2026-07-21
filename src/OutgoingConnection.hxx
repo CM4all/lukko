@@ -4,7 +4,10 @@
 
 #pragma once
 
+#include "UserAuthClient.hxx"
 #include "ssh/Connection.hxx"
+
+#include <memory>
 
 class SecretKey;
 class PublicKeySet;
@@ -32,19 +35,13 @@ public:
 };
 
 class OutgoingConnection final
-	: public SSH::Connection
+	: public SSH::Connection, UserAuthClientHandler
 {
 	const PublicKeySet &server_host_keys;
 
 	OutgoingConnectionHandler &handler;
 
-	enum class State : uint_least8_t {
-		INIT,
-		SERVICE_REQUEST_SSH_USERAUTH,
-		SERVICE_SSH_USERAUTH,
-		USERAUTH_REQUEST,
-		USERAUTH_SUCCESS,
-	} state = State::INIT;
+	std::unique_ptr<UserAuthClient> user_auth;
 
 public:
 	OutgoingConnection(EventLoop &event_loop, const PublicKeySet &_server_host_keys,
@@ -62,6 +59,11 @@ private:
 	void HandleServiceAccept(std::span<const std::byte> payload);
 
 protected:
+	/* virtual methods from class UserAuthClientHandler */
+	void OnUserAuthService() override;
+	void OnUserAuthSuccess() override;
+	void OnUserAuthFailure() override;
+
 	/* virtual methods from class SSH::Connection */
 	void Destroy() noexcept override;
 	void HandlePacket(SSH::MessageNumber msg,
