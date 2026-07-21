@@ -52,7 +52,7 @@ public:
  * Add SSH channel support to class #Connection.  Override method
  * CreateChannel().
  */
-class ChannelSupport : ConnectionHandler
+class ChannelSupport final : ConnectionHandler
 {
 	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
 
