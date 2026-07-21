@@ -76,6 +76,7 @@ public:
 		}
 
 		auto &_factory = factory;
+		canceled = true;
 		delete this;
 		return _factory.CreateChannel({
 				.local_channel = p.local_channel,
