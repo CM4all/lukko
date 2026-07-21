@@ -1,6 +1,6 @@
 Source: cm4all-lukko
 Section: net
-Priority: extra
+Priority: optional
 Maintainer: Max Kellermann <max.kellermann@ionos.com>
 Build-Depends: debhelper (>= 13.3~),
  meson (>= 1.2),

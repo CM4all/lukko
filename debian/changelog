@@ -6,6 +6,7 @@ cm4all-lukko (0.55) unstable; urgency=low
   * debian: add copyright file
   * debian: add source/format file
   * debian: add lintian override "no-manual-page"
+  * debian/control: set "Priority: optional"
 
  --   
 
