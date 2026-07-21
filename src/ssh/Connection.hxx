@@ -167,15 +167,15 @@ public:
 		OnBufferedError(std::move(e));
 	}
 
+	std::span<const std::byte> GetSessionId() const noexcept {
+		return kex_state.session_id;
+	}
+
 protected:
 	virtual void Destroy() noexcept = 0;
 
 	SocketDescriptor GetSocket() const noexcept {
 		return socket.GetSocket();
-	}
-
-	std::span<const std::byte> GetSessionId() const noexcept {
-		return kex_state.session_id;
 	}
 
 	void SetAuthenticated() noexcept {
