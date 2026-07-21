@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Service.hxx"
 #include "ssh/BufferedChannel.hxx"
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
