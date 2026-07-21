@@ -18,6 +18,12 @@ namespace SSH {
 
 class Channel;
 
+CConnection::CConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+			 HostKeyChooser &_host_key_chooser,
+			 ChannelHandler &_handler)
+	:GConnection(event_loop, std::move(fd), _host_key_chooser),
+	 channel_handler(_handler) {}
+
 CConnection::~CConnection() noexcept
 {
 	for (auto *i : channels)
@@ -222,31 +228,6 @@ CConnection::PopRequestedChannel(uint_least32_t local_channel)
 	return *static_cast<RequestedChannel *>(std::exchange(channels[local_channel], nullptr));
 }
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wmissing-noreturn"
-#else
-#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
-#endif
-#endif
-
-std::unique_ptr<Channel>
-CConnection::CreateChannel([[maybe_unused]] std::string_view channel_type,
-			   [[maybe_unused]] ChannelInit init,
-			   [[maybe_unused]] std::span<const std::byte> payload,
-			   [[maybe_unused]] CancellablePointer &cancel_ptr)
-{
-	throw ChannelOpenFailure{
-		ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
-		"Unknown channel type"sv,
-	};
-}
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
 static PacketSerializer
 MakeChannelOpenConfirmation(uint_least32_t peer_channel,
 			    uint_least32_t local_channel,
@@ -325,8 +306,8 @@ CConnection::HandleChannelOpen(std::string_view channel_type,
 	std::unique_ptr<Channel> channel;
 
 	try {
-		channel = CreateChannel(channel_type, init, payload,
-					opening->cancel_ptr);
+		channel = channel_handler.CreateChannel(channel_type, init, payload,
+							opening->cancel_ptr);
 	} catch (const ChannelOpenFailure &failure) {
 		assert(channels[local_channel] == opening);
 		channels[local_channel] = nullptr;

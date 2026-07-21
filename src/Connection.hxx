@@ -43,6 +43,7 @@ class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  public SSH::HostKeyChooser,
 	  public SSH::CConnection,
+	  public SSH::ChannelHandler,
 	  OutgoingConnectionHandler
 {
 	Instance &instance;
@@ -367,7 +368,7 @@ private:
 	Co::EagerTask<bool> HandleGlobalRequest(std::string_view request_name,
 						std::span<const std::byte> request_specific_data) override;
 
-	/* virtual methods from class SSH::CConnection */
+	/* virtual methods from class SSH::ChannelHandler */
 	std::unique_ptr<SSH::Channel> CreateChannel(std::string_view channel_type,
 						    SSH::ChannelInit init,
 						    std::span<const std::byte> payload,

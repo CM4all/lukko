@@ -171,7 +171,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::CConnection(_instance.GetEventLoop(), std::move(_fd),
-			  *this),
+			  *this, *this),
 	 instance(_instance), listener(_listener),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
@@ -728,8 +728,10 @@ Connection::CreateChannel(std::string_view channel_type,
 		operation->Start(socket_path, cancel_ptr);
 		return {};
 	} else
-		return SSH::CConnection::CreateChannel(channel_type, init, payload,
-						       cancel_ptr);
+		throw ChannelOpenFailure{
+			SSH::ChannelOpenFailureReasonCode::UNKNOWN_CHANNEL_TYPE,
+			"Unknown channel type"sv,
+		};
 }
 
 inline void

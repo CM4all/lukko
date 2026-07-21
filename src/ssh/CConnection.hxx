@@ -33,6 +33,31 @@ public:
 };
 
 /**
+ * Handler class for class #CConnection.
+ */
+class ChannelHandler {
+public:
+	/**
+	 * The peer has requested opening a channel.
+	 *
+	 * Throws #ChannelOpenFailure on error
+	 *
+	 * @param channel_type the type of the channel
+	 * @param init opaque initialization data for the #Channel constructor
+	 * @param payload the remaining payload specific to this channel type
+	 * @param cancel_ptr a cancellation hook (for channels that
+	 * are created asynchronously)
+	 * @return the new channel (nullptr if creating the channel
+	 * is asynchronous; upon completion, call
+	 * AsyncChannelOpenSuccess() or AsyncChannelOpenFailure())
+	 */
+	virtual std::unique_ptr<Channel> CreateChannel(std::string_view channel_type,
+						       ChannelInit init,
+						       std::span<const std::byte> payload,
+						       CancellablePointer &cancel_ptr) = 0;
+};
+
+/**
  * Add SSH channel support to class #Connection.  Override method
  * CreateChannel().
  */
@@ -40,10 +65,14 @@ class CConnection : public GConnection
 {
 	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
 
+	ChannelHandler &channel_handler;
+
 	std::array<Channel *, 64> channels{};
 
 public:
-	using GConnection::GConnection;
+	CConnection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		    HostKeyChooser &_host_key_chooser,
+		    ChannelHandler &_handler);
 
 	~CConnection() noexcept;
 
@@ -120,25 +149,6 @@ private:
 	void HandleChannelRequest(std::span<const std::byte> payload);
 
 protected:
-	/**
-	 * The peer has requested opening a channel.
-	 *
-	 * Throws #ChannelOpenFailure on error
-	 *
-	 * @param channel_type the type of the channel
-	 * @param init opaque initialization data for the #Channel constructor
-	 * @param payload the remaining payload specific to this channel type
-	 * @param cancel_ptr a cancellation hook (for channels that
-	 * are created asynchronously)
-	 * @return the new channel (nullptr if creating the channel
-	 * is asynchronous; upon completion, call
-	 * AsyncChannelOpenSuccess() or AsyncChannelOpenFailure())
-	 */
-	virtual std::unique_ptr<Channel> CreateChannel(std::string_view channel_type,
-						       ChannelInit init,
-						       std::span<const std::byte> payload,
-						       CancellablePointer &cancel_ptr);
-
 	/* virtual methods from class SSH::Connection */
 	void HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload) override;
