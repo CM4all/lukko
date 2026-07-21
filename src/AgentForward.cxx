@@ -6,6 +6,7 @@
 #include "SocketChannel.hxx"
 #include "Connection.hxx"
 #include "SessionChannel.hxx"
+#include "ssh/CFactory.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
 

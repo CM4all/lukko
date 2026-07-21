@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "CSupport.hxx"
+#include "CFactory.hxx"
 #include "Connection.hxx"
 #include "Channel.hxx"
 #include "Serializer.hxx"

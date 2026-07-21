@@ -5,6 +5,7 @@
 #include "SocketForwardListener.hxx"
 #include "SocketChannel.hxx"
 #include "Connection.hxx"
+#include "ssh/CFactory.hxx"
 #include "ssh/Serializer.hxx"
 #include "net/ToString.hxx"
 #include "util/Cancellable.hxx"
