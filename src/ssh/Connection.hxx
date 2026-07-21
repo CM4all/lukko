@@ -234,7 +234,7 @@ protected:
 	 * rekeying (after sending KEXINIT on a connection that is
 	 * already encrypted).
 	 */
-	virtual void OnWriteBlocked() noexcept;
+	void OnWriteBlocked() noexcept;
 
 	/**
 	 * The (kernel) socket buffer is no longer full and
@@ -242,7 +242,7 @@ protected:
 	 * method; this method shall only schedule events to produce
 	 * more data).
 	 */
-	virtual void OnWriteUnblocked() noexcept;
+	void OnWriteUnblocked() noexcept;
 
 	/**
 	 * Called right before sending a DISCONNECT packet to the
@@ -271,7 +271,7 @@ private:
 		return GetServerKexinit() != nullptr;
 	}
 
-	virtual void HandleRawPacket(std::span<const std::byte> payload);
+	void HandleRawPacket(std::span<const std::byte> payload);
 
 protected:
 	/* virtual methods from class BufferedSocketHandler */
