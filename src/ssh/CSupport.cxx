@@ -468,6 +468,24 @@ ChannelSupport::HandleChannelRequest(std::span<const std::byte> payload)
 	channel.HandleRequest(p.request_type, p.type_specific_data, p.want_reply);
 }
 
+inline void
+ChannelSupport::HandleChannelSuccess(std::span<const std::byte> payload)
+{
+	const auto p = ParseChannelResponse(payload);
+
+	auto &channel = GetChannel(p.local_channel);
+	channel.OnRequestSuccess();
+}
+
+inline void
+ChannelSupport::HandleChannelFailure(std::span<const std::byte> payload)
+{
+	const auto p = ParseChannelResponse(payload);
+
+	auto &channel = GetChannel(p.local_channel);
+	channel.OnRequestFailure();
+}
+
 bool
 ChannelSupport::HandlePacket(MessageNumber msg,
 			     std::span<const std::byte> payload)
@@ -510,6 +528,14 @@ ChannelSupport::HandlePacket(MessageNumber msg,
 
 	case MessageNumber::CHANNEL_REQUEST:
 		HandleChannelRequest(payload);
+		return true;
+
+	case MessageNumber::CHANNEL_SUCCESS:
+		HandleChannelSuccess(payload);
+		return true;
+
+	case MessageNumber::CHANNEL_FAILURE:
+		HandleChannelFailure(payload);
 		return true;
 
 	default:

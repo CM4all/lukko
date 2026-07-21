@@ -148,6 +148,8 @@ public:
 	[[nodiscard]]
 	virtual Co::EagerTask<bool> OnRequest(std::string_view request_type,
 					      std::span<const std::byte> type_specific);
+	virtual void OnRequestSuccess();
+	virtual void OnRequestFailure();
 
 	virtual void OnWriteBlocked() noexcept {}
 	virtual void OnWriteUnblocked() noexcept {}

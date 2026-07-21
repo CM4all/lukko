@@ -142,6 +142,8 @@ private:
 	void HandleChannelEof(std::span<const std::byte> payload);
 	void HandleChannelClose(std::span<const std::byte> payload);
 	void HandleChannelRequest(std::span<const std::byte> payload);
+	void HandleChannelSuccess(std::span<const std::byte> payload);
+	void HandleChannelFailure(std::span<const std::byte> payload);
 
 private:
 	/* virtual methods from class SSH::ConnectionHandler */

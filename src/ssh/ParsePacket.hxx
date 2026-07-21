@@ -280,6 +280,19 @@ ParseChannelRequest(std::span<const std::byte> raw)
 	return p;
 }
 
+struct ChannelResponse {
+	uint_least32_t local_channel;
+};
+
+inline auto
+ParseChannelResponse(std::span<const std::byte> raw)
+{
+	ChannelResponse p;
+	Deserializer d{raw};
+	p.local_channel = d.ReadU32();
+	return p;
+}
+
 struct GlobalRequest {
 	std::string_view request_name;
 	std::span<const std::byte> request_specific_data;

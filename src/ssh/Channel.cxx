@@ -264,4 +264,14 @@ Channel::OnRequest([[maybe_unused]] std::string_view request_type,
 	co_return false;
 }
 
+void
+Channel::OnRequestSuccess()
+{
+}
+
+void
+Channel::OnRequestFailure()
+{
+}
+
 } // namespace SSH
