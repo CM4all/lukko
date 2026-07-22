@@ -5,7 +5,7 @@ cm4all-lukko (0.56) unstable; urgency=low
   * fix rekeying on outgoing `proxy_to` connection
   * accept session ID only during initial KEX
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 23 Jul 2026 00:04:42 +0200
 
 cm4all-lukko (0.55) unstable; urgency=low
 
