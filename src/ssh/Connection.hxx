@@ -26,6 +26,7 @@ class Input;
 class Output;
 class Kex;
 class HostKeyChooser;
+class HostKeyVerifier;
 class ConnectionDisposer;
 class ConnectionHandler;
 enum class MessageNumber : uint8_t;
@@ -44,6 +45,7 @@ class Connection : BufferedSocketHandler, InputHandler
 	ConnectionDisposer &disposer;
 
 	const HostKeyChooser *const host_key_chooser = nullptr;
+	const HostKeyVerifier *const host_key_verifier = nullptr;
 
 	const SecretKey *host_key;
 	std::string host_key_algorithm;
@@ -161,7 +163,8 @@ public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		   ConnectionDisposer &_disposer,
 		   Role _role,
-		   const HostKeyChooser *_host_key_chooser=nullptr);
+		   const HostKeyChooser *_host_key_chooser=nullptr,
+		   const HostKeyVerifier *_host_key_verifier=nullptr);
 
 	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
@@ -169,6 +172,13 @@ public:
 		   const HostKeyChooser &_host_key_chooser)
 		:Connection(event_loop, std::move(fd), _disposer,
 			    Role::SERVER, &_host_key_chooser) {}
+
+	[[nodiscard]]
+	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		   ConnectionDisposer &_disposer,
+		   const HostKeyVerifier &_host_key_verifier)
+		:Connection(event_loop, std::move(fd), _disposer,
+			    Role::CLIENT, nullptr, &_host_key_verifier) {}
 
 
 	~Connection() noexcept;
@@ -251,15 +261,6 @@ protected:
 	void HandleNewKeys(std::span<const std::byte> payload);
 	void HandleECDHKexInit(std::span<const std::byte> payload);
 	void HandleECDHKexInitReply(std::span<const std::byte> payload);
-
-	/**
-	 * Check whether the give host key is acceptable (client mode
-	 * only).
-	 *
-	 * @return true to accept the host key
-	 */
-	[[gnu::pure]]
-	virtual bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept;
 
 	/**
 	 * Called after key exchange (KEX) has completed successfully

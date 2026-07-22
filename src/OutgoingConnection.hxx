@@ -7,6 +7,7 @@
 #include "ssh/Disposer.hxx"
 #include "ssh/UserAuthClient.hxx"
 #include "ssh/Connection.hxx"
+#include "ssh/SimpleHostKeyVerifier.hxx"
 
 #include <memory>
 
@@ -34,7 +35,7 @@ public:
 class OutgoingConnection final
 	: public SSH::Connection, SSH::UserAuthClientHandler
 {
-	const PublicKeySet &server_host_keys;
+	const SSH::SimpleHostKeyVerifier server_host_key_verifier;
 
 	OutgoingConnectionHandler &handler;
 
@@ -62,7 +63,6 @@ protected:
 	void OnUserAuthFailure() override;
 
 	/* virtual methods from class SSH::Connection */
-	bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept override;
 	void OnEncrypted() override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			     std::string_view msg) noexcept override;

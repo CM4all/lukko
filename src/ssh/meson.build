@@ -24,6 +24,7 @@ libssh = static_library(
   'KexState.cxx',
   'Serializer.cxx',
   'SimpleHostKeyChooser.cxx',
+  'SimpleHostKeyVerifier.cxx',
   'TerminalMode.cxx',
   'EarlyDisconnect.cxx',
   'UserAuthClient.cxx',

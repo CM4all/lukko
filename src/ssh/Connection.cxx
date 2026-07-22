@@ -15,6 +15,7 @@
 #include "KexProposal.hxx"
 #include "KexStrings.hxx"
 #include "HostKeyChooser.hxx"
+#include "HostKeyVerifier.hxx"
 #include "Handler.hxx"
 #include "Sizes.hxx"
 #include "StringList.hxx"
@@ -53,9 +54,11 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 		       ConnectionDisposer &_disposer,
 		       Role _role,
-		       const HostKeyChooser *_host_key_chooser)
+		       const HostKeyChooser *_host_key_chooser,
+		       const HostKeyVerifier *_host_key_verifier)
 	:disposer(_disposer),
 	 host_key_chooser(_host_key_chooser),
+	 host_key_verifier(_host_key_verifier),
 	 socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
@@ -220,12 +223,6 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 	}
 
 	disposer.Dispose(this);
-}
-
-bool
-Connection::CheckHostKey([[maybe_unused]] std::span<const std::byte> server_host_key_blob) const noexcept
-{
-	return false;
 }
 
 void
@@ -645,7 +642,8 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 
 	const auto p = ParseECDHKexInitReply(payload);
 
-	if (!CheckHostKey(p.server_host_key_blob))
+	if (host_key_verifier == nullptr ||
+	    !host_key_verifier->VerifyHostKey(p.server_host_key_blob))
 		throw Disconnect{
 			DisconnectReasonCode::HOST_KEY_NOT_VERIFIABLE,
 			"Host key not accepted"sv,

@@ -12,8 +12,10 @@ OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 				       const PublicKeySet &_server_host_keys,
 				       UniqueSocketDescriptor &&fd,
 				       OutgoingConnectionHandler &_handler)
-	:SSH::Connection(event_loop, std::move(fd), _handler, SSH::Role::CLIENT),
-	 server_host_keys(_server_host_keys),
+	:SSH::Connection(event_loop, std::move(fd),
+			 _handler,
+			 server_host_key_verifier),
+	 server_host_key_verifier(_server_host_keys),
 	 handler(_handler) {}
 
 OutgoingConnection::~OutgoingConnection() noexcept = default;
@@ -56,12 +58,6 @@ OutgoingConnection::OnUserAuthFailure()
 	user_auth.reset();
 
 	handler.OnOutgoingUserauthFailure();
-}
-
-bool
-OutgoingConnection::CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept
-{
-	return server_host_keys.Contains(server_host_key_blob);
 }
 
 void
