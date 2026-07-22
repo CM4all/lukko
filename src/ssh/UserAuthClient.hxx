@@ -4,10 +4,13 @@
 
 #pragma once
 
-#include "ssh/Handler.hxx"
+#include "Handler.hxx"
 
 class SecretKey;
-namespace SSH { class Connection; }
+
+namespace SSH {
+
+class Connection;
 
 class UserAuthClientHandler {
 public:
@@ -16,8 +19,8 @@ public:
 	virtual void OnUserAuthFailure() = 0;
 };
 
-class UserAuthClient final : SSH::ConnectionHandler {
-	SSH::Connection &connection;
+class UserAuthClient final : ConnectionHandler {
+	Connection &connection;
 
 	UserAuthClientHandler &handler;
 
@@ -30,7 +33,7 @@ class UserAuthClient final : SSH::ConnectionHandler {
 	} state = State::INIT;
 
 public:
-	UserAuthClient(SSH::Connection &_connection,
+	UserAuthClient(Connection &_connection,
 		       UserAuthClientHandler &_handler);
 	~UserAuthClient() noexcept;
 
@@ -50,7 +53,9 @@ private:
 	void HandleServiceAccept(std::span<const std::byte> payload);
 
 protected:
-	/* virtual methods from class SSH::ConnectionHandler */
-	bool HandlePacket(SSH::MessageNumber msg,
+	/* virtual methods from class ConnectionHandler */
+	bool HandlePacket(MessageNumber msg,
 			  std::span<const std::byte> payload) override;
 };
+
+} // namespace SSH

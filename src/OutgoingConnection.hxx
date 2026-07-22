@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "UserAuthClient.hxx"
+#include "ssh/UserAuthClient.hxx"
 #include "ssh/Connection.hxx"
 
 #include <memory>
@@ -35,13 +35,13 @@ public:
 };
 
 class OutgoingConnection final
-	: public SSH::Connection, UserAuthClientHandler
+	: public SSH::Connection, SSH::UserAuthClientHandler
 {
 	const PublicKeySet &server_host_keys;
 
 	OutgoingConnectionHandler &handler;
 
-	std::unique_ptr<UserAuthClient> user_auth;
+	std::unique_ptr<SSH::UserAuthClient> user_auth;
 
 public:
 	OutgoingConnection(EventLoop &event_loop, const PublicKeySet &_server_host_keys,
@@ -59,7 +59,7 @@ private:
 	void HandleServiceAccept(std::span<const std::byte> payload);
 
 protected:
-	/* virtual methods from class UserAuthClientHandler */
+	/* virtual methods from class SSH::UserAuthClientHandler */
 	void OnUserAuthService() override;
 	void OnUserAuthSuccess() override;
 	void OnUserAuthFailure() override;

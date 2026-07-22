@@ -113,8 +113,8 @@ OutgoingConnection::OnEncrypted()
 {
 	assert(!user_auth);
 
-	UserAuthClientHandler &user_auth_handler = *this;
-	user_auth = std::make_unique<UserAuthClient>(*this, user_auth_handler);
+	SSH::UserAuthClientHandler &user_auth_handler = *this;
+	user_auth = std::make_unique<SSH::UserAuthClient>(*this, user_auth_handler);
 	user_auth->Start();
 }
 
