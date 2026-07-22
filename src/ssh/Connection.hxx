@@ -248,9 +248,6 @@ protected:
 	void HandleECDHKexInit(std::span<const std::byte> payload);
 	void HandleECDHKexInitReply(std::span<const std::byte> payload);
 
-	virtual void HandlePacket(MessageNumber msg,
-				  std::span<const std::byte> payload);
-
 	/**
 	 * Check whether the give host key is acceptable (client mode
 	 * only).
@@ -306,6 +303,9 @@ private:
 
 	void InitiateRekey();
 	void OnRekeyTimer() noexcept;
+
+	void HandlePacket(MessageNumber msg,
+			  std::span<const std::byte> payload);
 
 	void HandleRawPacket(std::span<const std::byte> payload);
 

@@ -46,6 +46,7 @@ class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  public SSH::HostKeyChooser,
 	  public SSH::Connection,
+	  SSH::ConnectionHandler,
 	  public SSH::GlobalRequestHandler,
 	  public SSH::ChannelHandler,
 	  OutgoingConnectionHandler
@@ -397,13 +398,16 @@ private:
 	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
 
 	/* virtual methods from class SSH::Connection */
-	void HandlePacket(SSH::MessageNumber msg,
-			  std::span<const std::byte> payload) override;
-
+	void OnEncrypted() override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 			     std::string_view msg) noexcept override;
 	void OnDisconnected(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept override;
+
+	/* virtual methods from class SSH::ConnectionHandler */
+	bool HandlePacket(SSH::MessageNumber msg,
+			  std::span<const std::byte> payload) override;
+	using SSH::ConnectionHandler::OnDisconnecting; // suppress -Woverloaded-virtual
 
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;

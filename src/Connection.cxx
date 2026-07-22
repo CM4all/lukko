@@ -1244,6 +1244,14 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		co_return false;
 }
 
+void
+Connection::OnEncrypted()
+{
+	SSH::Connection::OnEncrypted();
+
+	AddHandler(*this);
+}
+
 /**
  * Is this message allowed while the connection is "occupied"?
  */
@@ -1267,12 +1275,11 @@ IsAllowedWhileOccupied(SSH::MessageNumber msg) noexcept
 	return false;
 }
 
-void
+bool
 Connection::HandlePacket(SSH::MessageNumber msg,
 			 std::span<const std::byte> payload)
 {
-	if (!IsEncrypted())
-		return SSH::Connection::HandlePacket(msg, payload);
+	assert(IsEncrypted());
 
 	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
 		throw Disconnect{
@@ -1283,14 +1290,14 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
 		HandleServiceRequest(payload);
-		break;
+		return true;
 
 	case SSH::MessageNumber::USERAUTH_REQUEST:
 		HandleUserauthRequest(payload);
-		break;
+		return true;
 
 	default:
-		SSH::Connection::HandlePacket(msg, payload);
+		return false;
 	}
 }
 
