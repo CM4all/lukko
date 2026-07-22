@@ -111,6 +111,22 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool rekeying = false;
 
+	struct {
+		bool kexinit_sent = false;
+		bool kexinit_received = false;
+		bool newkeys_sent = false;
+		bool newkeys_received = false;
+
+		constexpr bool IsComplete() const noexcept {
+			return newkeys_sent && newkeys_received;
+		}
+
+		constexpr void ResetIfComplete() noexcept {
+			if (IsComplete())
+				*this = {};
+		}
+	} kex_flags;
+
 public:
 	/**
 	 * An exception class that sends DISCONNECT and deletes the
@@ -261,16 +277,6 @@ protected:
 				    std::string_view msg) noexcept;
 
 private:
-	const auto &GetServerKexinit() const noexcept {
-		return role == Role::SERVER
-			? my_kexinit
-			: peer_kexinit;
-	}
-
-	bool IsPastKexInit() const noexcept {
-		return GetServerKexinit() != nullptr;
-	}
-
 	void HandleRawPacket(std::span<const std::byte> payload);
 
 protected:

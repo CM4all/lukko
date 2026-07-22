@@ -200,6 +200,10 @@ Connection::OnDisconnected(DisconnectReasonCode reason_code,
 inline void
 Connection::SendKexInit()
 {
+	assert(!kex_flags.kexinit_sent);
+	assert(!kex_flags.newkeys_sent);
+	assert(!kex_flags.newkeys_received);
+
 	PacketSerializer s{MessageNumber::KEXINIT};
 
 	const KexProposal proposal{
@@ -223,12 +227,17 @@ Connection::SendKexInit()
 	my_kexinit = s.Since(kex_mark);
 
 	SendPacket(std::move(s));
+	kex_flags.kexinit_sent = true;
 }
 
 inline void
 Connection::SendECDHKexInit()
 {
 	assert(role == Role::CLIENT);
+	assert(kex_flags.kexinit_sent);
+	assert(kex_flags.kexinit_received);
+	assert(!kex_flags.newkeys_sent);
+	assert(!kex_flags.newkeys_received);
 	assert(kex_algorithm);
 
 	PacketSerializer s{MessageNumber::ECDH_KEX_INIT};
@@ -244,6 +253,10 @@ inline void
 Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key)
 {
 	assert(role == Role::SERVER);
+	assert(kex_flags.kexinit_sent);
+	assert(kex_flags.kexinit_received);
+	assert(!kex_flags.newkeys_sent);
+	assert(!kex_flags.newkeys_received);
 	assert(kex_algorithm);
 
 	PacketSerializer s{MessageNumber::ECDH_KEX_INIT_REPLY};
@@ -300,7 +313,13 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 inline void
 Connection::SendNewKeys()
 {
+	assert(kex_flags.kexinit_sent);
+	assert(kex_flags.kexinit_received);
+	assert(!kex_flags.newkeys_sent);
+	assert(!kex_flags.newkeys_received);
+
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
+	kex_flags.newkeys_sent = true;
 
 	const auto send_encryption_algorithm =
 		FindNegotiatedAlgorithm(role, Direction::OUTGOING,
@@ -334,6 +353,8 @@ Connection::SendNewKeys()
 
 	if (was_rekeying && !write_blocked)
 		OnWriteUnblocked();
+
+	kex_flags.ResetIfComplete();
 }
 
 inline void
@@ -372,9 +393,19 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 {
 	const bool initial_kex = !IsEncrypted();
 
-	peer_kexinit = payload;
+	if (kex_flags.kexinit_received ||
+	    kex_flags.newkeys_sent ||
+	    kex_flags.newkeys_received)
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Unexpected KEXINIT"sv,
+		};
 
 	const auto p = ParseKexInit(payload);
+
+	kex_flags.kexinit_received = true;
+	peer_kexinit = payload;
+
 	encryption_algorithms_client_to_server = p.encryption_algorithms_client_to_server;
 	encryption_algorithms_server_to_client = p.encryption_algorithms_server_to_client;
 	mac_algorithms_client_to_server = p.mac_algorithms_client_to_server;
@@ -420,7 +451,9 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 				"No supported host key"sv,
 			};
 
-		SendKexInit();
+		if (!kex_flags.kexinit_sent)
+			SendKexInit();
+
 		ignore_next_kex_packet = p.first_kex_packet_follows &&
 			(FirstStringListItem(p.kex_algorithms) != FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms) ||
 			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
@@ -433,7 +466,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		break;
 
 	case Role::CLIENT:
-		if (!initial_kex)
+		if (!kex_flags.kexinit_sent)
 			SendKexInit();
 
 		SendECDHKexInit();
@@ -445,6 +478,15 @@ inline void
 Connection::HandleNewKeys(std::span<const std::byte> payload)
 {
 	(void)payload;
+
+	if (!kex_flags.kexinit_sent ||
+	    !kex_flags.kexinit_received ||
+	    !kex_flags.newkeys_sent ||
+	    kex_flags.newkeys_received)
+		throw Disconnect{
+			DisconnectReasonCode::PROTOCOL_ERROR,
+			"Unexpected NEWKEYS"sv,
+		};
 
 	if (kex_state.session_id.empty())
 		throw Disconnect{
@@ -474,10 +516,13 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 
 	const bool was_encrypted = input.IsEncrypted();
 
+	kex_flags.newkeys_received = true;
 	input.SetCipher(std::move(cipher));
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
+
+	kex_flags.ResetIfComplete();
 }
 
 inline void
@@ -489,7 +534,11 @@ Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 			"Unexpected packet"sv,
 		};
 
-	if (!IsPastKexInit() || !kex_algorithm)
+	if (!kex_flags.kexinit_sent ||
+	    !kex_flags.kexinit_received ||
+	    kex_flags.newkeys_sent ||
+	    kex_flags.newkeys_received ||
+	    !kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"No KEXINIT"sv,
@@ -513,7 +562,11 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 			"Unexpected packet"sv,
 		};
 
-	if (!IsPastKexInit() || !kex_algorithm)
+	if (!kex_flags.kexinit_sent ||
+	    !kex_flags.kexinit_received ||
+	    kex_flags.newkeys_sent ||
+	    kex_flags.newkeys_received ||
+	    !kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"No KEXINIT"sv,
@@ -601,7 +654,7 @@ void
 Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 {
 	if (!input.IsEncrypted()) {
-		if (!IsPastKexInit()) {
+		if (!kex_flags.kexinit_received) {
 			/* this is the first packet */
 
 			if (msg != MessageNumber::KEXINIT)
