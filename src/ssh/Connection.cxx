@@ -730,6 +730,7 @@ Connection::HandlePacket(MessageNumber msg, std::span<const std::byte> payload)
 			if (msg != MessageNumber::KEXINIT)
 				first_packet_was_kexinit = false;
 		} else if (ignore_next_kex_packet) {
+			// TODO obey ignore_next_kex_packet while rekeying, too
 			ignore_next_kex_packet = false;
 
 			if (IsKex(msg))
