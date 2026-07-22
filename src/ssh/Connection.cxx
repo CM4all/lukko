@@ -76,6 +76,8 @@ Connection::~Connection() noexcept
 void
 Connection::AddHandler(ConnectionHandler &handler) noexcept
 {
+	assert(!IsDead());
+
 	handlers.push_front(handler);
 }
 
@@ -88,6 +90,7 @@ Connection::IsEncrypted() const noexcept
 void
 Connection::SetAuthenticated() noexcept
 {
+	assert(!IsDead());
 	assert(IsEncrypted());
 	assert(!authenticated);
 
@@ -97,6 +100,8 @@ Connection::SetAuthenticated() noexcept
 inline void
 Connection::SendPacket(std::span<const std::byte> src) noexcept
 {
+	assert(!IsDead());
+
 	if (metrics != nullptr) {
 		++metrics->packets_sent;
 
