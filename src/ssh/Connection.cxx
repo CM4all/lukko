@@ -362,7 +362,8 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 
 	SendPacket(std::move(s));
 
-	kex_state.DeriveKeys(hash, shared_secret_, role, true);
+	const bool initial_kex = kex_state.session_id.empty();
+	kex_state.DeriveKeys(hash, shared_secret_, role, initial_kex);
 	kex_algorithm.reset();
 }
 
@@ -695,7 +696,8 @@ Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 			"Bad host key signature"sv,
 		};
 
-	kex_state.DeriveKeys(hash, shared_secret_, role, true);
+	const bool initial_kex = kex_state.session_id.empty();
+	kex_state.DeriveKeys(hash, shared_secret_, role, initial_kex);
 	kex_algorithm.reset();
 
 	SendNewKeys();

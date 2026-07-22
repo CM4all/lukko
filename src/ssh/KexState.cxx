@@ -47,8 +47,10 @@ KexState::DeriveKeys(std::span<const std::byte> hash,
 		   identically to the initial key exchange, except for
 		   the session identifier that will remain
 		   unchanged" */
-		if (session_id.empty())
-			session_id = hash;
+		if (!session_id.empty())
+			throw std::runtime_error{"Duplicate session ID"};
+
+		session_id = hash;
 	} else {
 		if (session_id.empty())
 			throw std::runtime_error{"No session ID"};
