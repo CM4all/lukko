@@ -144,10 +144,12 @@ public:
 	struct Destroyed {};
 
 public:
+	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		   Role _role,
 		   HostKeyChooser *_host_key_chooser=nullptr);
 
+	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		   HostKeyChooser &_host_key_chooser)
 		:Connection(event_loop, std::move(fd), Role::SERVER, &_host_key_chooser) {}
@@ -165,6 +167,14 @@ public:
 		metrics = &_metrics;
 	}
 
+	/**
+	 * Is this connection "dead", i.e. was DoDisconnect() called?
+	 * In this state, the socket may still be connected while we
+	 * are sending the encrypted #DISCONNECT message.  Once that
+	 * is finished, Destroy() will be called.
+	 *
+	 * A dead object must not be used for any I/O.
+	 */
 	bool IsDead() const noexcept {
 		return dead;
 	}
@@ -194,8 +204,17 @@ protected:
 		return socket.GetSocket();
 	}
 
+	/**
+	 * Mark this connection as "authenticated".
+	 */
 	void SetAuthenticated() noexcept;
 
+	/**
+	 * Add a serialized (but unencrypted) packet to the send
+	 * queue.
+	 *
+	 * This method cannot fail.
+	 */
 	void SendPacket(std::span<const std::byte> src) noexcept;
 
 public:
