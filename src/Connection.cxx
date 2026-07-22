@@ -12,6 +12,7 @@
 #include "RBind.hxx"
 #include "Delegate.hxx"
 #include "DebugMode.hxx"
+#include "ProxyCheck.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -1270,28 +1271,9 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 			"Occupied"sv
 		};
 
-	if (outgoing && outgoing_ready) {
-		switch (msg) {
-		case SSH::MessageNumber::GLOBAL_REQUEST:
-		case SSH::MessageNumber::REQUEST_SUCCESS:
-		case SSH::MessageNumber::REQUEST_FAILURE:
-		case SSH::MessageNumber::CHANNEL_OPEN:
-		case SSH::MessageNumber::CHANNEL_OPEN_CONFIRMATION:
-		case SSH::MessageNumber::CHANNEL_OPEN_FAILURE:
-		case SSH::MessageNumber::CHANNEL_WINDOW_ADJUST:
-		case SSH::MessageNumber::CHANNEL_DATA:
-		case SSH::MessageNumber::CHANNEL_EXTENDED_DATA:
-		case SSH::MessageNumber::CHANNEL_EOF:
-		case SSH::MessageNumber::CHANNEL_CLOSE:
-		case SSH::MessageNumber::CHANNEL_REQUEST:
-		case SSH::MessageNumber::CHANNEL_SUCCESS:
-		case SSH::MessageNumber::CHANNEL_FAILURE:
-			outgoing->SendPacket(msg, payload);
-			return;
-
-		default:
-			break;
-		}
+	if (outgoing && outgoing_ready && ShouldProxy(msg)) {
+		outgoing->SendPacket(msg, payload);
+		return;
 	}
 
 	switch (msg) {

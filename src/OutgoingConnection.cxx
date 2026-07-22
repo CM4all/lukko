@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "OutgoingConnection.hxx"
+#include "ProxyCheck.hxx"
 #include "ssh/ParsePacket.hxx"
 #include "key/Key.hxx"
 #include "key/Set.hxx"
@@ -74,32 +75,10 @@ void
 OutgoingConnection::HandlePacket(SSH::MessageNumber msg,
 				 std::span<const std::byte> payload)
 {
-	if (!IsAuthenticated())
-		return Connection::HandlePacket(msg, payload);
-
-	assert(IsEncrypted());
-
-	switch (msg) {
-	case SSH::MessageNumber::GLOBAL_REQUEST:
-	case SSH::MessageNumber::REQUEST_SUCCESS:
-	case SSH::MessageNumber::REQUEST_FAILURE:
-	case SSH::MessageNumber::CHANNEL_OPEN:
-	case SSH::MessageNumber::CHANNEL_OPEN_CONFIRMATION:
-	case SSH::MessageNumber::CHANNEL_OPEN_FAILURE:
-	case SSH::MessageNumber::CHANNEL_WINDOW_ADJUST:
-	case SSH::MessageNumber::CHANNEL_DATA:
-	case SSH::MessageNumber::CHANNEL_EXTENDED_DATA:
-	case SSH::MessageNumber::CHANNEL_EOF:
-	case SSH::MessageNumber::CHANNEL_CLOSE:
-	case SSH::MessageNumber::CHANNEL_REQUEST:
-	case SSH::MessageNumber::CHANNEL_SUCCESS:
-	case SSH::MessageNumber::CHANNEL_FAILURE:
+	if (IsAuthenticated() && ShouldProxy(msg))
 		handler.OnOutgoingHandlePacket(msg, payload);
-		break;
-
-	default:
-		SSH::Connection::HandlePacket(msg, payload);
-	}
+	else
+		return Connection::HandlePacket(msg, payload);
 }
 
 bool
