@@ -12,7 +12,7 @@
 #include "RBind.hxx"
 #include "Delegate.hxx"
 #include "DebugMode.hxx"
-#include "ProxyCheck.hxx"
+#include "ProxyConnectionHandler.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -167,6 +167,14 @@ CheckTranslateResponse(const TranslateResponse &response)
 }
 
 #endif // ENABLE_TRANSLATION
+
+struct Connection::ProxyHandlers {
+	ProxyConnectionHandler in, out;
+
+	[[nodiscard]]
+	ProxyHandlers(SSH::Connection &_in, SSH::Connection &_out) noexcept
+		:in(_in, _out), out(_out, _in) {}
+};
 
 Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
@@ -1271,11 +1279,6 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 			"Occupied"sv
 		};
 
-	if (outgoing && outgoing_ready && ShouldProxy(msg)) {
-		outgoing->SendPacket(msg, payload);
-		return;
-	}
-
 	switch (msg) {
 	case SSH::MessageNumber::SERVICE_REQUEST:
 		HandleServiceRequest(payload);
@@ -1437,6 +1440,8 @@ Connection::OnOutgoingUserauthSuccess()
 
 	outgoing_ready = true;
 
+	proxy_handlers = std::make_unique<ProxyHandlers>(*this, *outgoing);
+
 	SetAuthenticated();
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 }
@@ -1451,16 +1456,6 @@ Connection::OnOutgoingUserauthFailure()
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Proxy auth failed"sv);
 	throw Destroyed{};
-}
-
-void
-Connection::OnOutgoingHandlePacket(SSH::MessageNumber msg,
-				   std::span<const std::byte> payload)
-{
-	assert(outgoing);
-	assert(outgoing_ready);
-
-	SendPacket(msg, payload);
 }
 
 void

@@ -26,8 +26,6 @@ public:
 	virtual void OnOutgoingUserauthService() = 0;
 	virtual void OnOutgoingUserauthSuccess() = 0;
 	virtual void OnOutgoingUserauthFailure() = 0;
-	virtual void OnOutgoingHandlePacket(SSH::MessageNumber msg,
-					    std::span<const std::byte> payload) = 0;
 	virtual void OnOutgoingDisconnecting(SSH::DisconnectReasonCode reason_code,
 					     std::string_view msg) noexcept = 0;
 	virtual void OnOutgoingDisconnected(SSH::DisconnectReasonCode reason_code,
@@ -66,8 +64,6 @@ protected:
 
 	/* virtual methods from class SSH::Connection */
 	void Destroy() noexcept override;
-	void HandlePacket(SSH::MessageNumber msg,
-			  std::span<const std::byte> payload) override;
 	bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept override;
 	void OnEncrypted() override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,

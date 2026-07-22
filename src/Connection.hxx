@@ -102,6 +102,9 @@ class Connection final
 
 	std::unique_ptr<OutgoingConnection> outgoing;
 
+	struct ProxyHandlers;
+	std::unique_ptr<ProxyHandlers> proxy_handlers;
+
 #ifdef ENABLE_TRANSLATION
 	bool allow_exec = true;
 	bool allow_sftp = true;
@@ -412,8 +415,6 @@ private:
 	void OnOutgoingUserauthSuccess() override;
 	[[noreturn]]
 	void OnOutgoingUserauthFailure() override;
-	void OnOutgoingHandlePacket(SSH::MessageNumber msg,
-				    std::span<const std::byte> payload) override;
 	void OnOutgoingDisconnecting(SSH::DisconnectReasonCode reason_code,
 				     std::string_view msg) noexcept override;
 	void OnOutgoingDisconnected(SSH::DisconnectReasonCode reason_code,

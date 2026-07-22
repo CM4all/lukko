@@ -71,16 +71,6 @@ OutgoingConnection::Destroy() noexcept
 	handler.OnOutgoingDestroy();
 }
 
-void
-OutgoingConnection::HandlePacket(SSH::MessageNumber msg,
-				 std::span<const std::byte> payload)
-{
-	if (IsAuthenticated() && ShouldProxy(msg))
-		handler.OnOutgoingHandlePacket(msg, payload);
-	else
-		return Connection::HandlePacket(msg, payload);
-}
-
 bool
 OutgoingConnection::CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept
 {

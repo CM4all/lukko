@@ -252,6 +252,7 @@ executable(
   'src/RConnect.cxx',
   'src/RBind.cxx',
   'src/Delegate.cxx',
+  'src/ProxyConnectionHandler.cxx',
   'src/OutgoingConnection.cxx',
   'src/net/ClientAccounting.cxx',
   'src/system/SetupProcess.cxx',
