@@ -1301,6 +1301,7 @@ Connection::Dispose([[maybe_unused]] SSH::Connection *connection) noexcept
 void
 Connection::OnOutgoingError(std::exception_ptr &&error) noexcept
 {
+	proxy_handlers.reset();
 	outgoing.reset();
 
 	LogFmt("Error on outgoing connection: {}"sv, std::move(error));
