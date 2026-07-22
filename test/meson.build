@@ -20,6 +20,7 @@ test(
     'TestAuthorizedKeys.cxx',
     'TestWriteBignum2.cxx',
     'TestCommitBignum2.cxx',
+    'TestInitialKex.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
