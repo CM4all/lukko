@@ -60,6 +60,11 @@ class Channel {
 	IntrusiveList<PendingRequest> pending_requests;
 
 public:
+	/**
+	 * @param _receive_window the initial receive window size;
+	 * must be the same value that was passed to
+	 * ChannelSupport::OpenChannel()
+	 */
 	Channel(ChannelSupport &_parent, ChannelInit init,
 		std::size_t _receive_window) noexcept;
 
@@ -87,6 +92,14 @@ public:
 
 	void Close() noexcept;
 
+	/**
+	 * Send a #CHANNEL_WINDOW_ADJUST packet, extending the receive
+	 * window by the specified number of bytes.  This also updates
+	 * the #receive_window field which can be accessed using
+	 * GetReceiveWindow() and ConsumeReceiveWindow().
+	 *
+	 * This method cannot fail because only enqueues the packet.
+	 */
 	void SendWindowAdjust(uint_least32_t nbytes) noexcept;
 	void SendData(std::span<const std::byte> src);
 	void SendExtendedData(ChannelExtendedDataType data_type,
@@ -119,11 +132,30 @@ protected:
 	 * been consumed.  These virtuel methods are allowed to
 	 * consume the data asynchronously; therefore, this method may
 	 * be called after these two methods have already returned.
+	 *
+	 * After calling this method, depending on the return value,
+	 * it may be useful to call SendWindowAdjust().
+	 *
+	 * @return the remaining receive window size
 	 */
 	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept;
 
 public:
+	/**
+	 * Gives the object a chance to append more data to the
+	 * #CHANNEL_OPEN_CONFIRMATION payload.
+	 */
 	virtual void SerializeOpenConfirmation(Serializer &s) const;
+
+	/**
+	 * A #CHANNEL_WINDOW_ADJUST packet was received.  This
+	 * implementation updates #send_window, which can be accessed
+	 * using GetSendWindow().
+	 *
+	 * Overrides may decide to resume sending pending data using
+	 * SendData() or SendExtendedData() (which will then decrease
+	 * the #send_window).
+	 */
 	virtual void OnWindowAdjust(std::size_t nbytes);
 
 	/**
@@ -145,10 +177,24 @@ public:
 	 */
 	virtual void OnEof() {}
 
+	/**
+	 * A #CHANNEL_REQUEST message was received.
+	 *
+	 * @return a coroutine that handles the request; its return
+	 * value will (optionally) generate a #CHANNEL_SUCCESS or
+	 * a #CHANNEL_FAILURE packet
+	 */
 	[[nodiscard]]
 	virtual Co::EagerTask<bool> OnRequest(std::string_view request_type,
 					      std::span<const std::byte> type_specific);
+	/**
+	 * A #CHANNEL_SUCCESS message was received.
+	 */
 	virtual void OnRequestSuccess();
+
+	/**
+	 * A #CHANNEL_FAILURE message was received.
+	 */
 	virtual void OnRequestFailure();
 
 	virtual void OnWriteBlocked() noexcept {}
