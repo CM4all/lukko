@@ -1373,7 +1373,7 @@ Connection::OnOutgoingDisconnecting([[maybe_unused]] SSH::DisconnectReasonCode r
 		logger.Fmt(1, "Disconnecting outgoing: {}", msg);
 	}
 
-	/* don't forward any more packets to the dying outoing
+	/* don't forward any more packets to the dying outgoing
 	   connection */
 	proxy_handlers.reset();
 }
