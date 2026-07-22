@@ -194,12 +194,7 @@ protected:
 		return socket.GetSocket();
 	}
 
-	void SetAuthenticated() noexcept {
-		assert(IsEncrypted());
-		assert(!authenticated);
-
-		authenticated = true;
-	}
+	void SetAuthenticated() noexcept;
 
 	void SendPacket(std::span<const std::byte> src) noexcept;
 

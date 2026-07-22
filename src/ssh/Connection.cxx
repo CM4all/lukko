@@ -85,6 +85,15 @@ Connection::IsEncrypted() const noexcept
 	return input.IsEncrypted() && output.IsEncrypted();
 }
 
+void
+Connection::SetAuthenticated() noexcept
+{
+	assert(IsEncrypted());
+	assert(!authenticated);
+
+	authenticated = true;
+}
+
 inline void
 Connection::SendPacket(std::span<const std::byte> src) noexcept
 {
