@@ -157,8 +157,7 @@ GlobalRequestSupport::HandlePacket(MessageNumber msg,
 }
 
 void
-GlobalRequestSupport::OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
-				      [[maybe_unused]] std::string_view msg) noexcept
+GlobalRequestSupport::OnDisconnecting() noexcept
 {
 	/* cancel all pending requests so they don't try to do any I/O
 	   while we're waiting for the DISCONNECT to be flushed */

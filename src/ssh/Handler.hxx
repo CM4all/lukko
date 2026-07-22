@@ -14,7 +14,6 @@
 namespace SSH {
 
 enum class MessageNumber : uint8_t;
-enum class DisconnectReasonCode : uint32_t;
 
 /**
  * Handler class for a #Connection instance.  It may handle incoming
@@ -58,8 +57,7 @@ public:
 	 * peer.  This may be used for logging (but not for I/O or for
 	 * actually disconnecting).
 	 */
-	virtual void OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
-				     [[maybe_unused]] std::string_view msg) noexcept {}
+	virtual void OnDisconnecting() noexcept {}
 };
 
 } // namespace SSH

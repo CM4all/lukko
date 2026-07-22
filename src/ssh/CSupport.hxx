@@ -151,8 +151,7 @@ private:
 			  std::span<const std::byte> payload) final;
 	void OnWriteBlocked() noexcept final;
 	void OnWriteUnblocked() noexcept final;
-	void OnDisconnecting(DisconnectReasonCode reason_code,
-			     std::string_view msg) noexcept final;
+	void OnDisconnecting() noexcept final;
 };
 
 } // namespace SSH

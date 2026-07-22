@@ -240,11 +240,11 @@ Connection::OnWriteUnblocked() noexcept
 }
 
 void
-Connection::OnDisconnecting(DisconnectReasonCode reason_code,
-			    std::string_view msg) noexcept
+Connection::OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
+			    [[maybe_unused]] std::string_view msg) noexcept
 {
 	for (auto &i : handlers)
-		i.OnDisconnecting(reason_code, msg);
+		i.OnDisconnecting();
 }
 
 void

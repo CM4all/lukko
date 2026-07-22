@@ -561,8 +561,7 @@ ChannelSupport::OnWriteUnblocked() noexcept
 }
 
 void
-ChannelSupport::OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
-				[[maybe_unused]] std::string_view msg) noexcept
+ChannelSupport::OnDisconnecting() noexcept
 {
 	/* delete all channels so they don't try to do any I/O while
            we're waiting for the DISCONNECT to be flushed */
