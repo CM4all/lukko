@@ -1,6 +1,6 @@
 cm4all-lukko (0.56) unstable; urgency=low
 
-  * 
+  * fix rekeying on outgoing `proxy_to` connection
 
  --   
 
