@@ -219,6 +219,11 @@ public:
 		OnBufferedError(std::move(e));
 	}
 
+	/**
+	 * Send a DISCONNECT packet, flush it and destroy this object.
+	 */
+	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
+
 	std::span<const std::byte> GetSessionId() const noexcept {
 		return kex_state.session_id;
 	}
@@ -247,8 +252,6 @@ public:
 	void SendPacket(MessageNumber msg, std::span<const std::byte> src);
 
 protected:
-	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
-
 	void SendKexInit();
 	void SendECDHKexInit();
 	void SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_public_key);
