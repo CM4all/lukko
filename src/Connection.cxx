@@ -1221,6 +1221,8 @@ Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
            postponed */
 	auth_timeout.Cancel();
 	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
+
+	proxy_handlers.reset();
 	user_auth.reset();
 
 	if (log_disconnect) {
@@ -1369,6 +1371,10 @@ Connection::OnOutgoingDisconnecting([[maybe_unused]] SSH::DisconnectReasonCode r
 		log_disconnect = false;
 		logger.Fmt(1, "Disconnecting outgoing: {}", msg);
 	}
+
+	/* don't forward any more packets to the dying outoing
+	   connection */
+	proxy_handlers.reset();
 }
 
 void
