@@ -28,6 +28,7 @@ libssh = static_library(
   'TerminalMode.cxx',
   'EarlyDisconnect.cxx',
   'UserAuthClient.cxx',
+  'UserAuthServer.cxx',
   include_directories: inc,
   dependencies: [
     cipher_dep,

@@ -752,19 +752,10 @@ Connection::CreateChannel(std::string_view channel_type,
 		};
 }
 
-inline void
-Connection::HandleServiceRequest(std::span<const std::byte> payload)
+void
+Connection::OnUnsupportedService() noexcept
 {
-	const auto p = SSH::ParseServiceRequest(payload);
-
-	if (p.service_name == "ssh-userauth"sv) {
-		have_service_userauth = true;
-		SendPacket(SSH::MakeServiceAccept(p.service_name));
-	} else {
-		++instance.counters.n_unsupported_service;
-		throw Disconnect{SSH::DisconnectReasonCode::SERVICE_NOT_AVAILABLE,
-			"Unsupported service"sv};
-	}
+	++instance.counters.n_unsupported_service;
 }
 
 static bool
@@ -775,11 +766,18 @@ IsValidUsername(std::string_view username) noexcept
 	});
 }
 
-inline Co::EagerInvokeTask
-Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
+Co::EagerInvokeTask
+Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 {
 	assert(!IsAuthenticated());
 	assert(!channels);
+
+	if (!got_userauth_request) {
+		/* this is the first USERAUTH_REQUEST - reschedule the
+		   timeout with a longer duration */
+		got_userauth_request = true;
+		auth_timeout.Schedule(std::chrono::minutes{2});
+	}
 
 	/* this object aims to prevent timing-based guesses by
 	   delaying all error responses until 100ms have elapsed since
@@ -1145,58 +1143,11 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 	}
 }
 
-inline void
-Connection::OnUserauthCompletion(std::exception_ptr &&error) noexcept
+void
+Connection::OnUserAuthCompletion() noexcept
 {
-	if (error) {
-		try {
-			std::rethrow_exception(std::move(error));
-		} catch (const Disconnect &d) {
-			DoDisconnect(d.reason_code, d.msg);
-		} catch (...) {
-			CloseError(std::move(error));
-		}
-	}
-}
-
-inline void
-Connection::HandleUserauthRequest(std::span<const std::byte> payload)
-{
-	assert(!occupied_task);
-
-	if (IsAuthenticated())
-		/* RFC 4252 section 5.1: "When
-		   SSH_MSG_USERAUTH_SUCCESS has been sent, any further
-		   authentication requests received after that SHOULD
-		   be silently ignored" */
-		return;
-
-	if (!have_service_userauth) {
-		throw Disconnect{
-			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
-			"Service ssh-userauth not requested"sv
-		};
-	}
-
-	if (!got_userauth_request) {
-		/* this is the first USERAUTH_REQUEST - reschedule the
-		   timeout with a longer duration */
-		got_userauth_request = true;
-		auth_timeout.Schedule(std::chrono::minutes{2});
-	}
-
-	/* the payload is owned by the caller, therefore we need to
-	   duplicate it into an AllocatedArray owned by the coroutine,
-	   so the coroutine can keep using it after this method
-	   returns */
-	occupied_task = CoHandleUserauthRequest(AllocatedArray{payload});
-
-	/* we're using EagerInvokeTask here because early errors get
-	   rethrown out of this method instead of being passed to
-	   OnUserauthCompletion(); the latter would destroy this
-	   Connection instance, but this method wouldn't know and
-	   would continue accessing it */
-	occupied_task.Start(BIND_THIS_METHOD(OnUserauthCompletion));
+	assert(user_auth);
+	user_auth.reset();
 }
 
 Co::EagerTask<bool>
@@ -1251,56 +1202,8 @@ Connection::OnEncrypted()
 {
 	SSH::Connection::OnEncrypted();
 
-	AddHandler(*this);
-}
-
-/**
- * Is this message allowed while the connection is "occupied"?
- */
-static constexpr bool
-IsAllowedWhileOccupied(SSH::MessageNumber msg) noexcept
-{
-	switch (msg) {
-	case SSH::MessageNumber::DISCONNECT:
-	case SSH::MessageNumber::IGNORE:
-	case SSH::MessageNumber::NEWCOMPRESS:
-	case SSH::MessageNumber::KEXINIT:
-	case SSH::MessageNumber::NEWKEYS:
-	case SSH::MessageNumber::ECDH_KEX_INIT:
-	case SSH::MessageNumber::ECDH_KEX_INIT_REPLY:
-		return true;
-
-	default:
-		break;
-	}
-
-	return false;
-}
-
-bool
-Connection::HandlePacket(SSH::MessageNumber msg,
-			 std::span<const std::byte> payload)
-{
-	assert(IsEncrypted());
-
-	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
-		throw Disconnect{
-			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
-			"Occupied"sv
-		};
-
-	switch (msg) {
-	case SSH::MessageNumber::SERVICE_REQUEST:
-		HandleServiceRequest(payload);
-		return true;
-
-	case SSH::MessageNumber::USERAUTH_REQUEST:
-		HandleUserauthRequest(payload);
-		return true;
-
-	default:
-		return false;
-	}
+	SSH::UserAuthServerHandler &user_auth_server_handler = *this;
+	user_auth = std::make_unique<SSH::UserAuthServer>(*this, user_auth_server_handler);
 }
 
 void
@@ -1313,7 +1216,7 @@ Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
            postponed */
 	auth_timeout.Cancel();
 	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
-	occupied_task = {};
+	user_auth.reset();
 
 	if (log_disconnect) {
 		log_disconnect = false;

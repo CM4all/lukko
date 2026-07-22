@@ -10,6 +10,7 @@
 #include "ssh/GSupport.hxx"
 #include "ssh/CSupport.hxx"
 #include "ssh/SimpleHostKeyChooser.hxx"
+#include "ssh/UserAuthServer.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -45,9 +46,9 @@ class PacketSerializer;
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
 	  public SSH::Connection,
-	  SSH::ConnectionHandler,
 	  public SSH::GlobalRequestHandler,
 	  public SSH::ChannelHandler,
+	  SSH::UserAuthServerHandler,
 	  OutgoingConnectionHandler
 {
 	Instance &instance;
@@ -62,6 +63,7 @@ class Connection final
 	std::string peer_host;
 #endif
 
+	std::unique_ptr<SSH::UserAuthServer> user_auth;
 	std::unique_ptr<SSH::GlobalRequestSupport> global_requests;
 	std::unique_ptr<SSH::ChannelSupport> channels;
 
@@ -94,14 +96,6 @@ class Connection final
 
 	IntrusiveList<SocketForwardListener> socket_forward_listeners;
 
-	/**
-	 * If this is set, then the connection is currently occupied
-	 * with an asynchronous operation (e.g. lookup in the user
-	 * database).  Until it finishes, most incoming packets will
-	 * cause the connection to be closed.
-	 */
-	Co::EagerInvokeTask occupied_task;
-
 	std::unique_ptr<OutgoingConnection> outgoing;
 
 	struct ProxyHandlers;
@@ -118,8 +112,6 @@ class Connection final
 #endif
 
 	bool log_disconnect = true;
-
-	bool have_service_userauth = false;
 
 	/**
 	 * Tracks whether USERAUTH_REQUEST has been received already.
@@ -324,10 +316,6 @@ public:
 	using SSH::Connection::DoDisconnect;
 
 private:
-	bool IsOccupied() const noexcept {
-		return occupied_task;
-	}
-
 	[[gnu::pure]]
 	const char *GetHome() const noexcept;
 	UniqueFileDescriptor OpenHome() const noexcept;
@@ -369,11 +357,7 @@ private:
 	 */
 	bool IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
-	void HandleServiceRequest(std::span<const std::byte> payload);
-
 	Co::EagerInvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
-	void OnUserauthCompletion(std::exception_ptr &&error) noexcept;
-	void HandleUserauthRequest(std::span<const std::byte> payload);
 
 	void HandleChannelOpen(std::span<const std::byte> payload);
 
@@ -396,16 +380,16 @@ private:
 	void OnDisconnected(SSH::DisconnectReasonCode reason_code,
 			    std::string_view msg) noexcept override;
 
-	/* virtual methods from class SSH::ConnectionHandler */
-	bool HandlePacket(SSH::MessageNumber msg,
-			  std::span<const std::byte> payload) override;
-	using SSH::ConnectionHandler::OnDisconnecting; // suppress -Woverloaded-virtual
-
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class SSH::ConnectionDisposer */
 	void Dispose(SSH::Connection *connection) noexcept override;
+
+	/* virtual methods from class SSH::UserAuthServerHandler */
+	void OnUnsupportedService() noexcept override;
+	Co::EagerInvokeTask OnUserAuthRequest(AllocatedArray<std::byte> payload) override;
+	void OnUserAuthCompletion() noexcept override;
 
 	/* virtual methods from class OutgoingConnectionHandler */
 	void OnOutgoingError(std::exception_ptr &&error) noexcept override;
