@@ -60,7 +60,7 @@ class Connection final
 	std::string peer_host;
 #endif
 
-	SSH::GlobalRequestSupport global_requests{*this, *this};
+	std::unique_ptr<SSH::GlobalRequestSupport> global_requests;
 	std::unique_ptr<SSH::ChannelSupport> channels;
 
 	AccountedClientConnection accounting;

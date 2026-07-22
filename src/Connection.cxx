@@ -1138,6 +1138,7 @@ Connection::CoHandleUserauthRequest(AllocatedArray<std::byte> payload)
 		SetAuthenticated();
 		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 
+		global_requests = std::make_unique<SSH::GlobalRequestSupport>(*this, *this);
 		channels = std::make_unique<SSH::ChannelSupport>(*this, *this);
 	}
 }
