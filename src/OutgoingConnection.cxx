@@ -3,15 +3,8 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "OutgoingConnection.hxx"
-#include "ProxyCheck.hxx"
-#include "ssh/ParsePacket.hxx"
-#include "key/Key.hxx"
 #include "key/Set.hxx"
-#include "ssh/MakePacket.hxx"
 #include "ssh/PacketSerializer.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
-#include "util/PrintException.hxx"
-#include "util/StringSplit.hxx"
 
 using std::string_view_literals::operator""sv;
 
