@@ -178,7 +178,7 @@ void
 Connection::OnWriteUnblocked() noexcept
 {
 	for (auto &i : handlers)
-		i.OnWriteBlocked();
+		i.OnWriteUnblocked();
 }
 
 void
