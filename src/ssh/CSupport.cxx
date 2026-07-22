@@ -114,9 +114,9 @@ IsRequestedChannel(const Channel &channel) noexcept
 
 void
 ChannelSupport::OpenChannel(std::string_view channel_type,
-			 uint_least32_t initial_window_size,
-			 ChannelFactory &factory,
-			 CancellablePointer &cancel_ptr)
+			    uint_least32_t initial_window_size,
+			    ChannelFactory &factory,
+			    CancellablePointer &cancel_ptr)
 {
 	// TODO what if this throws ChannelOpenFailure?
 	const uint_least32_t local_channel = AllocateChannelIndex();
