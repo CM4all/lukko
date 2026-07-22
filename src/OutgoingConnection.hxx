@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ssh/Disposer.hxx"
 #include "ssh/UserAuthClient.hxx"
 #include "ssh/Connection.hxx"
 
@@ -12,10 +13,8 @@
 class SecretKey;
 class PublicKeySet;
 
-class OutgoingConnectionHandler {
+class OutgoingConnectionHandler : public SSH::ConnectionDisposer {
 public:
-	virtual void OnOutgoingDestroy() noexcept = 0;
-
 	/**
 	 * An error has occurred on the connection and it should be
 	 * closed.  This will be called instead of
@@ -63,7 +62,6 @@ protected:
 	void OnUserAuthFailure() override;
 
 	/* virtual methods from class SSH::Connection */
-	void Destroy() noexcept override;
 	bool CheckHostKey(std::span<const std::byte> server_host_key_blob) const noexcept override;
 	void OnEncrypted() override;
 	void OnDisconnecting(SSH::DisconnectReasonCode reason_code,

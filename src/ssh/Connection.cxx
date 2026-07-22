@@ -3,6 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "Connection.hxx"
+#include "Disposer.hxx"
 #include "IdentificationString.hxx"
 #include "Input.hxx"
 #include "Output.hxx"
@@ -50,9 +51,11 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 }
 
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
+		       ConnectionDisposer &_disposer,
 		       Role _role,
 		       HostKeyChooser *_host_key_chooser)
-	:host_key_chooser(_host_key_chooser),
+	:disposer(_disposer),
+	 host_key_chooser(_host_key_chooser),
 	 socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
@@ -216,7 +219,7 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 		/* ignore errors, we're going to disconnect anyway */
 	}
 
-	Destroy();
+	disposer.Dispose(this);
 }
 
 bool
@@ -448,7 +451,7 @@ Connection::HandleDisconnect(std::span<const std::byte> payload)
 	const auto p = ParseDisconnect(payload);
 	OnDisconnected(p.reason_code, p.description);
 
-	Destroy();
+	disposer.Dispose(this);
 	throw Destroyed{};
 }
 
@@ -804,7 +807,7 @@ Connection::OnBufferedData()
 		const auto eol = std::find(r.begin(), r.end(), std::byte{'\n'});
 		if (eol == r.end()) {
 			if (r.size() >= 255) {
-				Destroy();
+				disposer.Dispose(this);
 				return BufferedResult::DESTROYED;
 			}
 
@@ -816,7 +819,7 @@ Connection::OnBufferedData()
 		socket.KeepConsumed(length + 1);
 
 		if (!s.starts_with("SSH-"sv)) {
-			Destroy();
+			disposer.Dispose(this);
 			return BufferedResult::DESTROYED;
 		}
 
@@ -851,7 +854,7 @@ Connection::OnBufferedWrite()
 	switch (output.Flush()) {
 	case Output::FlushResult::DONE:
 		if (IsDead() && output.IsEmpty()) {
-			Destroy();
+			disposer.Dispose(this);
 			return false;
 		}
 
@@ -876,14 +879,14 @@ Connection::OnBufferedWrite()
 bool
 Connection::OnBufferedClosed() noexcept
 {
-	Destroy();
+	disposer.Dispose(this);
 	return false;
 }
 
 void
 Connection::OnBufferedError([[maybe_unused]] std::exception_ptr e) noexcept
 {
-	Destroy();
+	disposer.Dispose(this);
 }
 
 bool

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ssh/Disposer.hxx"
 #include "event/net/ServerSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/IntrusiveList.hxx"
@@ -35,7 +36,10 @@ enum class Arch : uint_least8_t;
 class ZeroconfCluster;
 #endif
 
-class Listener final : ServerSocket {
+class Listener final
+	: ServerSocket,
+	  public SSH::ConnectionDisposer
+{
 	friend class DelayedConnection;
 
 public:
@@ -157,6 +161,9 @@ public:
 	}
 
 private:
+	/* virtual methods from class SSH::ConnectionDisposer */
+	void Dispose(SSH::Connection *connection) noexcept override;
+
 	/* virtual methods from class ServerSocket */
 	void OnAccept(UniqueSocketDescriptor fd,
 		      SocketAddress address) noexcept override;

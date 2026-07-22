@@ -141,6 +141,13 @@ Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 }
 
 void
+Listener::Dispose(SSH::Connection *connection) noexcept
+{
+	connections.erase_and_dispose(connections.iterator_to(*static_cast<Connection *>(connection)),
+				      DeleteDisposer{});
+}
+
+void
 Listener::OnAccept(UniqueSocketDescriptor connection_fd,
 		   SocketAddress peer_address) noexcept
 {

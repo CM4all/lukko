@@ -180,6 +180,7 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::Connection(_instance.GetEventLoop(), std::move(_fd),
+			 _listener,
 			 host_key_chooser),
 	 instance(_instance), listener(_listener),
 	 host_key_chooser(listener.GetHostKeys()),
@@ -1377,9 +1378,10 @@ Connection::OnAuthTimeout() noexcept
 }
 
 void
-Connection::OnOutgoingDestroy() noexcept
+Connection::Dispose([[maybe_unused]] SSH::Connection *connection) noexcept
 {
-	outgoing.reset();
+	assert(outgoing);
+	assert(connection == outgoing.get());
 
 	// TODO
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,

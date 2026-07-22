@@ -26,6 +26,7 @@ class Input;
 class Output;
 class Kex;
 class HostKeyChooser;
+class ConnectionDisposer;
 class ConnectionHandler;
 enum class MessageNumber : uint8_t;
 enum class DisconnectReasonCode : uint32_t;
@@ -39,6 +40,8 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	static constexpr uint_least64_t REKEY_BYTES = GIGA;
 	static constexpr auto REKEY_INTERVAL = std::chrono::hours{1};
+
+	ConnectionDisposer &disposer;
 
 	HostKeyChooser *const host_key_chooser = nullptr;
 
@@ -156,13 +159,16 @@ public:
 public:
 	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		   ConnectionDisposer &_disposer,
 		   Role _role,
 		   HostKeyChooser *_host_key_chooser=nullptr);
 
 	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
+		   ConnectionDisposer &_disposer,
 		   HostKeyChooser &_host_key_chooser)
-		:Connection(event_loop, std::move(fd), Role::SERVER, &_host_key_chooser) {}
+		:Connection(event_loop, std::move(fd), _disposer,
+			    Role::SERVER, &_host_key_chooser) {}
 
 
 	~Connection() noexcept;
@@ -208,8 +214,6 @@ public:
 	}
 
 protected:
-	virtual void Destroy() noexcept = 0;
-
 	SocketDescriptor GetSocket() const noexcept {
 		return socket.GetSocket();
 	}

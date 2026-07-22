@@ -12,7 +12,7 @@ OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 				       const PublicKeySet &_server_host_keys,
 				       UniqueSocketDescriptor &&fd,
 				       OutgoingConnectionHandler &_handler)
-	:SSH::Connection(event_loop, std::move(fd), SSH::Role::CLIENT),
+	:SSH::Connection(event_loop, std::move(fd), _handler, SSH::Role::CLIENT),
 	 server_host_keys(_server_host_keys),
 	 handler(_handler) {}
 
@@ -56,12 +56,6 @@ OutgoingConnection::OnUserAuthFailure()
 	user_auth.reset();
 
 	handler.OnOutgoingUserauthFailure();
-}
-
-void
-OutgoingConnection::Destroy() noexcept
-{
-	handler.OnOutgoingDestroy();
 }
 
 bool

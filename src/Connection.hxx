@@ -323,11 +323,6 @@ public:
 
 	using SSH::Connection::DoDisconnect;
 
-protected:
-	void Destroy() noexcept override {
-		delete this;
-	}
-
 private:
 	bool IsOccupied() const noexcept {
 		return occupied_task;
@@ -409,8 +404,10 @@ private:
 	/* virtual methods from class BufferedSocketHandler */
 	void OnBufferedError(std::exception_ptr e) noexcept override;
 
+	/* virtual methods from class SSH::ConnectionDisposer */
+	void Dispose(SSH::Connection *connection) noexcept override;
+
 	/* virtual methods from class OutgoingConnectionHandler */
-	void OnOutgoingDestroy() noexcept override;
 	void OnOutgoingError(std::exception_ptr &&error) noexcept override;
 	void OnOutgoingUserauthService() override;
 	void OnOutgoingUserauthSuccess() override;
