@@ -7,6 +7,7 @@
 #include "IHandler.hxx"
 #include "KexState.hxx"
 #include "KexEnums.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/IntrusiveList.hxx"
@@ -32,6 +33,13 @@ enum class KexAlgorithm : uint_least8_t;
 
 class Connection : BufferedSocketHandler, InputHandler
 {
+	static constexpr uint_least64_t KILO = 1024;
+	static constexpr uint_least64_t MEGA = 1024 * KILO;
+	static constexpr uint_least64_t GIGA = 1024 * MEGA;
+
+	static constexpr uint_least64_t REKEY_BYTES = GIGA;
+	static constexpr auto REKEY_INTERVAL = std::chrono::hours{1};
+
 	HostKeyChooser *const host_key_chooser = nullptr;
 
 	const SecretKey *host_key;
@@ -54,6 +62,9 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	Input &input;
 	Output &output;
+
+	FarTimerEvent rekey_timer;
+	uint_least64_t encrypted_bytes_since_kex = 0;
 
 	struct HandlerHookTraits;
 	IntrusiveList<ConnectionHandler, HandlerHookTraits> handlers;
@@ -117,13 +128,20 @@ class Connection : BufferedSocketHandler, InputHandler
 		bool newkeys_sent = false;
 		bool newkeys_received = false;
 
+		constexpr bool IsIdle() const noexcept {
+			return !kexinit_sent && !kexinit_received &&
+				!newkeys_sent && !newkeys_received;
+		}
+
 		constexpr bool IsComplete() const noexcept {
 			return newkeys_sent && newkeys_received;
 		}
 
-		constexpr void ResetIfComplete() noexcept {
-			if (IsComplete())
+		constexpr bool ResetIfComplete() noexcept {
+			bool complete = IsComplete();
+			if (complete)
 				*this = {};
+			return complete;
 		}
 	} kex_flags;
 
@@ -291,6 +309,9 @@ protected:
 				    std::string_view msg) noexcept;
 
 private:
+	void InitiateRekey();
+	void OnRekeyTimer() noexcept;
+
 	void HandleRawPacket(std::span<const std::byte> payload);
 
 protected:

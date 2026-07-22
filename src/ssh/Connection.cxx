@@ -56,6 +56,7 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 	 socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
+	 rekey_timer(event_loop, BIND_THIS_METHOD(OnRekeyTimer)),
 	 role(_role)
 {
 	socket.Init(_fd.Release(), FD_TCP,
@@ -95,6 +96,35 @@ Connection::SetAuthenticated() noexcept
 	assert(!authenticated);
 
 	authenticated = true;
+
+	/* enable periodic rekeying */
+	rekey_timer.Schedule(REKEY_INTERVAL);
+}
+
+inline void
+Connection::InitiateRekey()
+{
+	assert(IsEncrypted());
+	assert(authenticated);
+	assert(!IsDead());
+
+	// TODO can we eliminate this check not not scheduling this timer during rekey?yt
+	if (rekeying || !kex_flags.IsIdle())
+		return;
+
+	rekeying = true;
+	if (!write_blocked)
+		OnWriteBlocked();
+
+	SendKexInit();
+}
+
+inline void
+Connection::OnRekeyTimer() noexcept
+try {
+	InitiateRekey();
+} catch (...) {
+	CloseError(std::current_exception());
 }
 
 inline void
@@ -111,6 +141,16 @@ Connection::SendPacket(std::span<const std::byte> src) noexcept
 
 	output.Push(src);
 	socket.DeferWrite();
+
+	if (const auto *cipher = output.GetCipher(); cipher != nullptr) {
+		encrypted_bytes_since_kex += src.size() + cipher->GetAuthSize();
+
+		if (authenticated &&
+		    encrypted_bytes_since_kex >= REKEY_BYTES &&
+		    kex_flags.IsIdle() && !rekeying)
+			/* rekey now */
+			rekey_timer.Schedule(Event::Duration::zero());
+	}
 }
 
 void
@@ -147,6 +187,8 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 		   it to the socket; therefore postpone the Destroy()
 		   call */
 		dead = true;
+
+		rekey_timer.Cancel();
 
 		/* we now have very little patience with this
                    client */
@@ -332,6 +374,8 @@ Connection::SendNewKeys()
 	assert(!kex_flags.newkeys_sent);
 	assert(!kex_flags.newkeys_received);
 
+	rekey_timer.Cancel();
+
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
 	kex_flags.newkeys_sent = true;
 
@@ -358,17 +402,19 @@ Connection::SendNewKeys()
 	const bool was_encrypted = output.IsEncrypted();
 
 	output.SetCipher(std::move(send_cipher));
+	encrypted_bytes_since_kex = 0;
 
 	const bool was_rekeying = rekeying;
 	rekeying = false;
+
+	if (kex_flags.ResetIfComplete())
+		rekey_timer.Schedule(REKEY_INTERVAL);
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
 
 	if (was_rekeying && !write_blocked)
 		OnWriteUnblocked();
-
-	kex_flags.ResetIfComplete();
 }
 
 inline void
@@ -405,6 +451,8 @@ Connection::HandleDisconnect(std::span<const std::byte> payload)
 inline void
 Connection::HandleKexInit(std::span<const std::byte> payload)
 {
+	rekey_timer.Cancel();
+
 	const bool initial_kex = !IsEncrypted();
 
 	if (kex_flags.kexinit_received ||
@@ -493,6 +541,8 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 {
 	(void)payload;
 
+	rekey_timer.Cancel();
+
 	if (!kex_flags.kexinit_sent ||
 	    !kex_flags.kexinit_received ||
 	    !kex_flags.newkeys_sent ||
@@ -501,6 +551,8 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 			DisconnectReasonCode::PROTOCOL_ERROR,
 			"Unexpected NEWKEYS"sv,
 		};
+
+	kex_flags.newkeys_received = true;
 
 	if (kex_state.session_id.empty())
 		throw Disconnect{
@@ -530,13 +582,13 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 
 	const bool was_encrypted = input.IsEncrypted();
 
-	kex_flags.newkeys_received = true;
 	input.SetCipher(std::move(cipher));
+
+	if (kex_flags.ResetIfComplete())
+		rekey_timer.Schedule(REKEY_INTERVAL);
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
-
-	kex_flags.ResetIfComplete();
 }
 
 inline void
