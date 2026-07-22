@@ -433,6 +433,9 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		break;
 
 	case Role::CLIENT:
+		if (!initial_kex)
+			SendKexInit();
+
 		SendECDHKexInit();
 		break;
 	}
