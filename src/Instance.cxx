@@ -155,8 +155,26 @@ Instance::OnExit() noexcept
 }
 
 void
+Instance::ReloadState() noexcept
+{
+#ifdef HAVE_AVAHI
+	for (auto &i : listeners) {
+		const auto name = i.GetStateName();
+		if (name.empty())
+			continue;
+
+		if (i.HasZeroconf()) {
+			const auto path = fmt::format("lukko/listener/{}/zeroconf", name);
+			i.SetZeroconfVisible(state_directories.GetBool(path.c_str(), true));
+		}
+	}
+#endif // HAVE_AVAHI
+}
+
+void
 Instance::OnReload(int) noexcept
 {
+	ReloadState();
 }
 
 #ifdef HAVE_AVAHI

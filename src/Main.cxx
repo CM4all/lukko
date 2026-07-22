@@ -163,6 +163,8 @@ try {
 	CapabilityState::Empty().Install();
 #endif // HAVE_LIBCAP
 
+	instance.ReloadState();
+
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */
 	sd_notify(0, "READY=1");

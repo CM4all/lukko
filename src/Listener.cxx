@@ -154,6 +154,22 @@ Listener::~Listener() noexcept
 #endif
 }
 
+#ifdef HAVE_AVAHI
+
+void
+Listener::SetZeroconfVisible(bool _visible) noexcept
+{
+	assert(avahi_service);
+
+	if (avahi_service->visible == _visible)
+		return;
+
+	avahi_service->visible = _visible;
+	instance.GetAvahiPublisher().UpdateServices();
+}
+
+#endif
+
 SocketAddress
 Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 {

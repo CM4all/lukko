@@ -93,6 +93,19 @@ public:
 	}
 #endif // ENABLE_TRANSLATION
 
+	/**
+	 * Returns the name used for loading settings from
+	 * #StateDirectories.
+	 */
+	std::string_view GetStateName() const noexcept {
+#ifdef ENABLE_TRANSLATION
+		if (!tag.empty())
+			return tag;
+#endif // ENABLE_TRANSLATION
+
+		return {};
+	}
+
 	const SecretKeyList &GetHostKeys() const noexcept {
 		return host_keys;
 	}
@@ -116,6 +129,8 @@ public:
 	bool HasZeroconf() const noexcept {
 		return avahi_service != nullptr;
 	}
+
+	void SetZeroconfVisible(bool _visible) noexcept;
 #endif // HAVE_AVAHI
 
 	/**

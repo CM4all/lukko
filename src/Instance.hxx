@@ -12,6 +12,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/net/PrometheusExporterHandler.hxx"
 #include "io/Logger.hxx"
+#include "io/StateDirectories.hxx"
 #include "config.h"
 
 #ifdef HAVE_AVAHI
@@ -66,6 +67,8 @@ class Instance final
 #ifdef ENABLE_TRANSLATION
 	const char *const translation_server;
 #endif
+
+	const StateDirectories state_directories;
 
 	EventLoop event_loop;
 
@@ -141,6 +144,8 @@ public:
 #endif // HAVE_AVAHI
 
 	void AddListener(const ListenerConfig &config);
+
+	void ReloadState() noexcept;
 
 	void Run() noexcept {
 		event_loop.Run();

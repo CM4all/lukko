@@ -1,6 +1,6 @@
 cm4all-lukko (0.57) unstable; urgency=low
 
-  * 
+  * enable/disable Zeroconf with files in "state" directories
 
  --   
 

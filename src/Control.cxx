@@ -59,6 +59,10 @@ Instance::OnControlPacket(BengControl::Command command,
 #endif
 		break;
 
+	case Command::RELOAD_STATE:
+		ReloadState();
+		break;
+
 	case Command::FLUSH_NFS_CACHE:
 	case Command::FLUSH_FILTER_CACHE:
 	case Command::STOPWATCH_PIPE:
@@ -66,7 +70,6 @@ Instance::OnControlPacket(BengControl::Command command,
 	case Command::FLUSH_HTTP_CACHE:
 	case Command::ENABLE_QUEUE:
 	case Command::DISABLE_QUEUE:
-	case Command::RELOAD_STATE:
 	case Command::DISCONNECT_DATABASE:
 	case Command::DISABLE_URING:
 	case Command::RESET_LIMITER:
