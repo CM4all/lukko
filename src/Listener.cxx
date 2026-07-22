@@ -258,11 +258,15 @@ Listener::OnAcceptError(std::exception_ptr ep) noexcept
 void
 Listener::TerminateChildren(std::string_view child_tag) noexcept
 {
-	connections.remove_and_dispose_if([child_tag](const Connection &c){
-		return c.HasTag(child_tag);
-	}, [](Connection *c){
-		c->Terminate();
-	});
+	for (auto i = connections.begin(), end = connections.end(); i != end;) {
+		/* increment the iterator before invoking Terminate()
+		   because that method may or may not erase the
+		   connection from the list */
+		auto &c = *i++;
+
+		if (c.HasTag(child_tag))
+			c.Terminate();
+	}
 }
 
 #endif

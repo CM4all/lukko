@@ -1,6 +1,6 @@
 cm4all-lukko (0.58) unstable; urgency=low
 
-  * 
+  * fix crash on TERMINATE_CHILDREN control packet
 
  --   
 
