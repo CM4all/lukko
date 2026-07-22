@@ -53,7 +53,7 @@ class Connection final
 	Instance &instance;
 	Listener &listener;
 
-	SSH::SimpleHostKeyChooser host_key_chooser;
+	const SSH::SimpleHostKeyChooser host_key_chooser;
 
 	AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;

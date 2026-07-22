@@ -43,7 +43,7 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	ConnectionDisposer &disposer;
 
-	HostKeyChooser *const host_key_chooser = nullptr;
+	const HostKeyChooser *const host_key_chooser = nullptr;
 
 	const SecretKey *host_key;
 	std::string host_key_algorithm;
@@ -161,12 +161,12 @@ public:
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		   ConnectionDisposer &_disposer,
 		   Role _role,
-		   HostKeyChooser *_host_key_chooser=nullptr);
+		   const HostKeyChooser *_host_key_chooser=nullptr);
 
 	[[nodiscard]]
 	Connection(EventLoop &event_loop, UniqueSocketDescriptor &&fd,
 		   ConnectionDisposer &_disposer,
-		   HostKeyChooser &_host_key_chooser)
+		   const HostKeyChooser &_host_key_chooser)
 		:Connection(event_loop, std::move(fd), _disposer,
 			    Role::SERVER, &_host_key_chooser) {}
 

@@ -53,7 +53,7 @@ SerializeKex(Serializer &s, std::span<const std::byte, KEX_COOKIE_SIZE> cookie,
 Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 		       ConnectionDisposer &_disposer,
 		       Role _role,
-		       HostKeyChooser *_host_key_chooser)
+		       const HostKeyChooser *_host_key_chooser)
 	:disposer(_disposer),
 	 host_key_chooser(_host_key_chooser),
 	 socket(event_loop),
