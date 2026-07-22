@@ -2,7 +2,7 @@ cm4all-lukko (0.58) unstable; urgency=low
 
   * fix crash on TERMINATE_CHILDREN control packet
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 23 Jul 2026 01:51:10 +0200
 
 cm4all-lukko (0.57) unstable; urgency=low
 
