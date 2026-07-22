@@ -88,6 +88,13 @@ Connection::IsEncrypted() const noexcept
 	return input.IsEncrypted() && output.IsEncrypted();
 }
 
+inline bool
+Connection::IsRekeying() const noexcept
+{
+	return output.IsEncrypted() &&
+		kex_flags.kexinit_sent && !kex_flags.newkeys_sent;
+}
+
 void
 Connection::SetAuthenticated() noexcept
 {
@@ -108,13 +115,8 @@ Connection::InitiateRekey()
 	assert(authenticated);
 	assert(!IsDead());
 
-	// TODO can we eliminate this check not not scheduling this timer during rekey?yt
-	if (rekeying || !kex_flags.IsIdle())
+	if (!kex_flags.IsIdle())
 		return;
-
-	rekeying = true;
-	if (!write_blocked)
-		OnWriteBlocked();
 
 	SendKexInit();
 }
@@ -147,7 +149,7 @@ Connection::SendPacket(std::span<const std::byte> src) noexcept
 
 		if (authenticated &&
 		    encrypted_bytes_since_kex >= REKEY_BYTES &&
-		    kex_flags.IsIdle() && !rekeying)
+		    kex_flags.IsIdle())
 			/* rekey now */
 			rekey_timer.Schedule(Event::Duration::zero());
 	}
@@ -282,8 +284,12 @@ Connection::SendKexInit()
 	SerializeKex(s, cookie, proposal);
 	my_kexinit = s.Since(kex_mark);
 
-	SendPacket(std::move(s));
 	kex_flags.kexinit_sent = true;
+
+	if (IsRekeying() && !write_blocked)
+		OnWriteBlocked();
+
+	SendPacket(std::move(s));
 }
 
 inline void
@@ -375,6 +381,8 @@ Connection::SendNewKeys()
 	assert(!kex_flags.newkeys_sent);
 	assert(!kex_flags.newkeys_received);
 
+	const bool was_rekeying = IsRekeying();
+
 	rekey_timer.Cancel();
 
 	SendPacket(PacketSerializer{MessageNumber::NEWKEYS});
@@ -404,9 +412,6 @@ Connection::SendNewKeys()
 
 	output.SetCipher(std::move(send_cipher));
 	encrypted_bytes_since_kex = 0;
-
-	const bool was_rekeying = rekeying;
-	rekeying = false;
 
 	if (kex_flags.ResetIfComplete())
 		rekey_timer.Schedule(REKEY_INTERVAL);
@@ -506,7 +511,6 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		output.AutoResetSeq();
 	}
 
-	bool was_rekeying;
 	switch (role) {
 	case Role::SERVER:
 		assert(host_key_chooser != nullptr);
@@ -524,11 +528,6 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		ignore_next_kex_packet = p.first_kex_packet_follows &&
 			(FirstStringListItem(p.kex_algorithms) != negotiated_kex_algorithm ||
 			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
-
-		was_rekeying = rekeying;
-		rekeying = !initial_kex;
-		if (!was_rekeying && rekeying && !write_blocked)
-			OnWriteBlocked();
 
 		break;
 
@@ -848,7 +847,7 @@ Connection::OnBufferedWrite()
 {
 	const bool was_write_blocked = write_blocked;
 	write_blocked = false;
-	if (was_write_blocked && !rekeying)
+	if (was_write_blocked && !IsRekeying())
 		OnWriteUnblocked();
 
 	switch (output.Flush()) {
@@ -865,7 +864,7 @@ Connection::OnBufferedWrite()
 		socket.ScheduleWrite();
 
 		write_blocked = true;
-		if (!rekeying)
+		if (!IsRekeying())
 			OnWriteBlocked();
 		break;
 

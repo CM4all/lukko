@@ -114,14 +114,6 @@ class Connection : BufferedSocketHandler, InputHandler
 	 */
 	bool write_blocked = false;
 
-	/**
-	 * Are we currently rekeying?  This field is `true` between
-	 * sending #KEXINIT and #NEWKEYS.
-	 *
-	 * @see RFC 4253 9
-	 */
-	bool rekeying = false;
-
 	struct {
 		bool kexinit_sent = false;
 		bool kexinit_received = false;
@@ -309,6 +301,9 @@ protected:
 				    std::string_view msg) noexcept;
 
 private:
+	[[gnu::pure]]
+	bool IsRekeying() const noexcept;
+
 	void InitiateRekey();
 	void OnRekeyTimer() noexcept;
 
