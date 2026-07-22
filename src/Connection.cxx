@@ -1293,6 +1293,9 @@ Connection::Dispose([[maybe_unused]] SSH::Connection *connection) noexcept
 	assert(outgoing);
 	assert(connection == outgoing.get());
 
+	proxy_handlers.reset();
+	outgoing.reset();
+
 	// TODO
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
 		     "Disconnected"sv);
@@ -1357,6 +1360,9 @@ void
 Connection::OnOutgoingUserauthFailure()
 {
 	assert(outgoing);
+
+	proxy_handlers.reset();
+	outgoing.reset();
 
 	// TODO
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
