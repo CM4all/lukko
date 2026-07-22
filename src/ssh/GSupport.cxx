@@ -97,7 +97,7 @@ GlobalRequestSupport::SubmitGlobalRequestResponses() noexcept
 
 inline void
 GlobalRequestSupport::OnGlobalRequestDone(PendingGlobalRequest &request,
-				 std::exception_ptr error) noexcept
+					  std::exception_ptr error) noexcept
 {
 	assert(request.IsDone());
 	assert(!pending_global_requests.empty());
@@ -141,7 +141,7 @@ GlobalRequestSupport::HandleGlobalRequest(std::span<const std::byte> payload)
 
 bool
 GlobalRequestSupport::HandlePacket(MessageNumber msg,
-			  std::span<const std::byte> payload)
+				   std::span<const std::byte> payload)
 {
 	if (!connection.IsEncrypted() || !connection.IsAuthenticated())
 		return false;
