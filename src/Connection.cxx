@@ -770,7 +770,9 @@ Co::EagerInvokeTask
 Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 {
 	assert(!IsAuthenticated());
+	assert(user_auth);
 	assert(!channels);
+	assert(!outgoing);
 
 	if (!got_userauth_request) {
 		/* this is the first USERAUTH_REQUEST - reschedule the
@@ -1341,6 +1343,8 @@ Connection::OnOutgoingUserauthService()
 void
 Connection::OnOutgoingUserauthSuccess()
 {
+	assert(!user_auth);
+	assert(!channels);
 	assert(outgoing);
 	assert(!outgoing_ready);
 
