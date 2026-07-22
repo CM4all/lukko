@@ -40,7 +40,7 @@ class SpawnServerClient;
 #include <map>
 struct ZeroconfClusterConfig;
 class ZeroconfCluster;
-namespace Avahi { class Client; class Publisher; struct Service; }
+namespace Avahi { class Client; class Publisher; }
 #endif // HAVE_AVAHI
 
 struct DummyBase {};
@@ -80,7 +80,6 @@ class Instance final
 
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> avahi_client;
-	std::forward_list<Avahi::Service> avahi_services;
 	std::unique_ptr<Avahi::Publisher> avahi_publisher;
 
 	std::map<const ZeroconfClusterConfig *, ZeroconfCluster> zeroconf_clusters;
@@ -127,6 +126,7 @@ public:
 
 #ifdef HAVE_AVAHI
 	Avahi::Client &GetAvahiClient();
+	Avahi::Publisher &GetAvahiPublisher();
 
 	/**
 	 * Create a #ZeroconfCluster instance from a
@@ -138,9 +138,6 @@ public:
 	 * Throws on error.
 	 */
 	ZeroconfCluster &MakeZeroconfCluster(const ZeroconfClusterConfig &config);
-
-	void EnableZeroconf() noexcept;
-	void DisableZeroconf() noexcept;
 #endif // HAVE_AVAHI
 
 	void AddListener(const ListenerConfig &config);

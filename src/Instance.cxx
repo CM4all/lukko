@@ -92,6 +92,19 @@ Instance::GetAvahiClient()
 	return *avahi_client;
 }
 
+Avahi::Publisher &
+Instance::GetAvahiPublisher()
+{
+	if (!avahi_publisher) {
+		Avahi::ErrorHandler &error_handler = *this;
+		avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
+								     "Lukko",
+								     error_handler);
+	}
+
+	return *avahi_publisher;
+}
+
 ZeroconfCluster &
 Instance::MakeZeroconfCluster(const ZeroconfClusterConfig &config)
 {
@@ -102,58 +115,12 @@ Instance::MakeZeroconfCluster(const ZeroconfClusterConfig &config)
 	return it->second;
 }
 
-void
-Instance::EnableZeroconf() noexcept
-{
-	assert(!avahi_publisher);
-
-	if (avahi_services.empty())
-		return;
-
-	Avahi::ErrorHandler &error_handler = *this;
-	avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
-							     "Lukko",
-							     error_handler);
-
-	for (auto &i : avahi_services)
-		avahi_publisher->AddService(i);
-}
-
-void
-Instance::DisableZeroconf() noexcept
-{
-	if (!avahi_publisher)
-		return;
-
-	for (auto &i : avahi_services)
-		avahi_publisher->RemoveService(i);
-
-	avahi_publisher.reset();
-}
-
 #endif // HAVE_AVAHI
 
 void
 Instance::AddListener(const ListenerConfig &config)
 {
 	listeners.emplace_front(*this, config);
-
-#ifdef HAVE_AVAHI
-	auto &listener = listeners.front();
-
-	if (config.zeroconf.IsEnabled()) {
-		/* ask the kernel for the effective address via
-		   getsockname(), because it may have changed, e.g. if
-		   the kernel has selected a port for us */
-		if (const auto local_address = listener.GetSocket().GetLocalAddress();
-		    local_address.IsDefined()) {
-			avahi_services.emplace_front(config.zeroconf,
-						     config.interface.empty() ? nullptr : config.interface.c_str(),
-						     local_address, config.v6only,
-						     listener.IsArchSpecific());
-		}
-	}
-#endif // HAVE_AVAHI
 }
 
 void
@@ -175,14 +142,14 @@ Instance::OnExit() noexcept
 	control_listeners.clear();
 #endif
 
-#ifdef HAVE_AVAHI
-	zeroconf_clusters.clear();
-	DisableZeroconf();
-	avahi_client.reset();
-#endif // HAVE_AVAHI
-
 	listeners.clear();
 	prometheus_exporters.clear();
+
+#ifdef HAVE_AVAHI
+	zeroconf_clusters.clear();
+	avahi_publisher.reset();
+	avahi_client.reset();
+#endif // HAVE_AVAHI
 
 	thread_pool_join();
 }

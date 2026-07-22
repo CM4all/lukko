@@ -163,10 +163,6 @@ try {
 	CapabilityState::Empty().Install();
 #endif // HAVE_LIBCAP
 
-#ifdef HAVE_AVAHI
-	instance.EnableZeroconf();
-#endif // HAVE_AVAHI
-
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */
 	sd_notify(0, "READY=1");

@@ -27,6 +27,7 @@ class RootLogger;
 class ClientAccountingMap;
 class PublicKeySet;
 class SecretKeyList;
+namespace Avahi { struct Service; }
 
 enum class Arch : uint_least8_t;
 
@@ -69,6 +70,10 @@ private:
 
 	const RootLogger &logger;
 
+#ifdef HAVE_AVAHI
+	const std::unique_ptr<Avahi::Service> avahi_service;
+#endif
+
 	std::unique_ptr<ClientAccountingMap> client_accounting;
 
 	IntrusiveList<Connection> connections;
@@ -106,6 +111,12 @@ public:
 		   specific - our CPU architecture doesn't matter */
 		return !HasProxyTo();
 	}
+
+#ifdef HAVE_AVAHI
+	bool HasZeroconf() const noexcept {
+		return avahi_service != nullptr;
+	}
+#endif // HAVE_AVAHI
 
 	/**
 	 * Throws on error.
@@ -161,6 +172,8 @@ public:
 	}
 
 private:
+	std::unique_ptr<Avahi::Service> MakeAvahiService(const ListenerConfig &config) const noexcept;
+
 	/* virtual methods from class SSH::ConnectionDisposer */
 	void Dispose(SSH::Connection *connection) noexcept override;
 

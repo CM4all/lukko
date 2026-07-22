@@ -12,6 +12,7 @@
 #include "lib/fmt/SocketAddressFormatter.hxx"
 #include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "time/Cast.hxx"
 #include "util/AlwaysFalse.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -29,6 +30,32 @@
 #include <sys/socket.h>
 
 using std::string_view_literals::operator""sv;
+
+#ifdef HAVE_AVAHI
+#include "lib/avahi/Service.hxx"
+#include "lib/avahi/Publisher.hxx"
+
+inline std::unique_ptr<Avahi::Service>
+Listener::MakeAvahiService(const ListenerConfig &config) const noexcept
+{
+	if (!config.zeroconf.IsEnabled())
+		return {};
+
+	/* ask the kernel for the effective address via getsockname(),
+	   because it may have changed, e.g. if the kernel has
+	   selected a port for us */
+	if (const auto local_address = GetSocket().GetLocalAddress();
+	    local_address.IsDefined()) {
+		return std::make_unique<Avahi::Service>(config.zeroconf,
+							config.interface.empty() ? nullptr : config.interface.c_str(),
+							local_address, config.v6only,
+							IsArchSpecific());
+	}
+
+	return {};
+}
+
+#endif // HAVE_AVAHI
 
 static Listener::ProxyTo
 LoadProxyTo(Instance &instance, const ListenerConfig &config)
@@ -95,12 +122,20 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 		     : UniqueSocketDescriptor{}),
 #endif
 	 logger(instance.GetLogger()),
+#ifdef HAVE_AVAHI
+	 avahi_service(MakeAvahiService(config)),
+#endif
 	 send_client_address(::GetSendClientAddress(config)),
 	 accept_client_address(config.accept_client_address),
 	 verbose_errors(config.verbose_errors),
 	 exec_reject_stderr(config.exec_reject_stderr)
 {
 	assert(proxy_host_keys == nullptr || !proxy_host_keys->empty());
+
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().AddService(*avahi_service);
+#endif
 
 	if (config.max_connections_per_ip > 0 || config.tarpit)
 		client_accounting = std::make_unique<ClientAccountingMap>(_instance.GetEventLoop(),
@@ -112,6 +147,11 @@ Listener::~Listener() noexcept
 {
 	delayed_connections.clear_and_dispose(DeleteDisposer{});
 	connections.clear_and_dispose(DeleteDisposer{});
+
+#ifdef HAVE_AVAHI
+	if (avahi_service)
+		instance.GetAvahiPublisher().RemoveService(*avahi_service);
+#endif
 }
 
 SocketAddress
