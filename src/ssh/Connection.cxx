@@ -473,7 +473,11 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	mac_algorithms_client_to_server = p.mac_algorithms_client_to_server;
 	mac_algorithms_server_to_client = p.mac_algorithms_server_to_client;
 
-	kex_algorithm = MakeKex(p.kex_algorithms);
+	const auto negotiated_kex_algorithm = role == Role::SERVER
+		? FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms)
+		: FindCommonAlgorithm(all_client_kex_algorithms, p.kex_algorithms);
+
+	kex_algorithm = MakeKex(negotiated_kex_algorithm);
 	if (!kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,
@@ -517,7 +521,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 			SendKexInit();
 
 		ignore_next_kex_packet = p.first_kex_packet_follows &&
-			(FirstStringListItem(p.kex_algorithms) != FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms) ||
+			(FirstStringListItem(p.kex_algorithms) != negotiated_kex_algorithm ||
 			 FirstStringListItem(p.server_host_key_algorithms) != host_key_algorithm);
 
 		was_rekeying = rekeying;
