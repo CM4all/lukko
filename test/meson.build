@@ -20,11 +20,10 @@ test(
     'TestAuthorizedKeys.cxx',
     'TestWriteBignum2.cxx',
     'TestCommitBignum2.cxx',
-    '../src/ssh/KexSignature.cxx',
-    '../src/ssh/Serializer.cxx',
     include_directories: inc,
     dependencies: [
       gtest,
+      ssh_dep,
       key_dep,
       memory_dep,
     ],
