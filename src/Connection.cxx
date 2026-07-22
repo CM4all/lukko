@@ -1123,6 +1123,8 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 
 	auth_timeout.Cancel();
 
+	SetAuthenticated();
+
 	if (const auto proxy_to = listener.GetProxyTo(arch, sticky_source);
 	    !proxy_to.IsNull()) {
 		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
@@ -1134,8 +1136,10 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 								listener.GetProxyHostKeys(),
 								std::move(s), handler);
 		outgoing_ready = false;
+
+		/* USERAUTH_SUCCESS will be sent later by
+		   OnOutgoingUserauthSuccess() */
 	} else {
-		SetAuthenticated();
 		SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 
 		global_requests = std::make_unique<SSH::GlobalRequestSupport>(*this, *this);
@@ -1344,7 +1348,6 @@ Connection::OnOutgoingUserauthSuccess()
 
 	proxy_handlers = std::make_unique<ProxyHandlers>(*this, *outgoing);
 
-	SetAuthenticated();
 	SendPacket(SSH::PacketSerializer{SSH::MessageNumber::USERAUTH_SUCCESS});
 }
 
