@@ -3,10 +3,7 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "OutgoingConnection.hxx"
-#include "key/Set.hxx"
 #include "ssh/PacketSerializer.hxx"
-
-using std::string_view_literals::operator""sv;
 
 OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 				       const PublicKeySet &_server_host_keys,
