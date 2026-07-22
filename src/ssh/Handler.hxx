@@ -60,14 +60,6 @@ public:
 	 */
 	virtual void OnDisconnecting([[maybe_unused]] DisconnectReasonCode reason_code,
 				     [[maybe_unused]] std::string_view msg) noexcept {}
-
-	/**
-	 * Called before handling a DISCONNECT packet received from
-	 * the peer.  This may be used for logging (but not for I/O or
-	 * for actually disconnecting).
-	 */
-	virtual void OnDisconnected([[maybe_unused]] DisconnectReasonCode reason_code,
-				    [[maybe_unused]] std::string_view msg) noexcept {}
 };
 
 } // namespace SSH

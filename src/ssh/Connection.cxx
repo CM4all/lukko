@@ -248,11 +248,9 @@ Connection::OnDisconnecting(DisconnectReasonCode reason_code,
 }
 
 void
-Connection::OnDisconnected(DisconnectReasonCode reason_code,
-			   std::string_view msg) noexcept
+Connection::OnDisconnected([[maybe_unused]] DisconnectReasonCode reason_code,
+			   [[maybe_unused]] std::string_view msg) noexcept
 {
-	for (auto &i : handlers)
-		i.OnDisconnected(reason_code, msg);
 }
 
 inline void
