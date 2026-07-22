@@ -32,6 +32,41 @@ UserAuthClient::Start()
 }
 
 void
+UserAuthClient::SendUserAuthRequestPublicKey(std::string_view username,
+					     const SecretKey &key,
+					     std::string_view key_algorithm)
+{
+	assert(state == State::SERVICE_SSH_USERAUTH);
+
+	SSH::PacketSerializer s{SSH::MessageNumber::USERAUTH_REQUEST};
+	const auto to_be_signed_marker = s.Mark();
+	s.WriteString(username);
+	s.WriteString("ssh-connection"sv);
+	s.WriteString("publickey"sv);
+	s.WriteBool(true); // with_signature
+	s.WriteString(key_algorithm);
+
+	const auto key_length = s.PrepareLength();
+	key.SerializePublic(s);
+	s.CommitLength(key_length);
+
+	const auto to_be_signed = s.Since(to_be_signed_marker);
+
+	SSH::Serializer s2;
+	s2.WriteLengthEncoded(connection.GetSessionId());
+	s2.WriteU8(static_cast<uint_least8_t>(SSH::MessageNumber::USERAUTH_REQUEST));
+	s2.WriteN(to_be_signed);
+
+	const auto signature_length = s.PrepareLength();
+	key.Sign(s, s2.Finish(), key_algorithm);
+	s.CommitLength(signature_length);
+
+	connection.SendPacket(std::move(s));
+
+	state = State::USERAUTH_REQUEST;
+}
+
+void
 UserAuthClient::SendUserAuthRequestHostbased(std::string_view username,
 					     const SecretKey &key,
 					     std::string_view key_algorithm,

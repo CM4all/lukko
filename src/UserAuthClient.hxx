@@ -36,6 +36,10 @@ public:
 
 	void Start();
 
+	void SendUserAuthRequestPublicKey(std::string_view username,
+					  const SecretKey &key,
+					  std::string_view key_algorithm);
+
 	void SendUserAuthRequestHostbased(std::string_view username,
 					  const SecretKey &key,
 					  std::string_view key_algorithm,
