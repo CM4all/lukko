@@ -1137,7 +1137,6 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(),
 								listener.GetProxyHostKeys(),
 								std::move(s), handler);
-		outgoing_ready = false;
 
 		/* USERAUTH_SUCCESS will be sent later by
 		   OnOutgoingUserauthSuccess() */
@@ -1313,7 +1312,6 @@ void
 Connection::OnOutgoingUserauthService()
 {
 	assert(outgoing);
-	assert(!outgoing_ready);
 
 	const auto [key, algorithm] = listener.GetHostKeys().Choose("ssh-ed25519"sv); // TODO
 	if (key == nullptr)
@@ -1346,9 +1344,6 @@ Connection::OnOutgoingUserauthSuccess()
 	assert(!user_auth);
 	assert(!channels);
 	assert(outgoing);
-	assert(!outgoing_ready);
-
-	outgoing_ready = true;
 
 	proxy_handlers = std::make_unique<ProxyHandlers>(*this, *outgoing);
 
@@ -1359,7 +1354,6 @@ void
 Connection::OnOutgoingUserauthFailure()
 {
 	assert(outgoing);
-	assert(!outgoing_ready);
 
 	// TODO
 	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,

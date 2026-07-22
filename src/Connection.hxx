@@ -119,8 +119,6 @@ class Connection final
 	 */
 	bool got_userauth_request = false;
 
-	bool outgoing_ready;
-
 	/**
 	 * Was "no-more-sessions@openssh.com" received?
 	 */
