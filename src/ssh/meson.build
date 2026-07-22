@@ -23,6 +23,7 @@ libssh = static_library(
   'KexProposal.cxx',
   'KexState.cxx',
   'Serializer.cxx',
+  'SimpleHostKeyChooser.cxx',
   'TerminalMode.cxx',
   'EarlyDisconnect.cxx',
   'UserAuthClient.cxx',

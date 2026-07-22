@@ -180,8 +180,9 @@ Connection::Connection(Instance &_instance, Listener &_listener,
 		       PerClientAccounting *per_client,
 		       UniqueSocketDescriptor _fd, SocketAddress _peer_address)
 	:SSH::Connection(_instance.GetEventLoop(), std::move(_fd),
-			 *this),
+			 host_key_chooser),
 	 instance(_instance), listener(_listener),
+	 host_key_chooser(listener.GetHostKeys()),
 	 peer_address(_peer_address),
 	 local_address(GetSocket().GetLocalAddress()),
 #ifdef ENABLE_POND
@@ -1299,18 +1300,6 @@ Connection::HandlePacket(SSH::MessageNumber msg,
 	default:
 		return false;
 	}
-}
-
-std::string_view
-Connection::GetServerHostKeyAlgorithms() const noexcept
-{
-	return listener.GetHostKeys().GetAlgorithms();
-}
-
-std::pair<const SecretKey *, std::string_view>
-Connection::ChooseHostKey(std::string_view algorithms) const noexcept
-{
-	return listener.GetHostKeys().Choose(algorithms);
 }
 
 void

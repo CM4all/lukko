@@ -9,7 +9,7 @@
 #include "ssh/Connection.hxx"
 #include "ssh/GSupport.hxx"
 #include "ssh/CSupport.hxx"
-#include "ssh/HostKeyChooser.hxx"
+#include "ssh/SimpleHostKeyChooser.hxx"
 #include "key/Options.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -44,7 +44,6 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
-	  public SSH::HostKeyChooser,
 	  public SSH::Connection,
 	  SSH::ConnectionHandler,
 	  public SSH::GlobalRequestHandler,
@@ -53,6 +52,8 @@ class Connection final
 {
 	Instance &instance;
 	Listener &listener;
+
+	SSH::SimpleHostKeyChooser host_key_chooser;
 
 	AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
@@ -392,10 +393,6 @@ private:
 						    SSH::ChannelInit init,
 						    std::span<const std::byte> payload,
 						    CancellablePointer &cancel_ptr) override;
-
-	/* virtual methods from class SSH::HostKeyChooser */
-	std::string_view GetServerHostKeyAlgorithms() const noexcept override;
-	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
 
 	/* virtual methods from class SSH::Connection */
 	void OnEncrypted() override;
