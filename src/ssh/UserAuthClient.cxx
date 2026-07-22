@@ -14,7 +14,7 @@ using std::string_view_literals::operator""sv;
 namespace SSH {
 
 UserAuthClient::UserAuthClient(Connection &_connection,
-			       UserAuthClientHandler &_handler)
+			       UserAuthClientHandler &_handler) noexcept
 	:connection(_connection),
 	 handler(_handler)
 {

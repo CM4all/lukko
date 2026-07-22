@@ -34,7 +34,7 @@ class UserAuthClient final : ConnectionHandler {
 
 public:
 	UserAuthClient(Connection &_connection,
-		       UserAuthClientHandler &_handler);
+		       UserAuthClientHandler &_handler) noexcept;
 	~UserAuthClient() noexcept;
 
 	void Start();
