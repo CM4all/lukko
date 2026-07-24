@@ -11,11 +11,11 @@
 namespace SSH {
 
 Serializer::Serializer() noexcept
-	:buffer(static_cast<std::byte *>(nullptr), MAX_PACKET_SIZE)
+	:buffer(static_cast<std::byte *>(nullptr), BUFFER_SIZE)
 {
 	auto alloc = fb_pool_get().Alloc();
 	area = alloc.area;
-	buffer = std::span<std::byte, MAX_PACKET_SIZE>{static_cast<std::byte *>(alloc.Steal()), MAX_PACKET_SIZE};
+	buffer = std::span<std::byte, BUFFER_SIZE>{static_cast<std::byte *>(alloc.Steal()), BUFFER_SIZE};
 }
 
 Serializer::~Serializer() noexcept

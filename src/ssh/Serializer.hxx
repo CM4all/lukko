@@ -24,7 +24,7 @@ class Serializer {
 	SliceArea *area = nullptr;
 
 protected:
-	std::span<std::byte, MAX_PACKET_SIZE> buffer;
+	std::span<std::byte, BUFFER_SIZE> buffer;
 
 	constexpr std::size_t size() const noexcept {
 		return position;

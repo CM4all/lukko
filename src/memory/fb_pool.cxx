@@ -5,7 +5,6 @@
 #include "fb_pool.hxx"
 #include "ssh/Sizes.hxx"
 #include "memory/SlicePool.hxx"
-#include "util/RoundPowerOfTwo.hxx"
 
 #include <cassert>
 
@@ -16,8 +15,7 @@ fb_pool_init() noexcept
 {
 	assert(fb_pool == nullptr);
 
-	fb_pool = new SlicePool(RoundUpToPowerOfTwo(SSH::MAX_PACKET_SIZE),
-				256, "io_buffers");
+	fb_pool = new SlicePool(SSH::BUFFER_SIZE, 256, "io_buffers");
 }
 
 void
