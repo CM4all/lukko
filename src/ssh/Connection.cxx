@@ -203,7 +203,7 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 		socket.SetWriteTimeout(std::chrono::seconds{1});
 
 		/* we don't want to receive anything from it */
-		socket.UnscheduleRead();
+		socket.UnscheduleOnlyRead();
 		return;
 	}
 
@@ -796,6 +796,19 @@ try {
 		DisconnectReasonCode::PROTOCOL_ERROR,
 		"Malformed packet"sv,
 	};
+}
+
+bool
+Connection::OnBufferedHangup() noexcept
+{
+	if (IsDead()) {
+		/* don't bother flushing the pending DISCONNECT packet
+		   if the peer has already hung up */
+		disposer.Dispose(this);
+		return false;
+	}
+
+	return true;
 }
 
 BufferedResult

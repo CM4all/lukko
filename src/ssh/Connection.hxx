@@ -319,6 +319,7 @@ private:
 
 protected:
 	/* virtual methods from class BufferedSocketHandler */
+	bool OnBufferedHangup() noexcept override;
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedWrite() override;
