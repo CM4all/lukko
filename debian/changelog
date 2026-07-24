@@ -1,3 +1,9 @@
+cm4all-lukko (0.60) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-lukko (0.59) unstable; urgency=low
 
   * improve backpressure handling in proxy mode
