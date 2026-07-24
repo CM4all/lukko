@@ -51,7 +51,7 @@ UserAuthServer::OnUserAuthCompletion(std::exception_ptr &&error) noexcept
 		} catch (const Connection::Disconnect &d) {
 			connection.DoDisconnect(d.reason_code, d.msg);
 		} catch (...) {
-			connection.CloseError(std::move(error));
+			connection.CloseError(std::current_exception());
 		}
 	} else if (connection.IsAuthenticated()) {
 		handler.OnUserAuthCompletion();
