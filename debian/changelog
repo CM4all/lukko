@@ -2,7 +2,7 @@ cm4all-lukko (0.59) unstable; urgency=low
 
   * improve backpressure handling in proxy mode
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 24 Jul 2026 09:42:20 +0200
 
 cm4all-lukko (0.58) unstable; urgency=low
 
