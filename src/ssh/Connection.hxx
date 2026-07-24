@@ -7,6 +7,7 @@
 #include "IHandler.hxx"
 #include "KexState.hxx"
 #include "KexEnums.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
@@ -68,6 +69,11 @@ class Connection : BufferedSocketHandler, InputHandler
 	Input &input;
 	Output &output;
 
+	/**
+	 * Handle pending input packets after UnblockRead().
+	 */
+	DeferEvent resume_input;
+
 	FarTimerEvent rekey_timer;
 	uint_least64_t encrypted_bytes_since_kex = 0;
 
@@ -111,6 +117,18 @@ class Connection : BufferedSocketHandler, InputHandler
 	 * algorithm wrong, then the next packet must be ignored.
 	 */
 	bool ignore_next_kex_packet = false;
+
+	/**
+	 * Is reading currently blocked after a BlockRead() call?
+	 */
+	bool read_blocked = false;
+
+	/**
+	 * This is true if OnInputReady() is still ready.  This is
+	 * used to decide whether OnInputReady() needs to be called
+	 * again after UnblockRead().
+	 */
+	bool input_ready = false;
 
 	/**
 	 * Is writing currently blocked (because the kernel socket is
@@ -228,6 +246,34 @@ public:
 		return kex_state.session_id;
 	}
 
+	/**
+	 * Has BlockRead() been called?
+	 */
+	bool IsReadBlocked() const noexcept {
+		return read_blocked;
+	}
+
+	/**
+	 * Don't read further data from the socket.  Call
+	 * UnblockRead() to start reading again.
+	 */
+	void BlockRead() noexcept {
+		read_blocked = true;
+		input_ready = false;
+	}
+
+	/**
+	 * Undo the effect of BlockRead().
+	 */
+	void UnblockRead() noexcept {
+		read_blocked = false;
+
+		if (input_ready)
+			/* there are packets ready to be handled; do
+			   that soon */
+			resume_input.Schedule();
+	}
+
 protected:
 	SocketDescriptor GetSocket() const noexcept {
 		return socket.GetSocket();
@@ -316,6 +362,10 @@ private:
 			  std::span<const std::byte> payload);
 
 	void HandleRawPacket(std::span<const std::byte> payload);
+
+	void OnResumeInput() noexcept {
+		OnInputReady();
+	}
 
 protected:
 	/* virtual methods from class BufferedSocketHandler */

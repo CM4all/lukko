@@ -62,6 +62,7 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 	 socket(event_loop),
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
+	 resume_input(event_loop, BIND_THIS_METHOD(OnResumeInput)),
 	 rekey_timer(event_loop, BIND_THIS_METHOD(OnRekeyTimer)),
 	 role(_role)
 {
@@ -808,6 +809,15 @@ Connection::OnBufferedHangup() noexcept
 		return false;
 	}
 
+	if (IsReadBlocked()) {
+		/* if the client hangs up while reading is blocked,
+		   close the connection immediately; reading was most
+		   likely blocked due to backpressure, and this is the
+		   best way out */
+		disposer.Dispose(this);
+		return false;
+	}
+
 	return true;
 }
 
@@ -908,6 +918,16 @@ try {
 		return false;
 
 	while (true) {
+		if (read_blocked) {
+			/* reading is currently blocked - postpone the
+			   packet handler and really stop reading from
+			   the socket to avoid unbounded packet buffer
+			   allocations */
+			input_ready = true;
+			socket.UnscheduleOnlyRead();
+			return true;
+		}
+
 		const auto payload = input.ReadPacket();
 		if (payload.data() == nullptr)
 			break;
@@ -923,6 +943,7 @@ try {
 		input.ConsumePacket();
 	}
 
+	input_ready = false;
 	socket.ScheduleRead();
 	return true;
 } catch (const Disconnect &d) {
