@@ -10,9 +10,22 @@ using std::string_view_literals::operator""sv;
 
 ProxyConnectionHandler::ProxyConnectionHandler(SSH::Connection &_source,
 					       SSH::Connection &_target) noexcept
-	:target(_target)
+	:source(_source), target(_target)
 {
 	_source.AddHandler(*this);
+}
+
+inline void
+ProxyConnectionHandler::OnOtherWriteBlocked() noexcept
+{
+	/* backpressure */
+	source.BlockRead();
+}
+
+inline void
+ProxyConnectionHandler::OnOtherWriteUnblocked() noexcept
+{
+	source.UnblockRead();
 }
 
 bool
@@ -24,4 +37,18 @@ ProxyConnectionHandler::HandlePacket(SSH::MessageNumber msg,
 		return true;
 	} else
 		return false;
+}
+
+void
+ProxyConnectionHandler::OnWriteBlocked() noexcept
+{
+	if (other)
+		other->OnOtherWriteBlocked();
+}
+
+void
+ProxyConnectionHandler::OnWriteUnblocked() noexcept
+{
+	if (other)
+		other->OnOtherWriteUnblocked();
 }

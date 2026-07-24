@@ -173,7 +173,11 @@ struct Connection::ProxyHandlers {
 
 	[[nodiscard]]
 	ProxyHandlers(SSH::Connection &_in, SSH::Connection &_out) noexcept
-		:in(_in, _out), out(_out, _in) {}
+		:in(_in, _out), out(_out, _in)
+	{
+		in.SetOther(out);
+		out.SetOther(in);
+	}
 };
 
 Connection::Connection(Instance &_instance, Listener &_listener,

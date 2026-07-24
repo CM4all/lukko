@@ -9,15 +9,26 @@
 namespace SSH { class Connection; }
 
 class ProxyConnectionHandler final : SSH::ConnectionHandler {
-	SSH::Connection &target;
+	SSH::Connection &source, &target;
+
+	ProxyConnectionHandler *other = nullptr;
 
 public:
 	[[nodiscard]]
 	explicit ProxyConnectionHandler(SSH::Connection &_source,
 					SSH::Connection &_target) noexcept;
 
+	void SetOther(ProxyConnectionHandler &_other) noexcept {
+		other = &_other;
+	}
+
 private:
+	void OnOtherWriteBlocked() noexcept;
+	void OnOtherWriteUnblocked() noexcept;
+
 	/* virtual methods from class ConnectionHandler */
 	bool HandlePacket(SSH::MessageNumber msg,
 			  std::span<const std::byte> payload) override;
+	void OnWriteBlocked() noexcept override;
+	void OnWriteUnblocked() noexcept override;
 };
