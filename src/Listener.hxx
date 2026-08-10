@@ -134,6 +134,12 @@ public:
 #endif // HAVE_AVAHI
 
 	/**
+	 * Determine which target server will handle the specified
+	 * incoming connection.
+	 *
+	 * Returns nullptr if no proxying shall be done, and the
+	 * incoming connection should be handled by this process.
+	 *
 	 * Throws on error.
 	 */
 	SocketAddress GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const;
