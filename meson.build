@@ -253,6 +253,7 @@ executable(
   'src/RBind.cxx',
   'src/Delegate.cxx',
   'src/ProxyConnectionHandler.cxx',
+  'src/OptionsRequest.cxx',
   'src/OutgoingConnection.cxx',
   'src/net/ClientAccounting.cxx',
   'src/system/SetupProcess.cxx',

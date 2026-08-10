@@ -18,6 +18,8 @@ test(
     'TestKeys.cxx',
     'TestKexSignature.cxx',
     'TestAuthorizedKeys.cxx',
+    'TestOptionsRequest.cxx',
+    '../src/OptionsRequest.cxx',
     'TestWriteBignum2.cxx',
     'TestCommitBignum2.cxx',
     'TestInitialKex.cxx',

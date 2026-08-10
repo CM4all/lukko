@@ -150,6 +150,18 @@ all incoming connections after the authentication phase to another
 server.  The connection to this target is authenticated using the SSH
 host key with the :ref:`"hostbased" method <hostbased>`.
 
+Since the "hostbased" method cannot carry the ``authorized_keys``
+options of the real client (e.g. a forced ``command``), the proxy
+sends them to the target in a global request called
+``authorized-key-options@lukko.cm4all.com``, right after the
+authentication has succeeded (and before any packet of the real client
+is forwarded).  The target accepts this request only on connections
+which were authenticated with the "hostbased" method, and it only ever
+adds restrictions, never removes any; therefore clients cannot use
+this request to escape their restrictions.  Targets which do not
+implement this request (e.g. OpenSSH or Lukko older than 0.61) ignore
+it silently, which means that the restrictions are not enforced there.
+
 Individual target hosts can be configured with a ``target_host``
 section::
 

@@ -124,6 +124,14 @@ class Connection final
 	 */
 	bool no_more_sessions = false;
 
+	/**
+	 * Was the client authenticated with the "hostbased" method?
+	 * Only such a peer (i.e. a trusted proxy, see
+	 * #authorized_host_keys) is allowed to submit the
+	 * #AUTHORIZED_KEY_OPTIONS_REQUEST.
+	 */
+	bool authenticated_hostbased = false;
+
 	class ResolveSocketChannelOperation;
 	class LocalConnectSocketChannelOperation;
 
@@ -356,6 +364,13 @@ private:
 	bool IsAcceptedHostPublicKey(std::span<const std::byte> public_key_blob) noexcept;
 
 	Co::EagerInvokeTask CoHandleUserauthRequest(AllocatedArray<std::byte> payload);
+
+	/**
+	 * Transport #authorized_key_options to the proxy target using
+	 * a GLOBAL_REQUEST, because the "hostbased" authentication on
+	 * the target cannot carry these restrictions.
+	 */
+	void SendAuthorizedKeyOptions();
 
 	void HandleChannelOpen(std::span<const std::byte> payload);
 

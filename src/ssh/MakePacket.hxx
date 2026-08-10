@@ -82,6 +82,16 @@ MakeUserauthPkOk(std::string_view public_key_algorithm,
 
 [[gnu::pure]]
 inline PacketSerializer
+MakeGlobalRequest(std::string_view request_name, bool want_reply) noexcept
+{
+	PacketSerializer s{MessageNumber::GLOBAL_REQUEST};
+	s.WriteString(request_name);
+	s.WriteBool(want_reply);
+	return s;
+}
+
+[[gnu::pure]]
+inline PacketSerializer
 MakeChannelOpenConfirmation(uint_least32_t recipient_channel,
 			    uint_least32_t sender_channel,
 			    uint_least32_t initial_window_size,

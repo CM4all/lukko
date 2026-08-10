@@ -61,3 +61,20 @@ AuthorizedKeyOptions::Set(std::string_view name, std::string &&value) noexcept
 	} else
 		return false;
 }
+
+bool
+AuthorizedKeyOptions::Restrict(AuthorizedKeyOptions &&other) noexcept
+{
+	if (!other.command.empty()) {
+		if (command.empty())
+			command = std::move(other.command);
+		else if (command != other.command)
+			return false;
+	}
+
+	no_port_forwarding |= other.no_port_forwarding;
+	no_pty |= other.no_pty;
+	home_read_only |= other.home_read_only;
+
+	return true;
+}

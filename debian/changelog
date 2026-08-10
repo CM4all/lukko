@@ -1,6 +1,6 @@
 cm4all-lukko (0.61) unstable; urgency=low
 
-  * 
+  * proxy: transport "authorized_keys" options to the target server
 
  --   
 

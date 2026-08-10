@@ -13,6 +13,7 @@
 #include "Delegate.hxx"
 #include "DebugMode.hxx"
 #include "ProxyConnectionHandler.hxx"
+#include "OptionsRequest.hxx"
 #include "key/Parser.hxx"
 #include "key/Key.hxx"
 #include "key/TextFile.hxx"
@@ -1102,6 +1103,8 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 			}
 		}
 
+		authenticated_hostbased = true;
+
 		++instance.counters.n_userauth_hostbased_accepted;
 		LogFmt("Accepted hostkey for {:?}: {} {}"sv,
 		       new_username,
@@ -1201,6 +1204,26 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		}, DeleteDisposer{}) > 0;
 	} else if (request_name == "no-more-sessions@openssh.com"sv) {
 		no_more_sessions = true;
+		co_return true;
+	} else if (request_name == AUTHORIZED_KEY_OPTIONS_REQUEST) {
+		/* only a proxy (which is trusted because its host key
+		   is listed in "authorized_host_key_file") may
+		   declare the "authorized_keys" options of the real
+		   client; everybody else (including the real client
+		   whose packets are forwarded by that proxy) must not
+		   be able to tamper with them */
+		if (!authenticated_hostbased)
+			co_return false;
+
+		SSH::Deserializer d{request_specific_data};
+		auto options = DeserializeAuthorizedKeyOptions(d);
+
+		/* Restrict() applies only additional restrictions, so
+		   even a repeated (or forwarded) request can never
+		   lift a restriction that is already in effect */
+		if (!authorized_key_options.Restrict(std::move(options)))
+			co_return false;
+
 		co_return true;
 	} else
 		co_return false;
@@ -1348,12 +1371,28 @@ Connection::OnOutgoingUserauthService()
 					       client_host_name, client_user_name);
 }
 
+inline void
+Connection::SendAuthorizedKeyOptions()
+{
+	assert(outgoing);
+
+	auto s = SSH::MakeGlobalRequest(AUTHORIZED_KEY_OPTIONS_REQUEST, false);
+	SerializeAuthorizedKeyOptions(s, authorized_key_options);
+	outgoing->SendPacket(std::move(s));
+}
+
 void
 Connection::OnOutgoingUserauthSuccess()
 {
 	assert(!user_auth);
 	assert(!channels);
 	assert(outgoing);
+
+	/* transport the "authorized_keys" options of the real client
+	   to the target; this happens before the proxy handlers are
+	   created, so this is guaranteed to reach the target before
+	   any packet of the (untrusted) real client */
+	SendAuthorizedKeyOptions();
 
 	proxy_handlers = std::make_unique<ProxyHandlers>(*this, *outgoing);
 

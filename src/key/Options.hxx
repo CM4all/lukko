@@ -28,4 +28,16 @@ struct AuthorizedKeyOptions {
 	 * is not supported
 	 */
 	bool Set(std::string_view name, std::string &&value) noexcept;
+
+	/**
+	 * Apply the restrictions of the given instance to this one.
+	 * This can only add restrictions, never remove any; that
+	 * makes it safe to apply restrictions received from another
+	 * server.
+	 *
+	 * @return false if #other contains a "command" which
+	 * contradicts the existing one (applying it would lift the
+	 * existing restriction)
+	 */
+	bool Restrict(AuthorizedKeyOptions &&other) noexcept;
 };
