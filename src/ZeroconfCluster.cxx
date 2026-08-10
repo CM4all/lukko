@@ -32,7 +32,7 @@ ZeroconfCluster::FillMemberList() noexcept
 		member_list.push_back(i);
 }
 
-SocketAddress
+std::pair<SocketAddress, Avahi::ObjectFlags>
 ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexcept
 {
 	if (dirty) {
@@ -41,7 +41,7 @@ ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexc
 	}
 
 	if (member_list.empty())
-		return nullptr;
+		return {nullptr, {}};
 
 	for (auto &i : member_list)
 		i->second.UpdateRendezvousScore(sticky_source);
@@ -54,7 +54,8 @@ ZeroconfCluster::Pick(Arch arch, std::span<const std::byte> sticky_source) noexc
 			  return RendezvousHashing::Node::Compare(arch, a->second, b->second);
 		  });
 
-	return member_list.front()->second.GetAddress();
+	auto &member = member_list.front()->second;
+	return {member.GetAddress(), member.GetFlags()};
 }
 
 void

@@ -63,7 +63,7 @@ public:
 	 * discovered.
 	 */
 	[[gnu::pure]]
-	SocketAddress Pick(Arch arch, std::span<const std::byte> sticky_source) noexcept;
+	std::pair<SocketAddress, Avahi::ObjectFlags> Pick(Arch arch, std::span<const std::byte> sticky_source) noexcept;
 
 private:
 	void FillMemberList() noexcept;

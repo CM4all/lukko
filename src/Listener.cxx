@@ -23,6 +23,7 @@
 
 #ifdef HAVE_AVAHI
 #include "ZeroconfCluster.hxx"
+#include "lib/avahi/ObjectFlags.hxx"
 #endif
 
 #include <fmt/core.h>
@@ -179,7 +180,7 @@ Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 			return value->address;
 #ifdef HAVE_AVAHI
 		} else if constexpr (std::is_same_v<T, ZeroconfCluster *>) {
-			const SocketAddress address = value->Pick(arch, sticky_source);
+			const auto [address, flags] = value->Pick(arch, sticky_source);
 			if (address.IsNull())
 				throw std::runtime_error{"Zeroconf cluster is empty"};
 
