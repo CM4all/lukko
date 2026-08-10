@@ -79,6 +79,10 @@ private:
 	IntrusiveList<Connection> connections;
 	IntrusiveList<DelayedConnection> delayed_connections;
 
+#ifdef HAVE_AVAHI
+	const bool proxy_skip_our_own;
+#endif
+
 	const bool send_client_address, accept_client_address;
 
 	const bool verbose_errors, exec_reject_stderr;

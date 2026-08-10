@@ -1,6 +1,7 @@
 cm4all-lukko (0.61) unstable; urgency=low
 
   * proxy: transport "authorized_keys" options to the target server
+  * proxy: add option "proxy_skip_our_own" to short-cut local connections
 
  --   
 

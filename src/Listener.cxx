@@ -125,6 +125,7 @@ Listener::Listener(Instance &_instance, const ListenerConfig &config)
 	 logger(instance.GetLogger()),
 #ifdef HAVE_AVAHI
 	 avahi_service(MakeAvahiService(config)),
+	 proxy_skip_our_own(config.proxy_skip_our_own),
 #endif
 	 send_client_address(::GetSendClientAddress(config)),
 	 accept_client_address(config.accept_client_address),
@@ -174,7 +175,11 @@ Listener::SetZeroconfVisible(bool _visible) noexcept
 SocketAddress
 Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 {
-	return std::visit([arch, sticky_source](const auto &value) -> SocketAddress {
+	return std::visit([arch, sticky_source
+#ifdef HAVE_AVAHI
+			   , proxy_skip_our_own=proxy_skip_our_own
+#endif
+				  ](const auto &value) -> SocketAddress {
 		using T = std::decay_t<decltype(value)>;
 		if constexpr (std::is_same_v<T, const TargetHostConfig *>) {
 			return value->address;
@@ -183,6 +188,9 @@ Listener::GetProxyTo(Arch arch, std::span<const std::byte> sticky_source) const
 			const auto [address, flags] = value->Pick(arch, sticky_source);
 			if (address.IsNull())
 				throw std::runtime_error{"Zeroconf cluster is empty"};
+
+			if (proxy_skip_our_own && flags.is_our_own)
+				return nullptr;
 
 			return address;
 #else

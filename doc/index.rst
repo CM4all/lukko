@@ -134,6 +134,13 @@ Known attributes:
   connections after the authentication phase to the specified Zeroconf
   cluster.
 
+- ``proxy_skip_our_own``: on ``yes``, if the Zeroconf cluster member
+  that was picked is really the same Lukko process, don't open a proxy
+  connection, but instead handle the incoming connection directly.
+  This should only be enabled if both listeners have equivalent
+  options (e.g. are expected to receive the same translation server
+  responses).
+
 - ``accept_client_address``: If enabled, then accept the real client
   address from the client during ``hostbased`` authentication.  This
   way, Lukko shows the real client address in the log and in

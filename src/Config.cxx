@@ -343,6 +343,11 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "accept_client_address")) {
 		config.accept_client_address = line.NextBool();
 		line.ExpectEnd();
+#ifdef HAVE_AVAHI
+	} else if (StringIsEqual(word, "proxy_skip_our_own")) {
+		config.proxy_skip_our_own = line.NextBool();
+		line.ExpectEnd();
+#endif // HAVE_AVAHI
 #ifdef ENABLE_POND
 	} else if (StringIsEqual(word, "pond_server")) {
 		config.pond_server = ParseSocketAddress(line.ExpectValueAndEnd(),

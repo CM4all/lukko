@@ -88,6 +88,10 @@ struct ListenerConfig : SocketConfig {
 
 	bool accept_client_address = false;
 
+#ifdef HAVE_AVAHI
+	bool proxy_skip_our_own = false;
+#endif
+
 	ListenerConfig() noexcept {
 		listen = 256;
 		tcp_no_delay = true;
