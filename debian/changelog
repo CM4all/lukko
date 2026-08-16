@@ -1,6 +1,6 @@
 cm4all-lukko (0.62) unstable; urgency=low
 
-  * 
+  * zeroconf: do not add hostname to Zeroconf service name
 
  --   
 
