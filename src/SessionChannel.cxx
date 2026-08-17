@@ -310,6 +310,8 @@ SessionChannel::PrepareExec(AllocatorPtr alloc,
 	if (enable_agent_forward) {
 		PrepareAgentForward(alloc, p);
 	}
+
+	c.PostPrepareChildProcess(p, SSH::Service::SSH);
 }
 
 void
@@ -408,6 +410,9 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 	std::forward_list<std::string> strings;
 	SplitCmdline(p, strings, cmd);
 
+	if (execute_options.process_name != nullptr)
+		p.SetProcessName(execute_options.process_name);
+
 	SpawnChildProcess(alloc, std::move(p));
 
 	co_await CoWaitSpawnCompletion{*child};
@@ -476,6 +481,9 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 
 	p.Append(cmd);
 	p.Append(unescaped_arg);
+
+	if (execute_options.process_name != nullptr)
+		p.SetProcessName(execute_options.process_name);
 
 	SpawnChildProcess(alloc, std::move(p));
 

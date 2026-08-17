@@ -540,6 +540,20 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 #endif // ENABLE_TRANSLATION
 }
 
+void
+Connection::PostPrepareChildProcess([[maybe_unused]] PreparedChildProcess &p,
+				    [[maybe_unused]] SSH::Service service) const noexcept
+{
+#ifdef ENABLE_TRANSLATION
+	if (translation) {
+		const auto &options = GetExecuteOptions(service);
+
+		if (options.process_name != nullptr)
+			p.SetProcessName(options.process_name);
+	}
+#endif // ENABLE_TRANSLATION
+}
+
 inline bool
 Connection::ShouldLoadHomeAuthorizedKeys() const noexcept
 {

@@ -319,6 +319,13 @@ public:
 				 FdHolder &close_fds,
 				 SSH::Service service) const noexcept;
 
+	/**
+	 * Like PreparedChildProcess(), but call after everything else
+	 * in #PreparedChildProcess has been filled.
+	 */
+	void PostPrepareChildProcess(PreparedChildProcess &p,
+				     SSH::Service service) const noexcept;
+
 	using SSH::Connection::DoDisconnect;
 
 private:
