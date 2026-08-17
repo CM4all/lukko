@@ -1,6 +1,7 @@
 cm4all-lukko (0.62) unstable; urgency=low
 
   * handle "tcpip-forward" errors gracefully
+  * limit the number of pending global requests
   * translation: add packets MAX_INOTIFY, PROCESS_NAME
   * zeroconf: do not add hostname to Zeroconf service name
 

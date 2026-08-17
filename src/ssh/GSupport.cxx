@@ -13,6 +13,8 @@
 
 #include <cassert>
 
+using std::string_view_literals::operator""sv;
+
 namespace SSH {
 
 class GlobalRequestSupport::PendingGlobalRequest : public IntrusiveListHook<> {
@@ -126,6 +128,12 @@ GlobalRequestSupport::OnGlobalRequestError(std::exception_ptr error) noexcept
 inline void
 GlobalRequestSupport::HandleGlobalRequest(std::span<const std::byte> payload)
 {
+	if (pending_global_requests.size() >= MAX_PENDING_REQUESTS)
+		throw Connection::Disconnect{
+			SSH::DisconnectReasonCode::BY_APPLICATION,
+			"Too many global requests"sv,
+		};
+
 	const auto p = ParseGlobalRequest(payload);
 
 	auto *request = new PendingGlobalRequest(*this, p.want_reply,

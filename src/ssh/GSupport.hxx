@@ -34,6 +34,8 @@ public:
  */
 class GlobalRequestSupport final : ConnectionHandler
 {
+	static constexpr std::size_t MAX_PENDING_REQUESTS = 16;
+
 	class PendingGlobalRequest;
 
 	Connection &connection;
@@ -45,7 +47,9 @@ class GlobalRequestSupport final : ConnectionHandler
 	 * yet be delivered because they need to be in-order and an
 	 * older request hasn't yet finished (see RFC 4254 section 4).
 	 */
-	IntrusiveList<PendingGlobalRequest> pending_global_requests;
+	IntrusiveList<PendingGlobalRequest,
+		IntrusiveListBaseHookTraits<PendingGlobalRequest>,
+		IntrusiveListOptions{.constant_time_size = true}> pending_global_requests;
 
 public:
 	GlobalRequestSupport(Connection &_connection, GlobalRequestHandler &_handler) noexcept;
