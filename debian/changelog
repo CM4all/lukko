@@ -5,7 +5,7 @@ cm4all-lukko (0.62) unstable; urgency=low
   * translation: add packets MAX_INOTIFY, PROCESS_NAME
   * zeroconf: do not add hostname to Zeroconf service name
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 17 Aug 2026 22:03:37 +0200
 
 cm4all-lukko (0.61) unstable; urgency=low
 
