@@ -1198,15 +1198,20 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		// TODO support special strings according to RFC 4254 7.1
 		// TODO support bind_port==0 (REQUEST_SUCCESS contains port number)
 
-		auto s = co_await ResolveBindTCP(*this, bind_address, bind_port);
-		if (!s.Listen(16))
-			throw MakeSocketError("listen() failed");
+		try {
+			auto s = co_await ResolveBindTCP(*this, bind_address, bind_port);
+			if (!s.Listen(16))
+				throw MakeSocketError("listen() failed");
 
-		auto *l = new SocketForwardListener(*this, std::move(bind_address),
-						    bind_port, std::move(s));
-		socket_forward_listeners.push_back(*l);
-
-		co_return true;
+			auto *l = new SocketForwardListener(*this, std::move(bind_address),
+							    bind_port, std::move(s));
+			socket_forward_listeners.push_back(*l);
+			co_return true;
+		} catch (...) {
+			logger.Fmt(2, "tcpip-forward {:?}:{} failed: {}",
+				   bind_address, bind_port, std::current_exception());
+			co_return false;
+		}
 	} else if (request_name == "cancel-tcpip-forward"sv) {
 		SSH::Deserializer d{request_specific_data};
 		const auto bind_address = d.ReadString();
