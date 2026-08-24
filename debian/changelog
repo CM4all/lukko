@@ -2,7 +2,7 @@ cm4all-lukko (0.63) unstable; urgency=low
 
   * spawn: postpone lowering rlimits to the end
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 24 Aug 2026 21:13:59 +0200
 
 cm4all-lukko (0.62) unstable; urgency=low
 
