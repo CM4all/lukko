@@ -1,6 +1,6 @@
 cm4all-lukko (0.63) unstable; urgency=low
 
-  * 
+  * spawn: postpone lowering rlimits to the end
 
  --   
 
