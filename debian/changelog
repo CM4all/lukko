@@ -1,6 +1,6 @@
 cm4all-lukko (0.64) unstable; urgency=low
 
-  * 
+  * spawn: apply inotify limits on new "proc" mount
 
  --   
 
