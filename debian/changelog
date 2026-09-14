@@ -2,7 +2,7 @@ cm4all-lukko (0.65) unstable; urgency=low
 
   * spawn: create temporary files in the new /tmp (0.64 regression)
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 14 Sep 2026 23:24:32 +0200
 
 cm4all-lukko (0.64) unstable; urgency=low
 
