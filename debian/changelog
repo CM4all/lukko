@@ -1,6 +1,6 @@
 cm4all-lukko (0.65) unstable; urgency=low
 
-  * 
+  * spawn: create temporary files in the new /tmp (0.64 regression)
 
  --   
 
