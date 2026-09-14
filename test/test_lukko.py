@@ -103,6 +103,18 @@ def test_paramiko(user: str, address: str, port: int) -> None:
                 key_filename=os.path.join(config_directory, 'client', 'id_ed25519'),
                 timeout=10, look_for_keys=False)
 
+    transport = ssh.get_transport()
+    for _ in range(3):
+        reply = transport.global_request('keepalive@openssh.com', wait=True)
+        assert reply is not None
+        assert reply.asbytes() == b''
+
+    transport.global_request('keepalive@openssh.com', wait=False)
+    # A reply to the silent keepalive would be mistaken for this failure.
+    assert transport.global_request('unknown@lukko.test', wait=True) is None
+    assert transport.is_active()
+    assert transport.global_request('keepalive@openssh.com', wait=True) is not None
+
     sftp = ssh.open_sftp()
     sftp.lstat('.')
     sftp.chdir('/')

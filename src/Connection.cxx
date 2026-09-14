@@ -1221,6 +1221,8 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		co_return socket_forward_listeners.remove_and_dispose_if([bind_address, bind_port](const auto &l){
 			return l.IsBindAddress(bind_address, bind_port);
 		}, DeleteDisposer{}) > 0;
+	} else if (request_name == "keepalive@openssh.com"sv) {
+		co_return true;
 	} else if (request_name == "no-more-sessions@openssh.com"sv) {
 		no_more_sessions = true;
 		co_return true;
