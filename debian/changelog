@@ -4,7 +4,7 @@ cm4all-lukko (0.64) unstable; urgency=low
   * spawn: apply inotify limits on new "proc" mount
   * spawn: use OPEN_TREE_NAMESPACE if available
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 14 Sep 2026 21:58:27 +0200
 
 cm4all-lukko (0.63) unstable; urgency=low
 
