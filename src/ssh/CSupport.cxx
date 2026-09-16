@@ -93,6 +93,7 @@ public:
 		}
 
 		auto &_factory = factory;
+		canceled = true;
 		delete this;
 		_factory.OnChannelOpenFailure(code, description);
 	}
