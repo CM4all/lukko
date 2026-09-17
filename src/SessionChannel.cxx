@@ -511,6 +511,11 @@ SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed()) {
+		if (!c.GetAuthorizedKeyOptions().command.empty())
+			/* with a forced command, we can't allow
+			   exceptions rsync and git */
+			co_return false;
+
 #ifdef ENABLE_TRANSLATION
 		/* "exec" is not allowed, but the translation server
 		   may have allowed a few exceptions: */
