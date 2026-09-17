@@ -6,6 +6,7 @@
 
 #include "util/IntrusiveList.hxx"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <exception> // for std::exception_ptr
@@ -59,6 +60,8 @@ class Channel {
 	 */
 	IntrusiveList<PendingRequest> pending_requests;
 
+	bool eof = false;
+
 public:
 	/**
 	 * @param _receive_window the initial receive window size;
@@ -88,6 +91,15 @@ public:
 
 	std::size_t GetSendWindow() const noexcept {
 		return send_window;
+	}
+
+	bool IsEof() const noexcept {
+		return eof;
+	}
+
+	void SetEof() noexcept {
+		assert(!eof);
+		eof = true;
 	}
 
 	void Close() noexcept;

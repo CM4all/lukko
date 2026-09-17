@@ -6,6 +6,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * session, socket: keep EPOLLHUP, EPOLLERR registered at zero windows
   * fix assertion failure on channel with zero initial window size
   * reject channel window adjustments which overflow the send window
+  * reject further data after CHANNEL_EOF
 
  --   
 
