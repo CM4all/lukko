@@ -221,10 +221,7 @@ ChannelSupport::GetChannel(uint_least32_t local_channel)
 	    channels[local_channel] == nullptr ||
 	    IsRequestedChannel(*channels[local_channel]) ||
 	    IsOpeningChannel(*channels[local_channel])) {
-		throw Connection::Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Bad channel"sv,
-		};
+		throw Connection::ProtocolError{"Bad channel"sv};
 	}
 
 	return *channels[local_channel];
@@ -236,10 +233,7 @@ ChannelSupport::PopRequestedChannel(uint_least32_t local_channel)
 	if (local_channel >= channels.size() ||
 	    channels[local_channel] == nullptr ||
 	    !IsRequestedChannel(*channels[local_channel])) {
-		throw Connection::Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Bad channel"sv,
-		};
+		throw Connection::ProtocolError{"Bad channel"sv};
 	}
 
 	return *static_cast<RequestedChannel *>(std::exchange(channels[local_channel], nullptr));

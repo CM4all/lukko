@@ -171,6 +171,14 @@ public:
 	};
 
 	/**
+	 * Light-weight shortcut for #Disconnect with the common
+	 * DisconnectReasonCode::PROTOCOL_ERROR.
+	 */
+	struct ProtocolError {
+		std::string_view msg;
+	};
+
+	/**
 	 * An exception class that, when caught, assumes that this
 	 * #Connection instance was destroyed.
 	 */

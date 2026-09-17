@@ -71,10 +71,7 @@ UserAuthServer::HandleUserauthRequest(std::span<const std::byte> payload)
 		return;
 
 	if (!have_service_userauth) {
-		throw Connection::Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Service ssh-userauth not requested"sv
-		};
+		throw Connection::ProtocolError{"Service ssh-userauth not requested"sv};
 	}
 
 	/* the payload is owned by the caller, therefore we need to
@@ -122,10 +119,7 @@ UserAuthServer::HandlePacket(MessageNumber msg,
 	assert(connection.IsEncrypted());
 
 	if (IsOccupied() && !IsAllowedWhileOccupied(msg))
-		throw Connection::Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Occupied"sv
-		};
+		throw Connection::ProtocolError{"Occupied"sv};
 
 	switch (msg) {
 	case MessageNumber::SERVICE_REQUEST:

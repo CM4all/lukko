@@ -463,10 +463,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	if (kex_flags.kexinit_received ||
 	    kex_flags.newkeys_sent ||
 	    kex_flags.newkeys_received)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Unexpected KEXINIT"sv,
-		};
+		throw ProtocolError{"Unexpected KEXINIT"sv};
 
 	const auto p = ParseKexInit(payload);
 
@@ -550,10 +547,7 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 	    !kex_flags.kexinit_received ||
 	    !kex_flags.newkeys_sent ||
 	    kex_flags.newkeys_received)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Unexpected NEWKEYS"sv,
-		};
+		throw ProtocolError{"Unexpected NEWKEYS"sv};
 
 	kex_flags.newkeys_received = true;
 
@@ -598,20 +592,14 @@ inline void
 Connection::HandleECDHKexInit(std::span<const std::byte> payload)
 {
 	if (role != Role::SERVER)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Unexpected packet"sv,
-		};
+		throw ProtocolError{"Unexpected packet"sv};
 
 	if (!kex_flags.kexinit_sent ||
 	    !kex_flags.kexinit_received ||
 	    kex_flags.newkeys_sent ||
 	    kex_flags.newkeys_received ||
 	    !kex_algorithm)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"No KEXINIT"sv,
-		};
+		throw ProtocolError{"No KEXINIT"sv};
 
 	const auto p = ParseECDHKexInit(payload);
 
@@ -626,20 +614,14 @@ inline void
 Connection::HandleECDHKexInitReply(std::span<const std::byte> payload)
 {
 	if (role != Role::CLIENT)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Unexpected packet"sv,
-		};
+		throw ProtocolError{"Unexpected packet"sv};
 
 	if (!kex_flags.kexinit_sent ||
 	    !kex_flags.kexinit_received ||
 	    kex_flags.newkeys_sent ||
 	    kex_flags.newkeys_received ||
 	    !kex_algorithm)
-		throw Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"No KEXINIT"sv,
-		};
+		throw ProtocolError{"No KEXINIT"sv};
 
 	const auto p = ParseECDHKexInitReply(payload);
 
@@ -793,10 +775,7 @@ try {
 	HandlePacket(msg, payload);
 } catch (MalformedPacket) {
 	// thrown by class Deserializer
-	throw Disconnect{
-		DisconnectReasonCode::PROTOCOL_ERROR,
-		"Malformed packet"sv,
-	};
+	throw ProtocolError{"Malformed packet"sv};
 }
 
 bool
@@ -948,6 +927,9 @@ try {
 	return true;
 } catch (const Disconnect &d) {
 	DoDisconnect(d.reason_code, d.msg);
+	return false;
+} catch (const ProtocolError &e) {
+	DoDisconnect(DisconnectReasonCode::PROTOCOL_ERROR, e.msg);
 	return false;
 } catch (const Destroyed &) {
 	return false;

@@ -718,10 +718,7 @@ Connection::CreateChannel(std::string_view channel_type,
 
 	if (channel_type == "session"sv) {
 		if (no_more_sessions)
-			throw Disconnect{
-				SSH::DisconnectReasonCode::PROTOCOL_ERROR,
-				"Possible attack: attempt to open a session after additional sessions disabled",
-			};
+			throw ProtocolError{"Possible attack: attempt to open a session after additional sessions disabled"};
 
 		return std::make_unique<SessionChannel>(*channels, init);
 	} else if (channel_type == "direct-tcpip"sv) {

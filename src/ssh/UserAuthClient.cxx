@@ -118,10 +118,7 @@ UserAuthClient::HandleServiceAccept(std::span<const std::byte> payload)
 
 		handler.OnUserAuthService();
 	} else
-		throw Connection::Disconnect{
-			DisconnectReasonCode::PROTOCOL_ERROR,
-			"Unexpected SERVICE_ACCEPT"sv,
-		};
+		throw Connection::ProtocolError{"Unexpected SERVICE_ACCEPT"sv};
 }
 
 bool
@@ -137,10 +134,7 @@ UserAuthClient::HandlePacket(MessageNumber msg,
 
 	case MessageNumber::USERAUTH_FAILURE:
 		if (state != State::USERAUTH_REQUEST)
-			throw Connection::Disconnect{
-				DisconnectReasonCode::PROTOCOL_ERROR,
-				"Unexpected USERAUTH_FAILURE"sv,
-			};
+			throw Connection::ProtocolError{"Unexpected USERAUTH_FAILURE"sv};
 
 		state = State::SERVICE_SSH_USERAUTH;
 		handler.OnUserAuthFailure();
@@ -148,10 +142,7 @@ UserAuthClient::HandlePacket(MessageNumber msg,
 
 	case MessageNumber::USERAUTH_SUCCESS:
 		if (state != State::USERAUTH_REQUEST)
-			throw Connection::Disconnect{
-				DisconnectReasonCode::PROTOCOL_ERROR,
-				"Unexpected USERAUTH_SUCCESS"sv,
-			};
+			throw Connection::ProtocolError{"Unexpected USERAUTH_SUCCESS"sv};
 
 		state = State::USERAUTH_SUCCESS;
 		handler.OnUserAuthSuccess();
@@ -172,10 +163,7 @@ UserAuthClient::HandlePacket(MessageNumber msg,
 	case MessageNumber::CHANNEL_SUCCESS:
 	case MessageNumber::CHANNEL_FAILURE:
 		if (state != State::USERAUTH_SUCCESS)
-			throw Connection::Disconnect{
-				DisconnectReasonCode::PROTOCOL_ERROR,
-				"Unexpected packet"sv,
-			};
+			throw Connection::ProtocolError{"Unexpected packet"sv};
 
 		return false;
 
