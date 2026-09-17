@@ -332,10 +332,16 @@ SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 
 		const char *const home = p.GetHome();
 
+		bool found = false;
 		for (auto &i : p.ns.mount.mounts) {
-			if (i.type == Mount::Type::BIND && i.IsInSourcePath(home))
+			if (i.type == Mount::Type::BIND && i.IsInSourcePath(home)) {
 				i.writable = false;
+				found = true;
+			}
 		}
+
+		if (!found)
+			throw std::runtime_error{"No home mount found for home-read-only"};
 	}
 
 	// TODO use a proper process name
