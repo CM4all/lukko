@@ -150,7 +150,11 @@ protected:
 	 *
 	 * @return the remaining receive window size
 	 */
-	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept;
+	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept {
+		assert(nbytes <= receive_window);
+
+		return receive_window -= nbytes;
+	}
 
 public:
 	/**

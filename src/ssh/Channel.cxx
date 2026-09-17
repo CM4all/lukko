@@ -87,14 +87,6 @@ Channel::Close() noexcept
 	parent.CloseChannel(*this);
 }
 
-std::size_t
-Channel::ConsumeReceiveWindow(std::size_t nbytes) noexcept
-{
-	assert(nbytes <= receive_window);
-
-	return receive_window -= nbytes;
-}
-
 void
 Channel::SendWindowAdjust(uint_least32_t nbytes) noexcept
 {
