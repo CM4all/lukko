@@ -75,7 +75,7 @@ void
 SocketChannel::OnWriteBlocked() noexcept
 {
 	if (GetSendWindow() > 0)
-		socket.CancelRead();
+		socket.CancelOnlyRead();
 }
 
 void
@@ -95,7 +95,7 @@ try {
 	}
 
 	if (events & SocketEvent::WRITE) {
-		socket.CancelWrite();
+		socket.CancelOnlyWrite();
 		ReadBuffer();
 	}
 
@@ -126,7 +126,7 @@ try {
 		SendData(dest.first(nbytes));
 
 		if (GetSendWindow() == 0)
-			socket.CancelRead();
+			socket.CancelOnlyRead();
 
 		/* the receive buffer is considered empty if the
 		   kernel has given us less data than we asked for */

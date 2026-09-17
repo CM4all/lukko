@@ -236,7 +236,7 @@ private:
 		stdout_pipe.Cancel();
 		stderr_pipe.Cancel();
 
-		tty.CancelRead();
+		tty.CancelOnlyRead();
 	}
 
 	void ScheduleRead() noexcept {

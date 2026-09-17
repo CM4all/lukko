@@ -881,7 +881,7 @@ try {
 	}
 
 	if (events & PipeEvent::WRITE) {
-		tty.CancelWrite();
+		tty.CancelOnlyWrite();
 		ReadBuffer();
 	}
 
