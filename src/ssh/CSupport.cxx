@@ -403,7 +403,7 @@ ChannelSupport::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 	const auto p = ParseChannelWindowAdjust(payload);
 
 	if (p.nbytes == 0)
-		throw std::invalid_argument{"Bad window adjustment"};
+		throw Connection::ProtocolError{"Bad window adjustment"};
 
 	auto &channel = GetChannel(p.local_channel);
 
@@ -413,7 +413,7 @@ ChannelSupport::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 	   #Channel implementation is already waiting for readable
 	   data */
 	if (p.nbytes > MAXIMUM_WINDOW_SIZE - channel.GetSendWindow())
-		throw std::invalid_argument{"Window overflow"};
+		throw Connection::ProtocolError{"Window overflow"};
 
 	channel.OnWindowAdjust(p.nbytes);
 }
@@ -425,7 +425,7 @@ ChannelSupport::HandleChannelData(std::span<const std::byte> payload)
 
 	auto &channel = GetChannel(p.local_channel);
 	if (p.data.size() > channel.GetReceiveWindow())
-		throw std::invalid_argument{"Receive window exceeded"};
+		throw Connection::ProtocolError{"Receive window exceeded"};
 
 	channel.OnData(p.data);
 }
@@ -437,7 +437,7 @@ ChannelSupport::HandleChannelExtendedData(std::span<const std::byte> payload)
 
 	auto &channel = GetChannel(p.local_channel);
 	if (p.data.size() > channel.GetReceiveWindow())
-		throw std::invalid_argument{"Receive window exceeded"};
+		throw Connection::ProtocolError{"Receive window exceeded"};
 
 	channel.OnExtendedData(p.data_type, p.data);
 }
