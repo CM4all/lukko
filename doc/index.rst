@@ -332,7 +332,9 @@ options:
 - ``restrict``: Enable all restrictions, i.e. is an alias for
   ``no-port-forwarding`` and ``no-pty``.
 
-- ``home-read-only``: Mount the home directory read-only.
+- ``home-read-only``: Mount the home directory read-only.  Only
+  applied to containerized sessions (i.e. when a mount namespace is
+  used).
 
 The following OpenSSH options are not implemented and are ignored
 silently:
