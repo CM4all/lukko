@@ -15,7 +15,14 @@ SocketChannel::SocketChannel(SSH::ChannelSupport &_parent,
 	 socket(GetConnection().GetEventLoop(), BIND_THIS_METHOD(OnSocketReady),
 		_socket.Release())
 {
-	socket.ScheduleRead();
+	if (GetSendWindow() > 0)
+		/* start reading only if we are allowed to send data;
+		   the peer may have announced an initial window size
+		   of zero, and then OnWindowAdjust() will schedule
+		   the read event as soon as we are allowed to send */
+		socket.ScheduleRead();
+	else
+		socket.ScheduleImplicit();
 }
 
 SocketChannel::~SocketChannel() noexcept
