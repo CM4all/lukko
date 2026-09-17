@@ -1,6 +1,7 @@
 cm4all-lukko (0.66) unstable; urgency=low
 
   * fix use-after-free crash bug
+  * limit the number of "tcpip-forward" listeners
 
  --   
 

@@ -94,6 +94,8 @@ class Connection final
 	std::string home_path;
 	std::string shell;
 
+	static constexpr std::size_t MAX_SOCKET_FORWARD_LISTENERS = 16;
+
 	IntrusiveList<SocketForwardListener> socket_forward_listeners;
 
 	std::unique_ptr<OutgoingConnection> outgoing;

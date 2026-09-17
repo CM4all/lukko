@@ -1186,6 +1186,9 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		if (!IsBindingAllowed())
 			co_return false;
 
+		if (socket_forward_listeners.size() >= MAX_SOCKET_FORWARD_LISTENERS)
+			co_return false;
+
 		SSH::Deserializer d{request_specific_data};
 		/* copy the string because the co_await will
 		   invalidate the request_specific_data buffer */
