@@ -7,6 +7,7 @@
 #include "Handler.hxx"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -55,6 +56,12 @@ public:
 class ChannelSupport final : ConnectionHandler
 {
 	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
+
+	/**
+	 * The largest window size allowed by RFC 4254 (where window
+	 * sizes are 32 bit integers).
+	 */
+	static constexpr std::size_t MAXIMUM_WINDOW_SIZE = 0xffffffff;
 
 	Connection &connection;
 	ChannelHandler &channel_handler;

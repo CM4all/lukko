@@ -412,6 +412,15 @@ ChannelSupport::HandleChannelWindowAdjust(std::span<const std::byte> payload)
 		throw std::invalid_argument{"Bad window adjustment"};
 
 	auto &channel = GetChannel(p.local_channel);
+
+	/* refuse to grow the send window beyond the maximum allowed
+	   by RFC 4254; this also protects the std::size_t field from
+	   integer overflow which could wrap it back to zero while a
+	   #Channel implementation is already waiting for readable
+	   data */
+	if (p.nbytes > MAXIMUM_WINDOW_SIZE - channel.GetSendWindow())
+		throw std::invalid_argument{"Window overflow"};
+
 	channel.OnWindowAdjust(p.nbytes);
 }
 
