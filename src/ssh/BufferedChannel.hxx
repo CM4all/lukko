@@ -16,6 +16,11 @@ namespace SSH {
 class BufferedChannel : public Channel {
 	BufferQueue queue;
 
+	/**
+	 * The total size of all buffers in the #queue.
+	 */
+	std::size_t queue_bytes = 0;
+
 	bool eof_pending = false;
 
 public:
