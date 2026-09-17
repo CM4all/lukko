@@ -426,7 +426,7 @@ ChannelSupport::HandleChannelData(std::span<const std::byte> payload)
 	auto &channel = GetChannel(p.local_channel);
 
 	if (channel.IsEof())
-		throw Connection::Connection::ProtocolError{"CHANNEL_DATA after CHANNEL_EOF"sv};
+		throw Connection::ProtocolError{"CHANNEL_DATA after CHANNEL_EOF"sv};
 
 	if (p.data.size() > channel.GetReceiveWindow())
 		throw Connection::ProtocolError{"Receive window exceeded"};
@@ -442,7 +442,7 @@ ChannelSupport::HandleChannelExtendedData(std::span<const std::byte> payload)
 	auto &channel = GetChannel(p.local_channel);
 
 	if (channel.IsEof())
-		throw Connection::Connection::ProtocolError{"CHANNEL_EXTENDED_DATA after CHANNEL_EOF"sv};
+		throw Connection::ProtocolError{"CHANNEL_EXTENDED_DATA after CHANNEL_EOF"sv};
 
 	if (p.data.size() > channel.GetReceiveWindow())
 		throw Connection::ProtocolError{"Receive window exceeded"};
@@ -458,7 +458,7 @@ ChannelSupport::HandleChannelEof(std::span<const std::byte> payload)
 	auto &channel = GetChannel(p.local_channel);
 
 	if (channel.IsEof())
-		throw Connection::Connection::ProtocolError{"Duplicate CHANNEL_EOF"sv};
+		throw Connection::ProtocolError{"Duplicate CHANNEL_EOF"sv};
 
 	channel.SetEof();
 
