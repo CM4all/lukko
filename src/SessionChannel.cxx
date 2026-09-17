@@ -713,6 +713,21 @@ ReadWindowSize(SSH::Deserializer &d)
 	return ws;
 }
 
+/**
+ * Is the client allowed to set this environment variable?
+ *
+ * This is currently hard-coded and follows the default OpenSSH
+ * configuration on Debian: `AcceptEnv LANG LC_* COLORTERM NO_COLOR`.
+ */
+static constexpr bool
+IsAllowedEnv(std::string_view name) noexcept
+{
+	return name == "LANG"sv ||
+		name.starts_with("LC_"sv) ||
+		name == "COLORTERM"sv ||
+		name == "NO_COLOR"sv;
+}
+
 Co::EagerTask<bool>
 SessionChannel::OnRequest(std::string_view request_type,
 			  std::span<const std::byte> type_specific)
@@ -825,6 +840,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		const auto name = d.ReadString();
 		const auto value = d.ReadString();
 		d.ExpectEnd();
+
+		if (!IsAllowedEnv(name))
+			co_return false;
 
 		SetEnv(name, value);
 		co_return true;
