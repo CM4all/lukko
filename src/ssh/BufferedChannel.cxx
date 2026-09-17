@@ -24,6 +24,9 @@ BufferedChannel::OnData(std::span<const std::byte> payload)
 		queue.Push(rest);
 		queue_bytes += rest.size();
 	}
+
+	if (nbytes > 0)
+		MaybeSendWindowAdjust();
 }
 
 void
@@ -43,6 +46,8 @@ BufferedChannel::ReadBuffer()
 {
 	assert(queue.empty() == (queue_bytes == 0));
 
+	bool consumed = false;
+
 	while (!queue.empty()) {
 		const auto payload = queue.Read();
 		assert(payload.size() <= queue_bytes);
@@ -51,8 +56,14 @@ BufferedChannel::ReadBuffer()
 		queue.Consume(nbytes);
 		queue_bytes -= nbytes;
 
-		if (nbytes < payload.size())
+		if (nbytes > 0)
+			consumed = true;
+
+		if (nbytes < payload.size()) {
+			if (consumed)
+				MaybeSendWindowAdjust();
 			return;
+		}
 	}
 
 	assert(queue_bytes == 0);
@@ -60,7 +71,8 @@ BufferedChannel::ReadBuffer()
 	if (eof_pending) {
 		eof_pending = false;
 		OnBufferedEof();
-	}
+	} else if (consumed)
+		MaybeSendWindowAdjust();
 }
 
 } // namespace SSH

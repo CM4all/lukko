@@ -143,10 +143,12 @@ SessionChannel::OnBufferedData(std::span<const std::byte> payload)
 		nbytes = stdin_pipe.GetFileDescriptor().Write(payload);
 	else if (tty.IsDefined())
 		nbytes = tty.GetFileDescriptor().Write(payload);
-	else
+	else {
 		/* do not update receive window if there's no
 		   destination */
+		max_receive_window = 0;
 		return payload.size();
+	}
 
 	if (nbytes < 0) {
 		const int e = errno;
@@ -160,6 +162,8 @@ SessionChannel::OnBufferedData(std::span<const std::byte> payload)
 		} else {
 			// TODO log error?
 			stdin_pipe.Close();
+
+			max_receive_window = 0;
 			return payload.size();
 		}
 	}
@@ -172,8 +176,9 @@ SessionChannel::OnBufferedData(std::span<const std::byte> payload)
 			tty.ScheduleWrite();
 	}
 
-	if (ConsumeReceiveWindow(consumed) < RECEIVE_WINDOW/ 2)
-		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
+	/* tell BufferedChannel to send CHANNEL_WINDOW_ADJUST
+	   automatically */
+	max_receive_window = RECEIVE_WINDOW;
 
 	return consumed;
 }

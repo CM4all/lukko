@@ -135,28 +135,22 @@ private:
 	void OnRequestDone(PendingRequest &request,
 			   std::exception_ptr error) noexcept;
 
-protected:
+public:
 	/**
 	 * Consume a portion of the channel receive window by
-	 * subtracting from #receive_window, to allow more data to be
-	 * received by the client.  Call this for data that was passed
-	 * to OnData() or OnExtendedData() after the data has really
-	 * been consumed.  These virtuel methods are allowed to
-	 * consume the data asynchronously; therefore, this method may
-	 * be called after these two methods have already returned.
+	 * subtracting from #receive_window.  Call this when channel
+	 * (extended) data from the client has been received.
 	 *
-	 * After calling this method, depending on the return value,
-	 * it may be useful to call SendWindowAdjust().
-	 *
-	 * @return the remaining receive window size
+	 * After OnData() or OnExtendedData() has really
+	 * consumed/processed the data, it may call SendWindowAdjust()
+	 * to allow the client to send more data.
 	 */
-	std::size_t ConsumeReceiveWindow(std::size_t nbytes) noexcept {
+	void ConsumeReceiveWindow(std::size_t nbytes) noexcept {
 		assert(nbytes <= receive_window);
 
-		return receive_window -= nbytes;
+		receive_window -= nbytes;
 	}
 
-public:
 	/**
 	 * Gives the object a chance to append more data to the
 	 * #CHANNEL_OPEN_CONFIRMATION payload.
@@ -176,14 +170,14 @@ public:
 
 	/**
 	 * Data was received on the channel.  As soon as data was
-	 * consumed, call ConsumeReceiveWindow().
+	 * consumed, SendWindowAdjust() may be called.
 	 */
 	virtual void OnData(std::span<const std::byte> payload);
 
 	/**
 	 * Extended data was received on the channel (usually STDERR
-	 * of a #SessionChannel).  As soon as data was consumed, call
-	 * ConsumeReceiveWindow().
+	 * of a #SessionChannel).  As soon as data was consumed,
+	 * SendWindowAdjust() may be called.
 	 */
 	virtual void OnExtendedData(ChannelExtendedDataType data_type,
 				    std::span<const std::byte> payload);

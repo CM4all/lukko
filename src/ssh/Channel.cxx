@@ -239,14 +239,12 @@ Channel::OnWindowAdjust(std::size_t nbytes)
 void
 Channel::OnData([[maybe_unused]] std::span<const std::byte> payload)
 {
-	ConsumeReceiveWindow(payload.size());
 }
 
 void
 Channel::OnExtendedData([[maybe_unused]] ChannelExtendedDataType data_type,
 			[[maybe_unused]] std::span<const std::byte> payload)
 {
-	ConsumeReceiveWindow(payload.size());
 }
 
 Co::EagerTask<bool>

@@ -431,6 +431,8 @@ ChannelSupport::HandleChannelData(std::span<const std::byte> payload)
 	if (p.data.size() > channel.GetReceiveWindow())
 		throw Connection::ProtocolError{"Receive window exceeded"};
 
+	channel.ConsumeReceiveWindow(p.data.size());
+
 	channel.OnData(p.data);
 }
 
@@ -446,6 +448,8 @@ ChannelSupport::HandleChannelExtendedData(std::span<const std::byte> payload)
 
 	if (p.data.size() > channel.GetReceiveWindow())
 		throw Connection::ProtocolError{"Receive window exceeded"};
+
+	channel.ConsumeReceiveWindow(p.data.size());
 
 	channel.OnExtendedData(p.data_type, p.data);
 }

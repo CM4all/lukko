@@ -15,6 +15,10 @@ SocketChannel::SocketChannel(SSH::ChannelSupport &_parent,
 	 socket(GetConnection().GetEventLoop(), BIND_THIS_METHOD(OnSocketReady),
 		_socket.Release())
 {
+	/* tell BufferedChannel to send CHANNEL_WINDOW_ADJUST
+	   automatically */
+	max_receive_window = RECEIVE_WINDOW;
+
 	if (GetSendWindow() > 0)
 		/* start reading only if we are allowed to send data;
 		   the peer may have announced an initial window size
@@ -65,9 +69,6 @@ SocketChannel::OnBufferedData(std::span<const std::byte> payload)
 	const std::size_t consumed = static_cast<std::size_t>(nbytes);
 	if (consumed < payload.size())
 		socket.ScheduleWrite();
-
-	if (ConsumeReceiveWindow(consumed) < RECEIVE_WINDOW/ 2)
-		SendWindowAdjust(RECEIVE_WINDOW - GetReceiveWindow());
 
 	return consumed;
 }

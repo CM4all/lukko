@@ -7,6 +7,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * fix assertion failure on channel with zero initial window size
   * reject channel window adjustments which overflow the send window
   * reject further data after CHANNEL_EOF
+  * detect receive window violations earlier
 
  --   
 

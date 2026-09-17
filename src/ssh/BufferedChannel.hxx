@@ -23,12 +23,35 @@ class BufferedChannel : public Channel {
 
 	bool eof_pending = false;
 
+protected:
+	/**
+	 * If positive, then this class sends #CHANNEL_WINDOW_ADJUST
+	 * automatically whenever the remaining receive window plus
+	 * the queue size gets below a certain mark.
+	 */
+	std::size_t max_receive_window = 0;
+
 public:
 	using Channel::Channel;
 
 	// virtual methods from class Channel
 	void OnData(std::span<const std::byte> payload) final;
 	void OnEof() final;
+
+private:
+	/**
+	 * Invoke SendWindowAdjust() if the remaining #receive_window
+	 * plus #queue_bytes is smaller than half the
+	 * #max_receive_window.
+	 */
+	void MaybeSendWindowAdjust() noexcept {
+		if (max_receive_window == 0)
+			return;
+
+		const std::size_t fill = GetReceiveWindow() + queue_bytes;
+		if (fill < max_receive_window / 2)
+			SendWindowAdjust(max_receive_window - fill);
+	}
 
 protected:
 	/**
