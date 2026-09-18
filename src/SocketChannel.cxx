@@ -146,8 +146,19 @@ try {
 	if (events & SocketEvent::HANGUP) {
 		/* close the socket only if the receive buffer is
 		   empty */
-		if (empty)
+		if (empty) {
 			Close();
+			return;
+		}
+
+		if (!socket.IsReadPending())
+			/* we are currently not allowed to read (our
+			   send window is exhausted or the SSH
+			   connection's output is blocked), and
+			   therefore we cannot know whether the
+			   receive buffer is empty; unregister the
+			   socket to avoid a busy loop */
+			socket.CancelRead();
 	}
 } catch (...) {
 	GetConnection().CloseError(std::current_exception());
