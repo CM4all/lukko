@@ -30,7 +30,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * fix TOCTOU bug in authorized_keys size check
   * avahi: fix use-after-free bug
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 18 Sep 2026 21:21:37 +0200
 
 cm4all-lukko (0.65) unstable; urgency=low
 
