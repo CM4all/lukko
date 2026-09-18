@@ -15,6 +15,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * reject packets which are not padded to the cipher block size
   * implement a KEX timeout
   * don't read from channel data sources while the output is blocked
+  * stop handling received packets while writing is blocked
   * refuse rsync options "--daemon", "--config" and "--protect-args"
   * refuse to start SFTP/rsync/git when there is a forced command
   * mount home "noexec" for rsync/git

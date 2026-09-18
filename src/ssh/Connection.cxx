@@ -908,6 +908,11 @@ Connection::OnBufferedWrite()
 		return false;
 	}
 
+	if (input_ready && !read_blocked && !write_blocked)
+		/* OnInputReady() has postponed handling packets
+		   because writing was blocked; resume that now */
+		resume_input.Schedule();
+
 	return true;
 }
 
@@ -931,11 +936,17 @@ try {
 		return false;
 
 	while (true) {
-		if (read_blocked) {
+		if (read_blocked || write_blocked) {
 			/* reading is currently blocked - postpone the
 			   packet handler and really stop reading from
 			   the socket to avoid unbounded packet buffer
-			   allocations */
+			   allocations
+
+			   this includes #write_blocked because many
+			   packets are answered with another packet
+			   (e.g. UNIMPLEMENTED); a peer which stops
+			   reading its socket could otherwise make us
+			   queue an unbounded number of replies */
 			input_ready = true;
 			socket.UnscheduleOnlyRead();
 			return true;

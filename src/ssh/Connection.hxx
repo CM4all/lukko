@@ -144,6 +144,10 @@ class Connection : BufferedSocketHandler, InputHandler
 	 * Is writing currently blocked (because the kernel socket is
 	 * full)?  This keeps track whether to call
 	 * OnWriteUnblocked().
+	 *
+	 * While this is set, OnInputReady() stops handling received
+	 * packets, because handling them usually generates more
+	 * output.
 	 */
 	bool write_blocked = false;
 
