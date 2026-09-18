@@ -31,6 +31,12 @@ protected:
 	 */
 	std::size_t max_receive_window = 0;
 
+	/**
+	 * Special return value for OnBufferedData() to indicate that
+	 * the method has closed the channel.
+	 */
+	static constexpr std::size_t CLOSED = ~std::size_t{0};
+
 public:
 	using Channel::Channel;
 
@@ -55,15 +61,21 @@ private:
 
 protected:
 	/**
+	 * Continue reading from the buffer, feed into
+	 * OnBufferedData().
 	 *
+	 * @return false if the channel has been closed
 	 */
-	void ReadBuffer();
+	bool ReadBuffer();
 
 	/**
 	 * @return the number of bytes consumed; if this is less than
 	 * the given payload size, then the transmission is paused and
 	 * method is expected to call ReadBuffer() eventually to
 	 * resume the transmission
+	 *
+	 * The special return value #CLOSED indicates that this method
+	 * has closed the channel.
 	 */
 	[[nodiscard]]
 	virtual std::size_t OnBufferedData(std::span<const std::byte> payload) = 0;

@@ -64,7 +64,7 @@ SocketChannel::OnBufferedData(std::span<const std::byte> payload)
 
 		// TODO log error?
 		Close();
-		return 0;
+		return CLOSED;
 	}
 
 
@@ -106,7 +106,8 @@ try {
 
 	if (events & SocketEvent::WRITE) {
 		socket.CancelOnlyWrite();
-		ReadBuffer();
+		if (!ReadBuffer()) [[unlikely]]
+			return;
 	}
 
 	/* is the kernel's receive buffer empty? */

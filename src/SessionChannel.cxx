@@ -990,7 +990,8 @@ try {
 
 	if (events & PipeEvent::WRITE) {
 		tty.CancelOnlyWrite();
-		ReadBuffer();
+		if (!ReadBuffer()) [[unlikely]]
+			return;
 	}
 
 	if ((events & PipeEvent::READ) == 0)
