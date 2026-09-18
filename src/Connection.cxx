@@ -1152,9 +1152,9 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 
 	if (const auto proxy_to = listener.GetProxyTo(arch, sticky_source);
 	    !proxy_to.IsNull()) {
-		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
-
 		LogFmt("Proxy to {}\n", proxy_to);
+
+		auto s = co_await CoConnectSocket(GetEventLoop(), proxy_to, std::chrono::seconds{10});
 
 		OutgoingConnectionHandler &handler = *this;
 		outgoing = std::make_unique<OutgoingConnection>(GetEventLoop(),
