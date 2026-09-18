@@ -62,7 +62,9 @@ SocketChannel::OnBufferedData(std::span<const std::byte> payload)
 			return 0;
 		}
 
-		throw MakeSocketError(e, "Failed to send");
+		// TODO log error?
+		Close();
+		return 0;
 	}
 
 

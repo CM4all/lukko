@@ -4,6 +4,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * limit the number of "tcpip-forward" listeners
   * session: accept only environment variables "LANG LC_* COLORTERM NO_COLOR"
   * session, socket: keep EPOLLHUP, EPOLLERR registered at zero windows
+  * socket: close channel on send error
   * fix assertion failure on channel with zero initial window size
   * reject channel window adjustments which overflow the send window
   * reject further data after CHANNEL_EOF
