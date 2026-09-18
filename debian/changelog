@@ -26,6 +26,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * apply the "no-port-forwarding" to "direct-streamlocal@openssh.com"
   * spawn: don't follow symlinks while building the mount namespace
   * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals
+  * do not generate ephemeral host keys if no files exist
 
  --   
 

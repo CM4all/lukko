@@ -82,13 +82,8 @@ LoadHostKeys(const std::filesystem::path &config_directory)
 		if (auto key = LoadOptionalKeyFile((config_directory / filename).c_str()))
 			keys.Add(std::move(key));
 
-	if (keys.empty()) {
-		keys.Add(std::make_unique<Ed25519Key>(Ed25519Key::Generate{}));
-#ifdef HAVE_OPENSSL
-		keys.Add(std::make_unique<ECDSAKey>(ECDSAKey::Generate{}));
-		keys.Add(std::make_unique<RSAKey>(RSAKey::Generate{}));
-#endif // HAVE_OPENSSL
-	}
+	if (keys.empty())
+		throw std::runtime_error{"No host keys found"};
 
 	return keys;
 }
