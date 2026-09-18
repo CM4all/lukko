@@ -1275,6 +1275,7 @@ Connection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 	auth_timeout.Cancel();
 	socket_forward_listeners.clear_and_dispose(DeleteDisposer{});
 
+	outgoing.reset();
 	proxy_handlers.reset();
 	user_auth.reset();
 

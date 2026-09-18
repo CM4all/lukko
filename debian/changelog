@@ -17,6 +17,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * don't read from channel data sources while the output is blocked
   * stop handling received packets while writing is blocked
   * fix memory leak if sending the version exchange fails
+  * proxy: close the outgoing connection when the client disconnects
   * refuse rsync options "--daemon", "--config" and "--protect-args"
   * refuse to start SFTP/rsync/git when there is a forced command
   * mount home "noexec" for rsync/git
