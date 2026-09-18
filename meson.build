@@ -1,4 +1,4 @@
-project('CM4all Lukko', 'cpp', version: '0.66',
+project('CM4all Lukko', 'cpp', version: '0.67',
   meson_version: '>= 1.2',
   default_options: [
     'cpp_std=c++23',
