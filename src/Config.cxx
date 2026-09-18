@@ -82,10 +82,21 @@ Config::Check()
 		l.keepalive = true;
 	}
 
-	if (debug_mode)
-		/* accept gid=0 (keep current gid) from translation
-		   server if we were started as unprivileged user */
-		spawn.allowed_gids.insert(0);
+	if (debug_mode) {
+		/* in debug mode, if no allowed UIDs/GIDs have been
+		   configured, assume keeping the current ones is
+		   allowed (needed for unit tests) */
+
+		if (!spawn.HasAllowedUid()) {
+			spawn.allowed_uids.insert(0);
+			spawn.allowed_uids.insert(getuid());
+		}
+
+		if (!spawn.HasAllowedGid()) {
+			spawn.allowed_gids.insert(0);
+			spawn.allowed_gids.insert(getuid());
+		}
+	}
 }
 
 class LukkoConfigParser final : public NestedConfigParser {
