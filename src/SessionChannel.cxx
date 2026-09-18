@@ -323,6 +323,8 @@ void
 SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 				  PreparedChildProcess &&p)
 {
+	assert(!child);
+
 	auto &c = static_cast<Connection &>(GetConnection());
 	auto &spawn_service = c.GetSpawnService();
 
@@ -752,7 +754,7 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 	logger.Fmt(2, "ChannelRequest {:?}"sv, request_type);
 
-	if (WasStarted())
+	if (start_requested)
 		co_return OnLateRequest(request_type, type_specific);
 
 	if (request_type == "exec"sv) {
@@ -774,6 +776,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return false;
 		}
 
+		start_requested = true;
+
 		try {
 			co_return co_await Exec(command.c_str());
 		} catch (...) {
@@ -788,6 +792,8 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return false;
 		}
 	} else if (request_type == "shell"sv) {
+		start_requested = true;
+
 		try {
 			co_return co_await Exec(nullptr);
 		} catch (...) {
@@ -808,9 +814,10 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		logger.Fmt(3, "  subsystem {:?}"sv, subsystem_name);
 
-		if (subsystem_name == "sftp"sv)
+		if (subsystem_name == "sftp"sv) {
+			start_requested = true;
 			co_return co_await StartSftpServer();
-		else
+		} else
 			co_return false;
 	} else if (request_type == "pty-req"sv) {
 		if (!c.IsExecAllowed() || c.GetAuthorizedKeyOptions().no_pty) {

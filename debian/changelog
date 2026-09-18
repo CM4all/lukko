@@ -10,6 +10,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * detect receive window violations earlier
   * fix assertion failure if the rekey timer elapses before authentication
   * proxy: disconnect if the target server does not authenticate in time
+  * fix race condition allowing two child processes on one session channel
   * refuse to start rsync/git when there is a forced command
   * fix out-of-bounds write on very long text lines
   * ignore long authorized_keys lines

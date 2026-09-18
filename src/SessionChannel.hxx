@@ -46,6 +46,12 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	std::size_t env_size = 0;
 
 	/**
+	 * Was a channel request received which starts the child
+	 * process ("exec", "shell", "subsystem")?
+	 */
+	bool start_requested = false;
+
+	/**
 	 * All input is deferred by OnBufferedData() until this flag
 	 * becomes true.  Call EnableStdin() to enable it.
 	 */
@@ -82,10 +88,6 @@ public:
 	void OnBufferedEof() override;
 
 private:
-	bool WasStarted() const noexcept {
-		return child != nullptr;
-	}
-
 	bool IsActive() const noexcept {
 		return stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||
 			tty.IsDefined() ||
