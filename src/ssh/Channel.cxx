@@ -81,6 +81,12 @@ Channel::~Channel() noexcept
 	pending_requests.clear_and_dispose(DeleteDisposer{});
 }
 
+bool
+Channel::CanSend() const noexcept
+{
+	return send_window > 0;
+}
+
 void
 Channel::Close() noexcept
 {

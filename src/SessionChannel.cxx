@@ -97,7 +97,7 @@ SessionChannel::SetStderrString(std::string_view s)
 	tty.Close();
 
 	stderr_pipe.Open(MakeStringPipe(s).Release());
-	if (GetSendWindow() > 0)
+	if (CanSend())
 		ScheduleRead();
 }
 
@@ -330,7 +330,7 @@ SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 	auto &c = static_cast<Connection &>(GetConnection());
 	auto &spawn_service = c.GetSpawnService();
 
-	if (GetSendWindow() > 0)
+	if (CanSend())
 		ScheduleRead();
 
 	for (const auto &i : env)

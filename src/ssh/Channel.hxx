@@ -93,6 +93,13 @@ public:
 		return send_window;
 	}
 
+	/**
+	 * May this channel send data right now?  This is false if the
+	 * send window is exhausted.
+	 */
+	[[gnu::pure]]
+	bool CanSend() const noexcept;
+
 	bool IsEof() const noexcept {
 		return eof;
 	}

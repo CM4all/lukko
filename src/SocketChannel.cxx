@@ -19,7 +19,7 @@ SocketChannel::SocketChannel(SSH::ChannelSupport &_parent,
 	   automatically */
 	max_receive_window = RECEIVE_WINDOW;
 
-	if (GetSendWindow() > 0)
+	if (CanSend())
 		/* start reading only if we are allowed to send data;
 		   the peer may have announced an initial window size
 		   of zero, and then OnWindowAdjust() will schedule
