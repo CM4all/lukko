@@ -7,6 +7,7 @@
 #include "lib/sodium/Base64Alloc.hxx"
 #include "io/BufferedReader.hxx"
 #include "io/FdReader.hxx"
+#include "io/SizeLimitReader.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/CharUtil.hxx"
 #include "util/IterableSplitString.hxx"
@@ -249,7 +250,8 @@ PublicKeysTextFileContains(FileDescriptor fd,
 			   std::span<const std::byte> needle) noexcept
 try {
 	FdReader r{fd};
-	BufferedReader br{r};
+	SizeLimitReader lr{r, MAX_PUBLIC_KEYS_TEXT_FILE_SIZE};
+	BufferedReader br{lr};
 	return PublicKeysTextFileContains(br, needle);
 } catch (...) {
 	return std::nullopt;

@@ -593,7 +593,7 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 		if (auto fd = co_await OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
 			if (struct stat st;
 			    fstat(fd.Get(), &st) == 0 &&
-			    S_ISREG(st.st_mode) && st.st_size <= MAX_PUBLIC_KEYS_TEXT_FILE_SIZE) {
+			    S_ISREG(st.st_mode) && st.st_size <= (off_t)MAX_PUBLIC_KEYS_TEXT_FILE_SIZE) {
 				if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
 					authorized_key_options = std::move(*options);
 					co_return true;
