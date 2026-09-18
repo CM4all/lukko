@@ -72,8 +72,16 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 		    *this);
 	socket.ScheduleRead();
 
-	if (socket.DirectWrite(AsBytes(IDENTIFICATION_STRING)) < 0)
-		throw MakeSocketError("Failed to send VersionExchange");
+	if (socket.DirectWrite(AsBytes(IDENTIFICATION_STRING)) < 0) {
+		const int e = errno;
+
+		/* manually destruct this because our destructor will
+		   not be called */
+		output.Destroy();
+		input.Destroy();
+
+		throw MakeSocketError(e, "Failed to send VersionExchange");
+	}
 }
 
 Connection::~Connection() noexcept
