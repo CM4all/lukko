@@ -538,7 +538,7 @@ SessionChannel::Exec(const char *cmd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	if (!c.IsExecAllowed()) {
-		if (!c.GetAuthorizedKeyOptions().command.empty())
+		if (c.HasForcedCommand())
 			/* with a forced command, we can't allow
 			   exceptions rsync and git */
 			co_return false;

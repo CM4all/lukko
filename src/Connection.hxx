@@ -191,6 +191,10 @@ public:
 		return authorized_key_options;
 	}
 
+	bool HasForcedCommand() const noexcept {
+		return !authorized_key_options.command.empty();
+	}
+
 	[[gnu::pure]]
 	const char *GetShell() const noexcept;
 
