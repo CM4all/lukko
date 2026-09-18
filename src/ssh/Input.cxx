@@ -80,6 +80,20 @@ Input::ParseHeader(const PacketHeader &header)
 
 	if (packet_length > MAX_PACKET_SIZE)
 		throw SocketProtocolError{"Packet too large"};
+
+	/* RFC 4253 section 6: the padded packet must be a multiple of
+	   the cipher block size (8 without encryption); this must be
+	   checked here because Cipher::DecryptPayload()
+	   implementations rely on it */
+	const std::size_t block_size = cipher
+		? cipher->GetBlockSize()
+		: 8;
+	const std::size_t padded_size = cipher && cipher->IsHeaderExcludedFromPadding()
+		? packet_length
+		: sizeof(PacketHeader) + packet_length;
+
+	if (padded_size % block_size != 0)
+		throw SocketProtocolError{"Misaligned packet"};
 }
 
 bool
