@@ -103,7 +103,7 @@ AgentForward::Factory::OnChannelCancel() noexcept
 	delete this;
 }
 
-AgentForward::AgentForward(Connection &_connection, SessionChannel &_channel) noexcept
+AgentForward::AgentForward(Connection &_connection, SessionChannel &_channel)
 	:ServerSocket(_connection.GetEventLoop()),
 	 connection(_connection), channel(_channel)
 {

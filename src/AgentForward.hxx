@@ -24,7 +24,7 @@ class AgentForward final : ServerSocket {
 	IntrusiveList<Factory> factories;
 
 public:
-	AgentForward(Connection &_connection, SessionChannel &_channel) noexcept;
+	AgentForward(Connection &_connection, SessionChannel &_channel);
 	~AgentForward() noexcept;
 
 	const char *GetPath() const noexcept {

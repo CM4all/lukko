@@ -164,11 +164,11 @@ private:
 	/**
 	 * Create and install an #AgentForward instance.
 	 */
-	void PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p) noexcept;
+	void PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p);
 
 	void PrepareExec(AllocatorPtr alloc,
 			 PreparedChildProcess &p,
-			 FdHolder &close_fds) noexcept;
+			 FdHolder &close_fds);
 
 	void SpawnChildProcess(AllocatorPtr alloc,
 			       PreparedChildProcess &&p);
@@ -181,7 +181,7 @@ private:
 			       PreparedChildProcess &p,
 			       FdHolder &close_fds,
 			       const ChildOptions &child_options,
-			       UniqueFileDescriptor &&exec_fd) noexcept;
+			       UniqueFileDescriptor &&exec_fd);
 
 	/**
 	 * Prepare "sftp-server" execution in the default container
@@ -190,11 +190,11 @@ private:
 	void PrepareSftpServer(AllocatorPtr alloc,
 			       PreparedChildProcess &p,
 			       FdHolder &close_fds,
-			       const char *path) noexcept;
+			       const char *path);
 
 	void PrepareSftpServer(AllocatorPtr alloc,
 			       PreparedChildProcess &p,
-			       FdHolder &close_fds) noexcept;
+			       FdHolder &close_fds);
 
 	/**
 	 * Start the SFTP server process.

@@ -257,7 +257,7 @@ SessionChannel::PrepareHome(AllocatorPtr alloc, PreparedChildProcess &p) noexcep
 }
 
 inline void
-SessionChannel::PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p) noexcept
+SessionChannel::PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p)
 {
 	auto &c = static_cast<Connection &>(GetConnection());
 
@@ -289,7 +289,7 @@ SessionChannel::PrepareAgentForward(AllocatorPtr alloc, PreparedChildProcess &p)
 inline void
 SessionChannel::PrepareExec(AllocatorPtr alloc,
 			    PreparedChildProcess &p,
-			    FdHolder &close_fds) noexcept
+			    FdHolder &close_fds)
 {
 	assert(!agent_forward);
 
@@ -635,7 +635,7 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  PreparedChildProcess &p,
 				  FdHolder &close_fds,
 				  const ChildOptions &child_options,
-				  UniqueFileDescriptor &&exec_fd) noexcept
+				  UniqueFileDescriptor &&exec_fd)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	assert(c.IsSftpAllowed());
@@ -657,7 +657,7 @@ inline void
 SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  PreparedChildProcess &p,
 				  FdHolder &close_fds,
-				  const char *path) noexcept
+				  const char *path)
 {
 	const auto &c = static_cast<Connection &>(GetConnection());
 	assert(c.IsSftpAllowed());
@@ -676,7 +676,7 @@ SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 inline void
 SessionChannel::PrepareSftpServer(AllocatorPtr alloc,
 				  PreparedChildProcess &p,
-				  FdHolder &close_fds) noexcept
+				  FdHolder &close_fds)
 {
 	assert(!tty.IsDefined());
 
@@ -725,9 +725,8 @@ SessionChannel::StartSftpServer()
 	FdHolder close_fds;
 	PreparedChildProcess p;
 
-	PrepareSftpServer(alloc, p, close_fds);
-
 	try {
+		PrepareSftpServer(alloc, p, close_fds);
 		SpawnChildProcess(alloc, std::move(p));
 		co_await CoWaitSpawnCompletion{*child};
 		EnableStdin();
