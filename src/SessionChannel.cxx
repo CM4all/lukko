@@ -336,7 +336,8 @@ SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 	for (const auto &i : env)
 		p.PutEnv(i.c_str());
 
-	if (c.GetAuthorizedKeyOptions().home_read_only) {
+	if (const bool home_read_only = c.GetAuthorizedKeyOptions().home_read_only;
+	    home_read_only || home_noexec) {
 		p.ns.mount.mounts = Mount::CloneAll(alloc, p.ns.mount.mounts);
 
 		const char *const home = p.GetHome();
@@ -344,13 +345,16 @@ SessionChannel::SpawnChildProcess(AllocatorPtr alloc,
 		bool found = false;
 		for (auto &i : p.ns.mount.mounts) {
 			if (i.type == Mount::Type::BIND && i.IsInSourcePath(home)) {
-				i.writable = false;
+				if (home_read_only)
+					i.writable = false;
+				if (home_noexec)
+					i.exec = false;
 				found = true;
 			}
 		}
 
 		if (!found)
-			throw std::runtime_error{"No home mount found for home-read-only"};
+			throw std::runtime_error{"No home mount found for home-read-only/home_noexec"};
 	}
 
 	// TODO use a proper process name
@@ -546,6 +550,11 @@ SessionChannel::Exec(const char *cmd)
 #ifdef ENABLE_TRANSLATION
 		/* "exec" is not allowed, but the translation server
 		   may have allowed a few exceptions: */
+
+		/* to ensure that nothing executes anything from the
+		   home directory (e.g. git hooks), remount it
+		   "noexec" */
+		home_noexec = true;
 
 		if (cmd != nullptr && c.IsRsyncAllowed() &&
 		    StringStartsWith(cmd, "rsync --server "sv)) {

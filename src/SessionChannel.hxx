@@ -46,6 +46,11 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	std::size_t env_size = 0;
 
 	/**
+	 * Mount the home directory with "noexec"?
+	 */
+	bool home_noexec = false;
+
+	/**
 	 * Was a channel request received which starts the child
 	 * process ("exec", "shell", "subsystem")?
 	 */
