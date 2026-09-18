@@ -402,6 +402,12 @@ SplitCmdline(PreparedChildProcess &p, std::forward_list<std::string> &strings,
 }
 
 /**
+ * Short rsync options which are followed by a parameter; the rest of
+ * the argument is that parameter and not more option letters.
+ */
+static constexpr std::string_view rsync_short_options_with_parameter = "@BefMT"sv;
+
+/**
  * Is this an rsync option which must not be used by an account that is
  * not allowed to execute arbitrary commands?
  *
@@ -410,15 +416,43 @@ SplitCmdline(PreparedChildProcess &p, std::forward_list<std::string> &strings,
  * command which rsync passes to system().  That would give the client
  * arbitrary process execution, which is exactly what the "sftp-only"
  * policy (that this rsync exception lives inside) denies.
+ *
+ * "--protect-args" (renamed to "--secluded-args" in rsync 3.2.4, but
+ * both names and the short option "-s" are still accepted) makes the
+ * rsync server read its real argument vector from standard input,
+ * i.e. from the SSH channel, and parse it a second time.  That second
+ * argument vector never reaches this function, and could therefore
+ * smuggle "--daemon" and "--config" past it.
  */
 [[gnu::pure]]
 static bool
 IsForbiddenRsyncOption(std::string_view s) noexcept
 {
-	/* strip the "=VALUE" suffix */
-	s = Split(s, '=').first;
+	if (SkipPrefix(s, "--"sv)) {
+		/* a long option; strip the "=VALUE" suffix */
+		s = Split(s, '=').first;
 
-	return s == "--daemon"sv || s == "--config"sv;
+		return s == "daemon"sv || s == "config"sv ||
+			s == "protect-args"sv || s == "secluded-args"sv;
+	}
+
+	if (!SkipPrefix(s, "-"sv) || s.empty())
+		/* not an option */
+		return false;
+
+	/* a cluster of short options */
+	for (const char ch : s) {
+		if (ch == 's')
+			/* this is "--protect-args" */
+			return true;
+
+		if (rsync_short_options_with_parameter.contains(ch))
+			/* everything after this option is its
+			   parameter, not another option */
+			break;
+	}
+
+	return false;
 }
 
 inline Co::Task<bool>
