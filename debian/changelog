@@ -27,6 +27,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * spawn: don't follow symlinks while building the mount namespace
   * spawn: verify the sender of JobRemoved/UnitRemoved DBus signals
   * do not generate ephemeral host keys if no files exist
+  * avahi: fix use-after-free bug
 
  --   
 
