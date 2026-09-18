@@ -7,12 +7,14 @@
 #include "IHandler.hxx"
 #include "KexState.hxx"
 #include "KexEnums.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/IntrusiveList.hxx"
 
+#include <cassert>
 #include <cstdint>
 #include <span>
 #include <string>
@@ -42,6 +44,12 @@ class Connection : BufferedSocketHandler, InputHandler
 
 	static constexpr uint_least64_t REKEY_BYTES = GIGA;
 	static constexpr auto REKEY_INTERVAL = std::chrono::hours{1};
+
+	/**
+	 * If KEX is not completed within this duration, the
+	 * connection is closed.
+	 */
+	static constexpr auto KEX_TIMEOUT = std::chrono::minutes{1};
 
 	ConnectionDisposer &disposer;
 
@@ -73,6 +81,8 @@ class Connection : BufferedSocketHandler, InputHandler
 	 * Handle pending input packets after UnblockRead().
 	 */
 	DeferEvent resume_input;
+
+	CoarseTimerEvent kex_timeout;
 
 	FarTimerEvent rekey_timer;
 	uint_least64_t encrypted_bytes_since_kex = 0;
@@ -362,6 +372,18 @@ protected:
 private:
 	[[gnu::pure]]
 	bool IsRekeying() const noexcept;
+
+	/**
+	 * Schedule the deadline for the key exchange which is
+	 * currently in progress.
+	 */
+	void ScheduleKexTimeout() noexcept {
+		assert(!kex_flags.IsIdle());
+
+		kex_timeout.Schedule(KEX_TIMEOUT);
+	}
+
+	void OnKexTimeout() noexcept;
 
 	void InitiateRekey();
 	void OnRekeyTimer() noexcept;

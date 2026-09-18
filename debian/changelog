@@ -13,6 +13,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * proxy: disconnect if the target server does not authenticate in time
   * fix race condition allowing two child processes on one session channel
   * reject packets which are not padded to the cipher block size
+  * implement a KEX timeout
   * refuse rsync options "--daemon", "--config" and "--protect-args"
   * refuse to start SFTP/rsync/git when there is a forced command
   * mount home "noexec" for rsync/git

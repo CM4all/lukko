@@ -63,6 +63,7 @@ Connection::Connection(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
 	 input(*new Input(thread_pool_get_queue(event_loop), *this)),
 	 output(*new Output(thread_pool_get_queue(event_loop), socket)),
 	 resume_input(event_loop, BIND_THIS_METHOD(OnResumeInput)),
+	 kex_timeout(event_loop, BIND_THIS_METHOD(OnKexTimeout)),
 	 rekey_timer(event_loop, BIND_THIS_METHOD(OnRekeyTimer)),
 	 role(_role)
 {
@@ -113,6 +114,13 @@ Connection::SetAuthenticated() noexcept
 
 	/* enable periodic rekeying */
 	rekey_timer.Schedule(REKEY_INTERVAL);
+}
+
+inline void
+Connection::OnKexTimeout() noexcept
+{
+	DoDisconnect(DisconnectReasonCode::KEY_EXCHANGE_FAILED,
+		     "Key exchange timeout"sv);
 }
 
 inline void
@@ -197,6 +205,7 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 		   call */
 		dead = true;
 
+		kex_timeout.Cancel();
 		rekey_timer.Cancel();
 
 		/* we now have very little patience with this
@@ -284,6 +293,8 @@ Connection::SendKexInit()
 	my_kexinit = s.Since(kex_mark);
 
 	kex_flags.kexinit_sent = true;
+
+	ScheduleKexTimeout();
 
 	if (IsRekeying() && !write_blocked)
 		OnWriteBlocked();
@@ -412,10 +423,17 @@ Connection::SendNewKeys()
 	output.SetCipher(std::move(send_cipher));
 	encrypted_bytes_since_kex = 0;
 
-	if (kex_flags.ResetIfComplete() && authenticated)
-		/* only authenticated connections rekey
-		   periodically */
-		rekey_timer.Schedule(REKEY_INTERVAL);
+	if (kex_flags.ResetIfComplete()) {
+		kex_timeout.Cancel();
+
+		if (authenticated)
+			/* only authenticated connections rekey
+			   periodically */
+			rekey_timer.Schedule(REKEY_INTERVAL);
+	} else
+		/* the key exchange is not finished yet; the peer must
+		   still send its NEWKEYS in time */
+		ScheduleKexTimeout();
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
@@ -471,6 +489,8 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 
 	kex_flags.kexinit_received = true;
 	peer_kexinit = payload;
+
+	ScheduleKexTimeout();
 
 	encryption_algorithms_client_to_server = p.encryption_algorithms_client_to_server;
 	encryption_algorithms_server_to_client = p.encryption_algorithms_server_to_client;
@@ -583,10 +603,14 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 
 	input.SetCipher(std::move(cipher));
 
-	if (kex_flags.ResetIfComplete() && authenticated)
-		/* only authenticated connections rekey
-		   periodically */
-		rekey_timer.Schedule(REKEY_INTERVAL);
+	if (kex_flags.ResetIfComplete()) {
+		kex_timeout.Cancel();
+
+		if (authenticated)
+			/* only authenticated connections rekey
+			   periodically */
+			rekey_timer.Schedule(REKEY_INTERVAL);
+	}
 
 	if (!was_encrypted && IsEncrypted())
 		OnEncrypted();
