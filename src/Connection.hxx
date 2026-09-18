@@ -280,7 +280,10 @@ public:
 	}
 
 	/**
-	 * Is the client allowed to spawn arbitrary processes?
+	 * Is the client allowed to spawn processes?
+	 *
+	 * Note that a forced command (key option "command") means
+	 * this is indeed allowed.
 	 */
 	[[gnu::pure]]
 	bool IsExecAllowed() const noexcept {
