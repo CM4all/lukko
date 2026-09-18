@@ -262,7 +262,7 @@ public:
 	 */
 	[[gnu::pure]]
 	bool IsSftpAllowed() const noexcept {
-		return allow_sftp;
+		return allow_sftp && !HasForcedCommand();
 	}
 
 	/**
@@ -280,7 +280,7 @@ public:
 	 */
 	[[gnu::pure]]
 	bool IsRsyncAllowed() const noexcept {
-		return IsSftpAllowed();
+		return IsSftpAllowed() && !HasForcedCommand();
 	}
 
 	/**
