@@ -63,9 +63,6 @@ Config::Config()
 	   it breaks PID_NAMESPACE_NAME */
 	spawn.pid_namespace = false;
 
-	// TODO implement SpawnConfig properly
-	spawn.allow_any_uid_gid = true;
-
 #ifdef HAVE_LIBSYSTEMD
 	spawn.systemd_scope = "lukko-spawn.scope";
 	spawn.systemd_scope_description = "The Lukko child process spawner";
