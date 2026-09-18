@@ -448,6 +448,11 @@ Connection::IsForwardingAllowed() const noexcept
 inline bool
 Connection::IsLocalForwardingAllowed() const noexcept
 {
+	if (authorized_key_options.no_port_forwarding)
+		/* this isn't really "port" forwarding, but OpenSSH
+		   checks the same option for local sockets */
+		return false;
+
 	if (!IsExecAllowed())
 		/* if arbitrary exec is not allowed, this is a
 		   restricted account and we don't allow forwarding */
