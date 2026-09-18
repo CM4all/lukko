@@ -412,7 +412,9 @@ Connection::SendNewKeys()
 	output.SetCipher(std::move(send_cipher));
 	encrypted_bytes_since_kex = 0;
 
-	if (kex_flags.ResetIfComplete())
+	if (kex_flags.ResetIfComplete() && authenticated)
+		/* only authenticated connections rekey
+		   periodically */
 		rekey_timer.Schedule(REKEY_INTERVAL);
 
 	if (!was_encrypted && IsEncrypted())
@@ -581,7 +583,9 @@ Connection::HandleNewKeys(std::span<const std::byte> payload)
 
 	input.SetCipher(std::move(cipher));
 
-	if (kex_flags.ResetIfComplete())
+	if (kex_flags.ResetIfComplete() && authenticated)
+		/* only authenticated connections rekey
+		   periodically */
 		rekey_timer.Schedule(REKEY_INTERVAL);
 
 	if (!was_encrypted && IsEncrypted())
