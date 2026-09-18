@@ -8,6 +8,7 @@
 #include "ssh/UserAuthClient.hxx"
 #include "ssh/Connection.hxx"
 #include "ssh/SimpleHostKeyVerifier.hxx"
+#include "event/CoarseTimerEvent.hxx"
 
 #include <memory>
 
@@ -41,6 +42,15 @@ class OutgoingConnection final
 
 	std::unique_ptr<SSH::UserAuthClient> user_auth;
 
+	/**
+	 * This timer disconnects when the auth phase takes too long.
+	 * At first, a very short duration is scheduled (10s) until
+	 * the server has accepted the "ssh-userauth" service; then
+	 * the timer is rescheduled, allowing some more time for the
+	 * actual user auth.
+	 */
+	CoarseTimerEvent auth_timeout;
+
 public:
 	OutgoingConnection(EventLoop &event_loop, const PublicKeySet &_server_host_keys,
 			   UniqueSocketDescriptor &&fd,
@@ -55,6 +65,8 @@ public:
 
 private:
 	void HandleServiceAccept(std::span<const std::byte> payload);
+
+	void OnAuthTimeout() noexcept;
 
 protected:
 	/* virtual methods from class SSH::UserAuthClientHandler */

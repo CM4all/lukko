@@ -5,6 +5,8 @@
 #include "OutgoingConnection.hxx"
 #include "ssh/PacketSerializer.hxx"
 
+using std::string_view_literals::operator""sv;
+
 OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 				       const PublicKeySet &_server_host_keys,
 				       UniqueSocketDescriptor &&fd,
@@ -13,7 +15,11 @@ OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 			 _handler,
 			 server_host_key_verifier),
 	 server_host_key_verifier(_server_host_keys),
-	 handler(_handler) {}
+	 handler(_handler),
+	 auth_timeout(event_loop, BIND_THIS_METHOD(OnAuthTimeout))
+{
+	auth_timeout.Schedule(std::chrono::seconds{10});
+}
 
 OutgoingConnection::~OutgoingConnection() noexcept = default;
 
@@ -35,6 +41,10 @@ OutgoingConnection::OnUserAuthService()
 {
 	assert(user_auth);
 
+	/* the server has accepted the "ssh-userauth" service -
+	   reschedule the timeout with a longer duration */
+	auth_timeout.Schedule(std::chrono::minutes{2});
+
 	handler.OnOutgoingUserauthService();
 }
 
@@ -43,6 +53,8 @@ OutgoingConnection::OnUserAuthSuccess()
 {
 	assert(user_auth);
 	user_auth.reset();
+
+	auth_timeout.Cancel();
 
 	SetAuthenticated();
 	handler.OnOutgoingUserauthSuccess();
@@ -73,6 +85,9 @@ OutgoingConnection::OnDisconnecting(SSH::DisconnectReasonCode reason_code,
 {
 	SSH::Connection::OnDisconnecting(reason_code, msg);
 
+	/* stop the timer just in case the Destroy() is postponed */
+	auth_timeout.Cancel();
+
 	handler.OnOutgoingDisconnecting(reason_code, msg);
 }
 
@@ -87,4 +102,11 @@ void
 OutgoingConnection::OnBufferedError(std::exception_ptr e) noexcept
 {
 	handler.OnOutgoingError(std::move(e));
+}
+
+void
+OutgoingConnection::OnAuthTimeout() noexcept
+{
+	DoDisconnect(SSH::DisconnectReasonCode::CONNECTION_LOST,
+		     "Timeout"sv);
 }
