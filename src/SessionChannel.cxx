@@ -24,11 +24,13 @@
 #include "util/SpanCast.hxx"
 #include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
 #ifdef ENABLE_TRANSLATION
 #include "translation/ExecuteOptions.hxx"
 #include "io/Open.hxx" // for OpenPath()
+#include <algorithm> // for std::any_of()
 #include <forward_list>
 #endif // ENABLE_TRANSLATION
 
@@ -395,6 +397,26 @@ SplitCmdline(PreparedChildProcess &p, std::forward_list<std::string> &strings,
 	}
 }
 
+/**
+ * Is this an rsync option which must not be used by an account that is
+ * not allowed to execute arbitrary commands?
+ *
+ * "--daemon" switches rsync to the "single-use daemon over a remote
+ * shell" mode; the "--config" file may then contain a "pre-xfer exec"
+ * command which rsync passes to system().  That would give the client
+ * arbitrary process execution, which is exactly what the "sftp-only"
+ * policy (that this rsync exception lives inside) denies.
+ */
+[[gnu::pure]]
+static bool
+IsForbiddenRsyncOption(std::string_view s) noexcept
+{
+	/* strip the "=VALUE" suffix */
+	s = Split(s, '=').first;
+
+	return s == "--daemon"sv || s == "--config"sv;
+}
+
 inline Co::Task<bool>
 SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options)
 {
@@ -422,6 +444,9 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 
 	std::forward_list<std::string> strings;
 	SplitCmdline(p, strings, cmd);
+
+	if (std::any_of(strings.begin(), strings.end(), IsForbiddenRsyncOption))
+		throw std::runtime_error{"Forbidden rsync option"};
 
 	if (execute_options.process_name != nullptr)
 		p.SetProcessName(execute_options.process_name);
