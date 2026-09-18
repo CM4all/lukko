@@ -17,6 +17,7 @@ cm4all-lukko (0.66) unstable; urgency=low
   * fix out-of-bounds write on very long text lines
   * ignore long authorized_keys lines
   * apply the "no-port-forwarding" to "direct-streamlocal@openssh.com"
+  * spawn: don't follow symlinks while building the mount namespace
 
  --   
 
