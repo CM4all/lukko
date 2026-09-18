@@ -37,7 +37,7 @@ SocketChannel::~SocketChannel() noexcept
 void
 SocketChannel::OnWindowAdjust(std::size_t nbytes)
 {
-	if (GetSendWindow() == 0)
+	if (GetSendWindow() == 0 && !GetConnection().IsWriteBlocked())
 		/* re-schedule all read events, because we are now
 		   allowed to send data again */
 		socket.ScheduleRead();

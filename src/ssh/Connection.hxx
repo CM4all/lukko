@@ -272,6 +272,15 @@ public:
 	}
 
 	/**
+	 * Is writing currently blocked, i.e. shall no more data be
+	 * submitted to SendPacket()?  This is true while the kernel
+	 * socket buffer is full and while a key exchange is in
+	 * progress.
+	 */
+	[[gnu::pure]]
+	bool IsWriteBlocked() const noexcept;
+
+	/**
 	 * Don't read further data from the socket.  Call
 	 * UnblockRead() to start reading again.
 	 */

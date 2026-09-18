@@ -123,7 +123,7 @@ SessionChannel::SetEnv(std::string_view name, std::string_view value)
 void
 SessionChannel::OnWindowAdjust(std::size_t nbytes)
 {
-	if (GetSendWindow() == 0)
+	if (GetSendWindow() == 0 && !GetConnection().IsWriteBlocked())
 		/* re-schedule all read events, because we are now
 		   allowed to send data again */
 		ScheduleRead();

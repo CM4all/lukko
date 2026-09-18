@@ -103,6 +103,12 @@ Connection::IsRekeying() const noexcept
 		kex_flags.kexinit_sent && !kex_flags.newkeys_sent;
 }
 
+bool
+Connection::IsWriteBlocked() const noexcept
+{
+	return write_blocked || IsRekeying();
+}
+
 void
 Connection::SetAuthenticated() noexcept
 {

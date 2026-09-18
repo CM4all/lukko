@@ -95,7 +95,8 @@ public:
 
 	/**
 	 * May this channel send data right now?  This is false if the
-	 * send window is exhausted.
+	 * send window is exhausted or if the connection's output is
+	 * blocked (see Connection::IsWriteBlocked()).
 	 */
 	[[gnu::pure]]
 	bool CanSend() const noexcept;

@@ -84,7 +84,7 @@ Channel::~Channel() noexcept
 bool
 Channel::CanSend() const noexcept
 {
-	return send_window > 0;
+	return send_window > 0 && !connection.IsWriteBlocked();
 }
 
 void
