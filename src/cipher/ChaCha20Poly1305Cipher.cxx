@@ -81,7 +81,7 @@ ChaCha20Poly1305Cipher::DecryptPayload(uint_least64_t seqnr,
 	src = src.first(src.size() - GetAuthSize());
 
 	const ChaCha20Poly1305Key poly_key{ReferenceAsBytes(seqbuf), payload_key};
-	if (!crypto_onetimeauth_poly1305_verify(auth, src, poly_key))
+	if (crypto_onetimeauth_poly1305_verify(auth, src, poly_key) != 0)
 		throw std::invalid_argument{"Invalid Poly1305 MAC"};
 
 	// decrypt the payload
