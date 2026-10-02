@@ -1,5 +1,6 @@
 cm4all-lukko (0.67) unstable; urgency=low
 
+  * spawn: forbid io_uring
   * translation: stricter SITE validation
   * zeroconf: fix leak bug
   * log: emit the TRUNCATED attributes
