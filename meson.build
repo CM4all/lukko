@@ -181,6 +181,7 @@ subdir('libcommon/src/spawn')
 sources = []
 
 if get_option('translation')
+  subdir('libcommon/src/uri')
   subdir('libcommon/src/translation')
   sources += [
     'src/translation/LoginClient.cxx',
