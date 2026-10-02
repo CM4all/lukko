@@ -2,6 +2,7 @@ cm4all-lukko (0.67) unstable; urgency=low
 
   * zeroconf: fix leak bug
   * prometheus: close connections after 30 seconds
+  * control: ignore truncated datagrams
 
  --   
 
