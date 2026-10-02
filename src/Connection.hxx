@@ -244,11 +244,11 @@ public:
 
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
-					const ChildOptions &options) noexcept;
+					const ChildOptions &options);
 
 	static void PrepareChildProcess(PreparedChildProcess &p,
 					FdHolder &close_fds,
-					const ExecuteOptions &options) noexcept;
+					const ExecuteOptions &options);
 
 	[[gnu::pure]]
 	bool HasTag(std::string_view tag) const noexcept;
@@ -326,7 +326,7 @@ public:
 	 */
 	void PrepareChildProcess(PreparedChildProcess &p,
 				 FdHolder &close_fds,
-				 SSH::Service service) const noexcept;
+				 SSH::Service service) const;
 
 	/**
 	 * Like PreparedChildProcess(), but call after everything else

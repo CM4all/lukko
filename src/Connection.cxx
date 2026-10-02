@@ -387,7 +387,7 @@ Connection::GetExecuteOptions(SSH::Service service) const noexcept
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				FdHolder &close_fds,
-				const ChildOptions &options) noexcept
+				const ChildOptions &options)
 {
 	options.CopyTo(p, close_fds);
 
@@ -404,7 +404,7 @@ Connection::PrepareChildProcess(PreparedChildProcess &p,
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				FdHolder &close_fds,
-				const ExecuteOptions &options) noexcept
+				const ExecuteOptions &options)
 {
 	PrepareChildProcess(p, close_fds, options.child_options);
 
@@ -527,7 +527,7 @@ Connection::GetShell() const noexcept
 void
 Connection::PrepareChildProcess(PreparedChildProcess &p,
 				[[maybe_unused]] FdHolder &close_fds,
-				[[maybe_unused]] SSH::Service service) const noexcept
+				[[maybe_unused]] SSH::Service service) const
 {
 #ifdef ENABLE_TRANSLATION
 	if (translation) {
