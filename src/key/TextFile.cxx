@@ -181,8 +181,13 @@ LoadPublicKeyLine(PublicKeySet &set, std::string_view line) noexcept
 static void
 LoadPublicKeysTextFile(PublicKeySet &set, BufferedReader &r)
 {
-	while (const char *line = r.ReadLine())
+	while (true) {
+		const std::string_view line = r.ReadLineView();
+		if (line.data() == nullptr)
+			break;
+
 		LoadPublicKeyLine(set, line);
+	}
 }
 
 void
@@ -238,9 +243,14 @@ PublicKeysTextFileContains(std::string_view contents,
 static std::optional<AuthorizedKeyOptions>
 PublicKeysTextFileContains(BufferedReader &r, std::span<const std::byte> needle)
 {
-	while (const char *line = r.ReadLine())
+	while (true) {
+		const std::string_view line = r.ReadLineView();
+		if (line.data() == nullptr)
+			break;
+
 		if (auto options = PublicKeysTextLineContains(line, needle))
 			return options;
+	}
 
 	return std::nullopt;
 }
