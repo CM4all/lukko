@@ -2,6 +2,7 @@ cm4all-lukko (0.67) unstable; urgency=low
 
   * translation: stricter SITE validation
   * zeroconf: fix leak bug
+  * log: emit the TRUNCATED attributes
   * prometheus: close connections after 30 seconds
   * control: ignore truncated datagrams
 
