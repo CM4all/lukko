@@ -125,7 +125,6 @@ libcommon_enable_seccomp = get_option('seccomp')
 libcommon_enable_spawn_local = false
 
 openssl_min_version = '3.0.8'
-openssl_api_compat = '0x30000000L'
 
 subdir('libcommon/src/util')
 subdir('libcommon/src/co')
