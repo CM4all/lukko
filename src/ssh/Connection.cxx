@@ -499,6 +499,11 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 	    kex_flags.newkeys_received)
 		throw ProtocolError{"Unexpected KEXINIT"sv};
 
+	if (!initial_kex && !authenticated)
+		/* refuse rekeying before authentication because each
+		   KEX is expensive (host key signature) */
+		throw ProtocolError{"KEXINIT before authentication"sv};
+
 	const auto p = ParseKexInit(payload);
 
 	kex_flags.kexinit_received = true;

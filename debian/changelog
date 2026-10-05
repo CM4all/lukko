@@ -2,6 +2,7 @@ cm4all-lukko (0.67) unstable; urgency=low
 
   * spawn: forbid io_uring
   * limit the number of pending channel requests
+  * refuse rekeying before authentication
   * translation: stricter SITE validation
   * zeroconf: fix leak bug
   * log: emit the TRUNCATED attributes
