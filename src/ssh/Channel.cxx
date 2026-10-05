@@ -176,6 +176,12 @@ Channel::HandleRequest(std::string_view request_type,
 		       std::span<const std::byte> type_specific,
 		       bool want_reply)
 {
+	if (pending_requests.size() >= MAX_PENDING_REQUESTS)
+		throw Connection::Disconnect{
+			DisconnectReasonCode::BY_APPLICATION,
+			"Too many channel requests"sv,
+		};
+
 	auto *request = new PendingRequest(*this, want_reply,
 					   OnRequest(request_type, type_specific));
 	pending_requests.push_back(*request);

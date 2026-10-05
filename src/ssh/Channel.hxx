@@ -33,6 +33,8 @@ struct ChannelInit {
 };
 
 class Channel {
+	static constexpr std::size_t MAX_PENDING_REQUESTS = 16;
+
 	ChannelSupport &parent;
 	Connection &connection;
 
@@ -58,7 +60,9 @@ class Channel {
 	 * because they need to be in-order and an older request
 	 * hasn't yet finished.
 	 */
-	IntrusiveList<PendingRequest> pending_requests;
+	IntrusiveList<PendingRequest,
+		IntrusiveListBaseHookTraits<PendingRequest>,
+		IntrusiveListOptions{.constant_time_size = true}> pending_requests;
 
 	bool eof = false;
 
