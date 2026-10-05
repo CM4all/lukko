@@ -558,6 +558,19 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	p.Append(cmd);
 	p.Append(unescaped_arg);
 
+	/* override configuration options (from the client-writable
+	   repository config and ~/.gitconfig) which make git execute
+	   commands */
+	p.PutEnv("GIT_CONFIG_COUNT=4");
+	p.PutEnv("GIT_CONFIG_KEY_0=core.alternateRefsCommand");
+	p.PutEnv("GIT_CONFIG_VALUE_0=true");
+	p.PutEnv("GIT_CONFIG_KEY_1=core.fsmonitor");
+	p.PutEnv("GIT_CONFIG_VALUE_1=false");
+	p.PutEnv("GIT_CONFIG_KEY_2=core.hooksPath");
+	p.PutEnv("GIT_CONFIG_VALUE_2=/dev/null");
+	p.PutEnv("GIT_CONFIG_KEY_3=receive.denyCurrentBranch");
+	p.PutEnv("GIT_CONFIG_VALUE_3=refuse");
+
 	if (execute_options.process_name != nullptr)
 		p.SetProcessName(execute_options.process_name);
 

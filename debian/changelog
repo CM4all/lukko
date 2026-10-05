@@ -4,6 +4,7 @@ cm4all-lukko (0.67) unstable; urgency=low
   * limit the number of pending channel requests
   * refuse rekeying before authentication
   * fix username enumeration via USERAUTH_FAILURE method list
+  * git: override config options which execute commands
   * translation: stricter SITE validation
   * zeroconf: fix leak bug
   * log: emit the TRUNCATED attributes
