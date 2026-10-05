@@ -900,7 +900,7 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 				       response.message != nullptr ? response.message : "");
 
 			co_await fail_sleep;
-			SendPacket(SSH::MakeUserauthFailure({}, false));
+			SendPacket(SSH::MakeUserauthFailure(auth_methods, false));
 			co_return;
 		}
 
