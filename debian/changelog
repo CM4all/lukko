@@ -1,6 +1,7 @@
 cm4all-lukko (0.67) unstable; urgency=low
 
   * spawn: forbid io_uring
+  * spawn: make a dropped forbidden-syscall rule fatal
   * limit the number of pending channel requests
   * refuse rekeying before authentication
   * fix username enumeration via USERAUTH_FAILURE method list
