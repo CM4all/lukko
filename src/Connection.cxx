@@ -1241,6 +1241,13 @@ Connection::HandleGlobalRequest(std::string_view request_name,
 		if (!authenticated_hostbased)
 			co_return false;
 
+		/* the proxy sends this request exactly once, before
+		   forwarding any packet of the real client; refuse
+		   all further requests, which may have been sent by
+		   the real client, to prevent changing the options
+		   while a session is being set up */
+		authenticated_hostbased = false;
+
 		SSH::Deserializer d{request_specific_data};
 		auto options = DeserializeAuthorizedKeyOptions(d);
 
