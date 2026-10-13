@@ -7,7 +7,7 @@ cm4all-lukko (0.68) unstable; urgency=low
   * proxy: send/accept only numeric IP client addresses
   * reply CHANNEL_OPEN_FAILURE instead of disconnecting if there are too many channels
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Tue, 13 Oct 2026 21:26:14 +0200
 
 cm4all-lukko (0.67) unstable; urgency=low
 
