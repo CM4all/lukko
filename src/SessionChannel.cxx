@@ -565,9 +565,8 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	p.PutEnv("GIT_CONFIG_GLOBAL=/dev/null");
 
 	/* override configuration options (from the client-writable
-	   repository config and ~/.gitconfig) which make git execute
-	   commands */
-	p.PutEnv("GIT_CONFIG_COUNT=4");
+	   repository config) which make git execute commands */
+	p.PutEnv("GIT_CONFIG_COUNT=7");
 	p.PutEnv("GIT_CONFIG_KEY_0=core.alternateRefsCommand");
 	p.PutEnv("GIT_CONFIG_VALUE_0=true");
 	p.PutEnv("GIT_CONFIG_KEY_1=core.fsmonitor");
@@ -576,6 +575,12 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	p.PutEnv("GIT_CONFIG_VALUE_2=/dev/null");
 	p.PutEnv("GIT_CONFIG_KEY_3=receive.denyCurrentBranch");
 	p.PutEnv("GIT_CONFIG_VALUE_3=refuse");
+	p.PutEnv("GIT_CONFIG_KEY_4=gpg.program");
+	p.PutEnv("GIT_CONFIG_VALUE_4=false");
+	p.PutEnv("GIT_CONFIG_KEY_5=gpg.x509.program");
+	p.PutEnv("GIT_CONFIG_VALUE_5=false");
+	p.PutEnv("GIT_CONFIG_KEY_6=gpg.ssh.program");
+	p.PutEnv("GIT_CONFIG_VALUE_6=false");
 
 	if (execute_options.process_name != nullptr)
 		p.SetProcessName(execute_options.process_name);
