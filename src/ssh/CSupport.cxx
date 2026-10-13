@@ -303,7 +303,16 @@ ChannelSupport::HandleChannelOpen(std::string_view channel_type,
 			       uint_least32_t initial_window_size,
 			       std::span<const std::byte> payload)
 {
-	const uint_least32_t local_channel = AllocateChannelIndex();
+	uint_least32_t local_channel;
+
+	try {
+		local_channel = AllocateChannelIndex();
+	} catch (const ChannelOpenFailure &failure) {
+		SendPacket(MakeChannelOpenFailure(peer_channel,
+						  failure.reason_code,
+						  failure.description));
+		return;
+	}
 
 	const ChannelInit init{
 		.local_channel = local_channel,
