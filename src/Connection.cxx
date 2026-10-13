@@ -32,7 +32,8 @@
 #include "event/net/CoConnectSocket.hxx"
 #include "system/Arch.hxx"
 #include "net/FormatAddress.hxx"
-#include "net/Parser.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/Resolver.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -1097,12 +1098,13 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 			    !user_name.empty() && !address.empty()) {
 				try {
 					static constexpr struct addrinfo hints = {
+						.ai_flags = AI_NUMERICHOST|AI_NUMERICSERV,
 						.ai_family = AF_UNSPEC,
 						.ai_socktype = SOCK_STREAM,
 					};
 
-					peer_address = ParseSocketAddress(std::string{address}.c_str(),
-									  0, hints);
+					peer_address = Resolve(std::string{address}.c_str(),
+							       0, &hints).GetBest();
 
 					LogFmt("Accepted client address {:?} from proxy"sv, address);
 
@@ -1390,7 +1392,9 @@ Connection::OnOutgoingUserauthService()
 	std::string_view client_user_name = "unknown"sv;
 
 	char user_buffer[1024];
-	if (listener.GetSendClientAddress()) {
+	if (listener.GetSendClientAddress() && GetPeerAddress().IsInet()) {
+		/* send only IP addresses; the address of a local
+		   socket client is chosen by the client */
 		std::span<char> w = user_buffer;
 
 		const std::string_view prefix = "unknown@"sv;

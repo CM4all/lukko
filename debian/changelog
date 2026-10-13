@@ -4,6 +4,7 @@ cm4all-lukko (0.68) unstable; urgency=low
   * git: ignore ~/.gitconfig
   * git: override GPG programs
   * proxy: accept only one authorized_keys options request
+  * proxy: send/accept only numeric IP client addresses
 
  --   
 
