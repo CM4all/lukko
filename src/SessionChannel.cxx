@@ -558,6 +558,12 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	p.Append(cmd);
 	p.Append(unescaped_arg);
 
+	/* ignore the client-writable ~/.gitconfig and
+	   $XDG_CONFIG_HOME/git/config; this is "protected
+	   configuration" which may contain options like
+	   "uploadpack.packObjectsHook" */
+	p.PutEnv("GIT_CONFIG_GLOBAL=/dev/null");
+
 	/* override configuration options (from the client-writable
 	   repository config and ~/.gitconfig) which make git execute
 	   commands */

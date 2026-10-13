@@ -1,6 +1,7 @@
 cm4all-lukko (0.68) unstable; urgency=low
 
   * fix infinite loop while reading authorized_keys file
+  * git: ignore ~/.gitconfig
 
  --   
 
