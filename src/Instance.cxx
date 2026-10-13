@@ -134,6 +134,10 @@ Instance::OnExit() noexcept
 	shutdown_listener.Disable();
 	sighup_event.Disable();
 
+#ifdef HAVE_LIBSYSTEMD
+	systemd_watchdog.Disable();
+#endif
+
 	thread_pool_stop();
 
 	spawn_service->Shutdown();

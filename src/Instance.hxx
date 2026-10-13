@@ -15,6 +15,10 @@
 #include "io/StateDirectories.hxx"
 #include "config.h"
 
+#ifdef HAVE_LIBSYSTEMD
+#include "event/systemd/Watchdog.hxx"
+#endif
+
 #ifdef HAVE_AVAHI
 #include "lib/avahi/ErrorHandler.hxx"
 #endif
@@ -76,6 +80,10 @@ class Instance final
 
 	ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnExit)};
 	SignalEvent sighup_event{event_loop, SIGHUP, BIND_THIS_METHOD(OnReload)};
+
+#ifdef HAVE_LIBSYSTEMD
+	Systemd::Watchdog systemd_watchdog{event_loop};
+#endif
 
 #ifdef ENABLE_CONTROL
 	std::forward_list<BengControl::Server> control_listeners;
