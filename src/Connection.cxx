@@ -781,6 +781,35 @@ Connection::OnUnsupportedService() noexcept
 	++instance.counters.n_unsupported_service;
 }
 
+/**
+ * Parse the method-specific fields of a "publickey" or "hostbased"
+ * USERAUTH_REQUEST.  This is called before the user is looked up,
+ * so a malformed request results in the same error regardless of
+ * whether the user exists.
+ *
+ * Throws SSH::MalformedPacket on error.
+ */
+static void
+CheckUserauthMethodFields(std::string_view method_name,
+			  SSH::Deserializer d)
+{
+	if (method_name == "publickey"sv) {
+		const bool with_signature = d.ReadBool();
+		d.ReadString(); // public_key_algorithm
+		d.ReadLengthEncoded(); // public_key_blob
+		if (with_signature)
+			d.ReadLengthEncoded(); // signature
+		d.ExpectEnd();
+	} else if (method_name == "hostbased"sv) {
+		d.ReadString(); // public_key_algorithm
+		d.ReadLengthEncoded(); // public_key_blob
+		d.ReadString(); // client_host_name
+		d.ReadString(); // client_user_name
+		d.ReadLengthEncoded(); // signature
+		d.ExpectEnd();
+	}
+}
+
 static bool
 IsValidUsername(std::string_view username) noexcept
 {
@@ -814,6 +843,7 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 	const auto new_username = d.ReadString();
 	const auto service_name = d.ReadString();
 	const auto method_name = d.ReadString();
+	CheckUserauthMethodFields(method_name, d);
 
 	++instance.counters.n_userauth_received;
 

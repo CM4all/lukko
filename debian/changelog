@@ -4,6 +4,7 @@ cm4all-lukko (0.69) unstable; urgency=low
   * fix assertion failure after rejecting a long command with exec_reject_stderr
   * proxy: relay authorized_keys options through intermediate proxies
   * session: reject more than 20 PTYs per user
+  * fix username enumeration via malformed publickey/hostbased requests
   * git: refuse option arguments
   * rsync: don't set $HOME to prevent reading ~/.popt
   * debian: use "debhelper-compat" instead of "debian/compat"
