@@ -860,6 +860,10 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		if (command.size() + env_size > MAX_ENV_SIZE) {
 			if (c.GetListener().GetExecRejectStderr()) {
+				/* the stderr pipe is now in use; no
+				   other process may be started on this
+				   channel */
+				start_requested = true;
 				SetStderrString("Command too long\r\n"sv);
 				co_return true;
 			}
