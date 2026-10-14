@@ -2,6 +2,7 @@ cm4all-lukko (0.69) unstable; urgency=low
 
   * enable the systemd watchdog
   * fix assertion failure after rejecting a long command with exec_reject_stderr
+  * proxy: relay authorized_keys options through intermediate proxies
   * git: refuse option arguments
   * rsync: don't set $HOME to prevent reading ~/.popt
   * debian: use "debhelper-compat" instead of "debian/compat"

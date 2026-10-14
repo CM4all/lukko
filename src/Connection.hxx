@@ -131,7 +131,8 @@ class Connection final
 	 * Only such a peer (i.e. a trusted proxy, see
 	 * #authorized_host_keys) is allowed to submit the
 	 * #AUTHORIZED_KEY_OPTIONS_REQUEST.  This flag is cleared
-	 * after the first such request.
+	 * after the first such request.  If this connection is
+	 * proxied, the request is relayed instead.
 	 */
 	bool authenticated_hostbased = false;
 

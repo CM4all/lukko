@@ -1430,7 +1430,8 @@ Connection::OnOutgoingUserauthSuccess()
 	   to the target; this happens before the proxy handlers are
 	   created, so this is guaranteed to reach the target before
 	   any packet of the (untrusted) real client */
-	SendAuthorizedKeyOptions();
+	if (!authenticated_hostbased)
+		SendAuthorizedKeyOptions();
 
 	proxy_handlers = std::make_unique<ProxyHandlers>(*this, *outgoing);
 
