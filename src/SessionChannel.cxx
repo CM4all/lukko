@@ -475,7 +475,15 @@ SessionChannel::ExecRsync(const char *cmd, const ExecuteOptions &execute_options
 
 	c.PrepareChildProcess(p, close_fds, execute_options.child_options);
 	PreparePipes(p, close_fds);
-	PrepareHome(alloc, p);
+
+	/* change to the home directory, but do not set $HOME (and
+	   remove it if the translation server has set it), because
+	   popt (rsync's option parser) would read the client-writable
+	   $HOME/.popt, which may contain "exec" entries */
+	p.RemoveEnv("HOME"sv);
+
+	if (p.chdir == nullptr)
+		p.chdir = p.ToContainerPath(alloc, p.GetHome());
 
 	const UniqueFileDescriptor exec_fd = OpenPath(execute_options.execute);
 	p.exec_fd = exec_fd;
