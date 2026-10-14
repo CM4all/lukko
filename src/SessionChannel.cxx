@@ -541,6 +541,13 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	if (unescaped_arg == nullptr)
 		co_return false;
 
+	if (*unescaped_arg == '-')
+		/* this must be a repository path, not an option
+		   (e.g. "--help" would run "git help", which executes
+		   the "man.<tool>.cmd" from the client-writable
+		   repository config) */
+		co_return false;
+
 	/* throttle if the spawner is under pressure */
 	co_await CoEnqueueSpawner(c.GetSpawnService());
 
