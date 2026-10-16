@@ -3,6 +3,7 @@ cm4all-lukko (0.69) unstable; urgency=low
   * enable the systemd watchdog
   * fix assertion failure after rejecting a long command with exec_reject_stderr
   * git: refuse option arguments
+  * debian: use "debhelper-compat" instead of "debian/compat"
 
  --   
 
