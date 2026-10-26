@@ -12,6 +12,7 @@
 #include "event/FarTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/AllocatedArray.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/IntrusiveList.hxx"
 
 #include <cassert>
@@ -38,11 +39,7 @@ enum class KexAlgorithm : uint_least8_t;
 
 class Connection : BufferedSocketHandler, InputHandler
 {
-	static constexpr uint_least64_t KILO = 1024;
-	static constexpr uint_least64_t MEGA = 1024 * KILO;
-	static constexpr uint_least64_t GIGA = 1024 * MEGA;
-
-	static constexpr uint_least64_t REKEY_BYTES = GIGA;
+	static constexpr uint_least64_t REKEY_BYTES = 1_GiB;
 	static constexpr auto REKEY_INTERVAL = std::chrono::hours{1};
 
 	/**

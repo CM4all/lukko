@@ -5,13 +5,14 @@
 #pragma once
 
 #include "Options.hxx"
+#include "util/ByteSizes.hxx"
 
 #include <cstddef>
 #include <optional>
 #include <span>
 #include <string_view>
 
-static constexpr std::size_t MAX_PUBLIC_KEYS_TEXT_FILE_SIZE = 1024zu * 1024zu;
+static constexpr std::size_t MAX_PUBLIC_KEYS_TEXT_FILE_SIZE = 1_MiB;
 
 class PublicKeySet;
 class FileDescriptor;

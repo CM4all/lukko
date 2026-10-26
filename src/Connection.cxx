@@ -47,6 +47,7 @@
 #include "co/Task.hxx"
 #include "time/Cast.hxx"
 #include "util/AllocatedArray.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/Cancellable.hxx"
 #include "util/CharUtil.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -1391,7 +1392,7 @@ Connection::OnOutgoingUserauthService()
 
 	std::string_view client_user_name = "unknown"sv;
 
-	char user_buffer[1024];
+	char user_buffer[1_KiB];
 	if (listener.GetSendClientAddress() && GetPeerAddress().IsInet()) {
 		/* send only IP addresses; the address of a local
 		   socket client is chosen by the client */

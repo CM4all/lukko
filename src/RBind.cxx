@@ -39,6 +39,7 @@ using std::string_view_literals::operator""sv;
 #include "net/SendMessage.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringAPI.hxx"
@@ -65,7 +66,7 @@ NsResolveBindTCPFunction(PreparedChildProcess &&)
 	SocketDescriptor control{3};
 
 	unsigned port;
-	char host[1024];
+	char host[1_KiB];
 
 	std::array v{
 		MakeIovec(ReferenceAsWritableBytes(port)),

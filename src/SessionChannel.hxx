@@ -8,6 +8,7 @@
 #include "spawn/ExitListener.hxx"
 #include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 
 #include <forward_list>
 #include <memory>
@@ -24,7 +25,7 @@ class AgentForward;
 
 class SessionChannel final : public SSH::BufferedChannel, ExitListener
 {
-	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
+	static constexpr std::size_t RECEIVE_WINDOW = 1_MiB;
 
 	const Logger &logger;
 
@@ -42,7 +43,7 @@ class SessionChannel final : public SSH::BufferedChannel, ExitListener
 	 */
 	std::forward_list<std::string> env;
 
-	static constexpr std::size_t MAX_ENV_SIZE = 16384;
+	static constexpr std::size_t MAX_ENV_SIZE = 16_KiB;
 	std::size_t env_size = 0;
 
 	/**

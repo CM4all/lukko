@@ -19,6 +19,7 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/Task.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -40,7 +41,7 @@ static int
 LocalConnectExec(PreparedChildProcess &&)
 {
 	SocketDescriptor control{3};
-	char path[4096];
+	char path[4_KiB];
 	ReceivePath(control, path);
 	try {
 		UniqueSocketDescriptor sock;
@@ -64,7 +65,7 @@ static int
 OpenExec(PreparedChildProcess &&)
 {
 	SocketDescriptor control{3};
-	char path[4096];
+	char path[4_KiB];
 	ReceivePath(control, path);
 	try {
 		auto fd = OpenReadOnly(path);

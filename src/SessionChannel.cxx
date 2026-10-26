@@ -230,7 +230,7 @@ SessionChannel::PreparePipes(PreparedChildProcess &p,
 
 	/* allocate 256 kB for each pipe to maximize
 	   throughput */
-	constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
+	constexpr int PIPE_BUFFER_SIZE = 256_KiB;
 	stdout_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
 	stdin_w.SetPipeCapacity(PIPE_BUFFER_SIZE);
 
@@ -1040,7 +1040,7 @@ try {
 	if ((events & PipeEvent::READ) == 0)
 		return;
 
-	std::byte buffer[4096];
+	std::byte buffer[4_KiB];
 	std::span<std::byte> dest{buffer};
 
 	if (GetSendWindow() < dest.size()) {
@@ -1075,7 +1075,7 @@ try {
 void
 SessionChannel::OnStdoutReady([[maybe_unused]] unsigned events) noexcept
 try {
-	std::byte buffer[4096];
+	std::byte buffer[4_KiB];
 	std::span<std::byte> dest{buffer};
 	if (GetSendWindow() < dest.size()) {
 		dest = dest.first(GetSendWindow());
@@ -1099,7 +1099,7 @@ try {
 void
 SessionChannel::OnStderrReady([[maybe_unused]] unsigned events) noexcept
 try {
-	std::byte buffer[4096];
+	std::byte buffer[4_KiB];
 	std::span<std::byte> dest{buffer};
 	if (GetSendWindow() < dest.size()) {
 		dest = dest.first(GetSendWindow());

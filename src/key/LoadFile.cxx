@@ -7,6 +7,7 @@
 #include "Key.hxx"
 #include "system/Error.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <sodium/utils.h>
@@ -25,7 +26,7 @@ LoadKeyFile(FileDescriptor fd)
 	if (!S_ISREG(st.st_mode))
 		throw std::runtime_error{"Not a regular file"};
 
-	std::array<std::byte, 32768> buffer;
+	std::array<std::byte, 32_KiB> buffer;
 
 	if (st.st_size > (off_t)buffer.size())
 		throw std::runtime_error{"File is too large"};

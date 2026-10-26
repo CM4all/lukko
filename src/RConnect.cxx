@@ -37,6 +37,7 @@
 #include "net/SocketError.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "io/Iovec.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/SpanCast.hxx"
 
 static int
@@ -45,7 +46,7 @@ NsResolveConnectTCPFunction(PreparedChildProcess &&)
 	SocketDescriptor control{3};
 
 	unsigned port;
-	char host[1024];
+	char host[1_KiB];
 
 	std::array v{
 		MakeIovec(ReferenceAsWritableBytes(port)),

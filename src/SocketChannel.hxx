@@ -6,6 +6,7 @@
 
 #include "ssh/BufferedChannel.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/ByteSizes.hxx"
 
 class UniqueSocketDescriptor;
 
@@ -17,7 +18,7 @@ class SocketChannel final : public SSH::BufferedChannel
 	SocketEvent socket;
 
 public:
-	static constexpr std::size_t RECEIVE_WINDOW = 1024 * 1024;
+	static constexpr std::size_t RECEIVE_WINDOW = 1_MiB;
 
 	SocketChannel(SSH::ChannelSupport &_parent,
 		      SSH::ChannelInit init,

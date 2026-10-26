@@ -114,7 +114,7 @@ try {
 	bool empty = false;
 
 	if (events & SocketEvent::READ) {
-		std::byte buffer[4096];
+		std::byte buffer[4_KiB];
 		std::span<std::byte> dest{buffer};
 
 		if (GetSendWindow() < dest.size()) {

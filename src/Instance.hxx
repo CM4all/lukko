@@ -13,6 +13,7 @@
 #include "event/net/PrometheusExporterHandler.hxx"
 #include "io/Logger.hxx"
 #include "io/StateDirectories.hxx"
+#include "util/ByteSizes.hxx"
 #include "config.h"
 
 #ifdef HAVE_LIBSYSTEMD
@@ -60,7 +61,7 @@ class Instance final
 #endif
 	 PrometheusExporterHandler
 {
-	static constexpr size_t MAX_DATAGRAM_SIZE = 4096;
+	static constexpr size_t MAX_DATAGRAM_SIZE = 4_KiB;
 
 	const RootLogger logger;
 

@@ -13,6 +13,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "co/AwaitableHelper.hxx"
 #include "co/Task.hxx"
+#include "util/ByteSizes.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/SpanCast.hxx"
 
@@ -90,7 +91,7 @@ SendTranslateLogin(SocketDescriptor fd,
 	if (password.size() > 256)
 		throw std::runtime_error("Password too long");
 
-	std::byte buffer[1024], *p = buffer;
+	std::byte buffer[1_KiB], *p = buffer;
 
 	WritePacket(p, TranslationCommand::BEGIN);
 	WritePacket(p, TranslationCommand::LOGIN);
@@ -161,7 +162,7 @@ ReceiveResponse(EventLoop &event_loop,
 	TranslateResponse response;
 	TranslateParser parser(alloc, response);
 
-	StaticFifoBuffer<std::byte, 8192> buffer;
+	StaticFifoBuffer<std::byte, 8_KiB> buffer;
 
 	CoSocketEvent event{event_loop, fd};
 	co_await event;

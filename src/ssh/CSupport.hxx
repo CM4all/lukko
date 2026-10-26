@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Handler.hxx"
+#include "util/ByteSizes.hxx"
 
 #include <array>
 #include <cstddef>
@@ -55,7 +56,7 @@ public:
  */
 class ChannelSupport final : ConnectionHandler
 {
-	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32768;
+	static constexpr uint_least32_t MAXIMUM_PACKET_SIZE = 32_KiB;
 
 	/**
 	 * The largest window size allowed by RFC 4254 (where window

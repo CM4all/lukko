@@ -166,7 +166,7 @@ ExtractPublicKeyBlobFromLine(std::string_view line) noexcept
 static void
 LoadPublicKeyLine(PublicKeySet &set, std::string_view line) noexcept
 {
-	if (line.size() >= 8192)
+	if (line.size() >= 8_KiB)
 		/* such long lines can't be good */
 		return;
 
@@ -211,7 +211,7 @@ static std::optional<AuthorizedKeyOptions>
 PublicKeysTextLineContains(std::string_view line,
 			   std::span<const std::byte> needle) noexcept
 {
-	if (line.size() >= 8192)
+	if (line.size() >= 8_KiB)
 		/* such long lines can't be good */
 		return std::nullopt;
 
