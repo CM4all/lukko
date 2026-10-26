@@ -117,6 +117,11 @@ Known attributes:
   authorized unconditionally (see :ref:`hostbased`).  This option may
   appear more than once to load keys from multiple files.
 
+  On listeners with ``proxy_to`` or ``proxy_to_zeroconf``,
+  ``authorized_keys`` options in these files (e.g. ``command`` or
+  ``restrict``) are ignored; they are neither applied nor forwarded to
+  the target.
+
 - ``exec_reject_stderr``: ``yes`` means when an ``exec`` request on a
   session channel is rejected (e.g. for SFTP-only accounts), Lukko
   pretends the request has succeeded, but prints an error message on
