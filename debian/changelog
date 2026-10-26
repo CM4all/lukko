@@ -10,7 +10,7 @@ cm4all-lukko (0.69) unstable; urgency=low
   * debian: use "debhelper-compat" instead of "debian/compat"
   * refuse pty-req instead of disconnecting if openpty() fails
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 26 Oct 2026 21:26:15 +0100
 
 cm4all-lukko (0.68) unstable; urgency=low
 
