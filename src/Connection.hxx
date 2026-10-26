@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "PerUser.hxx"
 #include "OutgoingConnection.hxx"
 #include "Service.hxx"
 #include "ssh/Connection.hxx"
@@ -62,6 +63,8 @@ class Connection final
 #ifdef ENABLE_POND
 	std::string peer_host;
 #endif
+
+	PerUserAccountingLease user_accounting;
 
 	std::unique_ptr<SSH::UserAuthServer> user_auth;
 	std::unique_ptr<SSH::GlobalRequestSupport> global_requests;
@@ -153,6 +156,10 @@ public:
 
 	const auto &GetLogger() const noexcept {
 		return logger;
+	}
+
+	PerUserData &GetPerUserData() const noexcept {
+		return *user_accounting;
 	}
 
 	/**

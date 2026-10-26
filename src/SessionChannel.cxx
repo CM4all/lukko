@@ -67,6 +67,13 @@ SessionChannel::~SessionChannel() noexcept
 	tty.Close();
 }
 
+inline PerUserData &
+SessionChannel::GetPerUserData() noexcept
+{
+	auto &c = static_cast<Connection &>(GetConnection());
+	return c.GetPerUserData();
+}
+
 void
 SessionChannel::CloseIfInactive() noexcept
 {

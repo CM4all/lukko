@@ -17,6 +17,7 @@ namespace Co { template<typename T> class Task; }
 struct ChildOptions;
 struct ExecuteOptions;
 struct PreparedChildProcess;
+struct PerUserData;
 class AllocatorPtr;
 class ChildProcessHandle;
 class FdHolder;
@@ -94,6 +95,8 @@ public:
 	void OnBufferedEof() override;
 
 private:
+	PerUserData &GetPerUserData() noexcept;
+
 	bool IsActive() const noexcept {
 		return stdout_pipe.IsDefined() || stderr_pipe.IsDefined() ||
 			tty.IsDefined() ||

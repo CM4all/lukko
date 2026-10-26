@@ -1146,6 +1146,7 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 	}
 
 	username.assign(new_username);
+	user_accounting = instance.GetUserAccounting()[username];
 
 	logger = Logger{fmt::format("{} user={:?}", logger.GetDomain(), username)};
 

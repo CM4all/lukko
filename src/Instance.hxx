@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "PerUser.hxx"
 #include "ssh/Metrics.hxx"
 #include "key/List.hxx"
 #include "key/Set.hxx"
@@ -97,6 +98,8 @@ class Instance final
 	std::map<const ZeroconfClusterConfig *, ZeroconfCluster> zeroconf_clusters;
 #endif // HAVE_AVAHI
 
+	UserAccountingMap user_accounting;
+
 	std::forward_list<Listener> listeners;
 
 	std::forward_list<PrometheusExporterListener> prometheus_exporters;
@@ -132,6 +135,10 @@ public:
 		return translation_server;
 	}
 #endif
+
+	UserAccountingMap &GetUserAccounting() noexcept {
+		return user_accounting;
+	}
 
 	[[gnu::const]]
 	SpawnService &GetSpawnService() const noexcept;
