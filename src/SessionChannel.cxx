@@ -64,7 +64,7 @@ SessionChannel::~SessionChannel() noexcept
 	stdin_pipe.Close();
 	stdout_pipe.Close();
 	stderr_pipe.Close();
-	tty.Close();
+	CloseTty();
 }
 
 inline PerUserData &
@@ -72,6 +72,18 @@ SessionChannel::GetPerUserData() noexcept
 {
 	auto &c = static_cast<Connection &>(GetConnection());
 	return c.GetPerUserData();
+}
+
+inline void
+SessionChannel::CloseTty() noexcept
+{
+	if (!tty.IsDefined())
+		return;
+
+	auto &pu = GetPerUserData();
+	assert(pu.n_ptys > 0);
+	--pu.n_ptys;
+	tty.Close();
 }
 
 void
@@ -101,7 +113,7 @@ SessionChannel::SetStderrString(std::string_view s)
 	stdin_pipe.Close();
 	stdout_pipe.Close();
 	stderr_pipe.Close();
-	tty.Close();
+	CloseTty();
 
 	stderr_pipe.Open(MakeStringPipe(s).Release());
 	if (CanSend())
@@ -947,6 +959,10 @@ SessionChannel::OnRequest(std::string_view request_type,
 			co_return false;
 		}
 
+		auto &pu = GetPerUserData();
+		if (pu.n_ptys >= pu.MAX_PTYS)
+			co_return false;
+
 		SSH::Deserializer d{type_specific};
 		const auto term = d.ReadString();
 		const auto ws = ReadWindowSize(d);
@@ -963,7 +979,9 @@ SessionChannel::OnRequest(std::string_view request_type,
 		slave_tty = UniqueFileDescriptor{AdoptTag{}, slave};
 		slave_tty.EnableCloseOnExec();
 
-		tty.Close();
+		CloseTty();
+
+		++GetPerUserData().n_ptys;
 		tty.Open(FileDescriptor{master});
 		tty.GetFileDescriptor().EnableCloseOnExec();
 		tty.GetFileDescriptor().SetNonBlocking();
@@ -1035,7 +1053,7 @@ void
 SessionChannel::OnTtyReady([[maybe_unused]] unsigned events) noexcept
 try {
 	if (events == PipeEvent::HANGUP) {
-		tty.Close();
+		CloseTty();
 		MaybeSendEofAndClose();
 		return;
 	}
@@ -1064,7 +1082,7 @@ try {
 		if (GetSendWindow() == 0)
 			CancelRead();
 	} else {
-		tty.Close();
+		CloseTty();
 		MaybeSendEofAndClose();
 	}
 } catch (...) {

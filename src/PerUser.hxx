@@ -8,12 +8,24 @@
 #include "util/SharedLease.hxx"
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 /**
  * Data accounted for each user.
  */
 struct PerUserData {
+	/**
+	 * The maximum number of ptys a user may allocate (in all of
+	 * its connections).  This prevents one user from exhausting
+	 * the host's pty pool.
+	 */
+	static constexpr uint_least16_t MAX_PTYS = 20;
+
+	/**
+	 * The current number of ptys, used by #SessionChannel.
+	 */
+	uint_least16_t n_ptys = 0;
 };
 
 /**

@@ -144,6 +144,12 @@ private:
 	}
 
 	/**
+	 * Close #tty (if it exists) and decrement
+	 * PerUserData::n_ptys.
+	 */
+	void CloseTty() noexcept;
+
+	/**
 	 * Inject the specified string into STDERR (to be displayed to
 	 * the user).  Call this if process execution is rejected.
 	 */
