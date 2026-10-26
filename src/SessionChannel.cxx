@@ -948,8 +948,10 @@ SessionChannel::OnRequest(std::string_view request_type,
 
 		int master, slave;
 
-		if (openpty(&master, &slave, nullptr, nullptr, &ws) < 0)
-			throw MakeErrno("openpty() failed");
+		if (openpty(&master, &slave, nullptr, nullptr, &ws) < 0) {
+			logger(1, std::make_exception_ptr(MakeErrno("openpty() failed")));
+			co_return false;
+		}
 
 		slave_tty = UniqueFileDescriptor{AdoptTag{}, slave};
 		slave_tty.EnableCloseOnExec();

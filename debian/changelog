@@ -6,6 +6,7 @@ cm4all-lukko (0.69) unstable; urgency=low
   * git: refuse option arguments
   * rsync: don't set $HOME to prevent reading ~/.popt
   * debian: use "debhelper-compat" instead of "debian/compat"
+  * refuse pty-req instead of disconnecting if openpty() fails
 
  --   
 
