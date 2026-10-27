@@ -583,22 +583,34 @@ Connection::ShouldLoadHomeAuthorizedKeys() const noexcept
 	return true;
 }
 
-inline Co::Task<std::optional<AuthorizedKeyOptions>>
-Connection::FindHomeAuthorizedKey(std::span<const std::byte> blob) const noexcept
+inline Co::Task<const AuthorizedKeyOptions *>
+Connection::FindHomeAuthorizedKey(std::span<const std::byte> blob) noexcept
 {
 	assert(ShouldLoadHomeAuthorizedKeys());
 
-	const auto fd = co_await OpenInHome(".ssh/authorized_keys");
-	if (!fd.IsDefined())
-		co_return std::nullopt;
+	if (!home_authorized_keys) {
+		home_authorized_keys = std::make_unique<PublicKeySet>();
 
-	if (struct stat st;
-	    fstat(fd.Get(), &st) < 0 ||
-	    !S_ISREG(st.st_mode) ||
-	    st.st_size > (off_t)MAX_PUBLIC_KEYS_TEXT_FILE_SIZE)
-		co_return std::nullopt;
+		const auto fd = co_await OpenInHome(".ssh/authorized_keys");
+		if (!fd.IsDefined())
+			co_return nullptr;
 
-	co_return PublicKeysTextFileContains(fd, blob);
+		if (struct stat st;
+		    fstat(fd.Get(), &st) < 0 ||
+		    !S_ISREG(st.st_mode) ||
+		    st.st_size > (off_t)MAX_PUBLIC_KEYS_TEXT_FILE_SIZE)
+			co_return nullptr;
+
+		try {
+			LoadPublicKeysTextFile(*home_authorized_keys, fd);
+		} catch (...) {
+			// TODO log error?
+		}
+	}
+
+	assert(home_authorized_keys);
+
+	co_return home_authorized_keys->Find(blob);
 }
 
 inline Co::Task<bool>
@@ -622,7 +634,7 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 
 	if (ShouldLoadHomeAuthorizedKeys()) {
 		if (auto options = co_await FindHomeAuthorizedKey(public_key_blob)) {
-			authorized_key_options = std::move(*options);
+			authorized_key_options = *options;
 			co_return true;
 		}
 	}
@@ -1222,6 +1234,10 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 	auth_timeout.Cancel();
 
 	SetAuthenticated();
+
+	/* free the ~/.ssh/authorized_keys cache; we don't need it
+	   anymore */
+	home_authorized_keys.reset();
 
 	if (const auto proxy_to = listener.GetProxyTo(arch, sticky_source);
 	    !proxy_to.IsNull()) {

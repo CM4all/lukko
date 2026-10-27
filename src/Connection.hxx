@@ -23,7 +23,6 @@
 
 #include <cassert>
 #include <memory>
-#include <optional>
 
 #include <sys/types.h> // for uid_t, gid_t
 
@@ -36,6 +35,7 @@ class FdHolder;
 class Instance;
 class Listener;
 class PerClientAccounting;
+class PublicKeySet;
 class SocketForwardListener;
 class UniqueFileDescriptor;
 class SpawnService;
@@ -112,6 +112,11 @@ class Connection final
 
 	struct ProxyHandlers;
 	std::unique_ptr<ProxyHandlers> proxy_handlers;
+
+	/**
+	 * All keys loaded from ~/.ssh/authorized_keys.
+	 */
+	std::unique_ptr<PublicKeySet> home_authorized_keys;
 
 	static constexpr unsigned MAX_AUTH_REQUESTS = 6;
 	unsigned n_auth_requests = 0;
@@ -387,10 +392,10 @@ private:
 	bool ShouldLoadHomeAuthorizedKeys() const noexcept;
 
 	/**
-	 * Find a key in ~/.ssh/authorized_keys; returns std::nullopt
+	 * Find a key in ~/.ssh/authorized_keys; returns nullptr
 	 * if not found.
 	 */
-	Co::Task<std::optional<AuthorizedKeyOptions>> FindHomeAuthorizedKey(std::span<const std::byte> blob) const noexcept;
+	Co::Task<const AuthorizedKeyOptions *> FindHomeAuthorizedKey(std::span<const std::byte> blob) noexcept;
 
 	/**
 	 * This method modifies the `authorized_key_options` field if
