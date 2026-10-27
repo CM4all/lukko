@@ -1,6 +1,6 @@
 cm4all-lukko (0.70) unstable; urgency=low
 
-  * 
+  * auth: limit authentication requests per connection
 
  --   
 

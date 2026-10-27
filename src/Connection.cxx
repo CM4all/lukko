@@ -826,6 +826,12 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 	assert(!channels);
 	assert(!outgoing);
 
+	if (n_auth_requests++ >= MAX_AUTH_REQUESTS)
+		throw Disconnect{
+			SSH::DisconnectReasonCode::NO_MORE_AUTH_METHODS_AVAILABLE,
+			"Too many authentication requests"sv,
+		};
+
 	if (!got_userauth_request) {
 		/* this is the first USERAUTH_REQUEST - reschedule the
 		   timeout with a longer duration */

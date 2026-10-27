@@ -106,6 +106,9 @@ class Connection final
 	struct ProxyHandlers;
 	std::unique_ptr<ProxyHandlers> proxy_handlers;
 
+	static constexpr unsigned MAX_AUTH_REQUESTS = 6;
+	unsigned n_auth_requests = 0;
+
 #ifdef ENABLE_TRANSLATION
 	bool allow_exec = true;
 	bool allow_sftp = true;
