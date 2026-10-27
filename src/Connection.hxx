@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 
 #include <sys/types.h> // for uid_t, gid_t
 
@@ -384,6 +385,12 @@ private:
 	 */
 	[[gnu::pure]]
 	bool ShouldLoadHomeAuthorizedKeys() const noexcept;
+
+	/**
+	 * Find a key in ~/.ssh/authorized_keys; returns std::nullopt
+	 * if not found.
+	 */
+	Co::Task<std::optional<AuthorizedKeyOptions>> FindHomeAuthorizedKey(std::span<const std::byte> blob) const noexcept;
 
 	/**
 	 * This method modifies the `authorized_key_options` field if

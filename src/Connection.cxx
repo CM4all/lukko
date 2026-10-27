@@ -583,6 +583,24 @@ Connection::ShouldLoadHomeAuthorizedKeys() const noexcept
 	return true;
 }
 
+inline Co::Task<std::optional<AuthorizedKeyOptions>>
+Connection::FindHomeAuthorizedKey(std::span<const std::byte> blob) const noexcept
+{
+	assert(ShouldLoadHomeAuthorizedKeys());
+
+	const auto fd = co_await OpenInHome(".ssh/authorized_keys");
+	if (!fd.IsDefined())
+		co_return std::nullopt;
+
+	if (struct stat st;
+	    fstat(fd.Get(), &st) < 0 ||
+	    !S_ISREG(st.st_mode) ||
+	    st.st_size > (off_t)MAX_PUBLIC_KEYS_TEXT_FILE_SIZE)
+		co_return std::nullopt;
+
+	co_return PublicKeysTextFileContains(fd, blob);
+}
+
 inline Co::Task<bool>
 Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noexcept
 {
@@ -603,15 +621,9 @@ Connection::IsAcceptedPublicKey(std::span<const std::byte> public_key_blob) noex
 	}
 
 	if (ShouldLoadHomeAuthorizedKeys()) {
-		if (auto fd = co_await OpenInHome(".ssh/authorized_keys"); fd.IsDefined()) {
-			if (struct stat st;
-			    fstat(fd.Get(), &st) == 0 &&
-			    S_ISREG(st.st_mode) && st.st_size <= (off_t)MAX_PUBLIC_KEYS_TEXT_FILE_SIZE) {
-				if (auto options = PublicKeysTextFileContains(fd, public_key_blob)) {
-					authorized_key_options = std::move(*options);
-					co_return true;
-				}
-			}
+		if (auto options = co_await FindHomeAuthorizedKey(public_key_blob)) {
+			authorized_key_options = std::move(*options);
+			co_return true;
 		}
 	}
 
