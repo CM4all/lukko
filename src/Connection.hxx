@@ -85,6 +85,12 @@ class Connection final
 
 	AuthorizedKeyOptions authorized_key_options;
 
+	/**
+	 * The user name of the first USERAUTH_REQUEST.  All further
+	 * requests must use the same user name.
+	 */
+	std::string first_username;
+
 	std::string username;
 
 #ifdef ENABLE_TRANSLATION

@@ -285,8 +285,9 @@ Connection::LazyTranslate(const char *translation_server,
 			  std::string_view new_username,
 			  std::string_view password) noexcept
 {
-	if (translation && password.empty() &&
-	    new_username == translation->user)
+	assert(!translation || new_username == translation->user);
+
+	if (translation && password.empty())
 		co_return translation->response;
 
 	Allocator alloc;
@@ -874,6 +875,16 @@ Connection::OnUserAuthRequest(AllocatedArray<std::byte> payload)
 			"Illegal user name"sv,
 		};
 	}
+
+	if (first_username.empty())
+		first_username.assign(new_username);
+	else if (new_username != first_username)
+		/* don't allow changing the user name; this prevents
+		   probing many user names on one connection */
+		throw Disconnect{
+			SSH::DisconnectReasonCode::PROTOCOL_ERROR,
+			"Change of user name not allowed"sv,
+		};
 
 	SSH::AuthMethods _auth_methods{
 		.hostbased = !listener.GetAuthorizedHostKeys().empty(),
