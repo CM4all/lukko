@@ -4,6 +4,7 @@ cm4all-lukko (0.70) unstable; urgency=low
   * auth: limit authentication requests per connection
   * auth: fix "publickey" rejection after failed "password"
   * auth: read ~/.ssh/authorized_keys only once
+  * systemd: raise MemoryMax to 4 GB
 
  --   
 
