@@ -194,7 +194,8 @@ void
 LoadPublicKeysTextFile(PublicKeySet &set, FileDescriptor fd)
 {
 	FdReader r{fd};
-	BufferedReader br{r};
+	SizeLimitReader lr{r, MAX_PUBLIC_KEYS_TEXT_FILE_SIZE};
+	BufferedReader br{lr};
 	LoadPublicKeysTextFile(set, br);
 }
 
