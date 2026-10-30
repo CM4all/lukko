@@ -12,7 +12,7 @@
 #include <span>
 #include <string_view>
 
-static constexpr std::size_t MAX_PUBLIC_KEYS_TEXT_FILE_SIZE = 1_MiB;
+static constexpr std::size_t MAX_PUBLIC_KEYS_TEXT_FILE_SIZE = 256_KiB;
 
 class PublicKeySet;
 class FileDescriptor;
