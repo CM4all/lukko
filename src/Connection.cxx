@@ -96,6 +96,12 @@ struct Connection::Translation {
 	TranslateResponse response;
 
 	/**
+	 * Was this response obtained with a password?  If yes, it
+	 * must not be reused for requests without a password.
+	 */
+	const bool with_password;
+
+	/**
 	 * The translation response for "SERVICE=sftp".  It is loaded
 	 * on demand.
 	 */
@@ -123,16 +129,19 @@ struct Connection::Translation {
 
 	Translation(std::string_view _user,
 		    Allocator &&_alloc,
-		    TranslateResponse &&_response) noexcept;
+		    TranslateResponse &&_response,
+		    bool _with_password) noexcept;
 };
 
 inline
 Connection::Translation::Translation(std::string_view _user,
 				     Allocator &&_alloc,
-				     TranslateResponse &&_response) noexcept
+				     TranslateResponse &&_response,
+				     bool _with_password) noexcept
 	:user(_user),
 	 alloc(std::move(_alloc)),
 	 response(std::move(_response)),
+	 with_password(_with_password),
 	 sftp_options(response.service_execute_options.Get("sftp"sv)),
 	 rsync_options(response.service_execute_options.Get("rsync"sv)),
 	 git_receive_pack_options(response.service_execute_options.Get("git-receive-pack"sv)),
@@ -287,7 +296,7 @@ Connection::LazyTranslate(const char *translation_server,
 {
 	assert(!translation || new_username == translation->user);
 
-	if (translation && password.empty())
+	if (translation && !translation->with_password && password.empty())
 		co_return translation->response;
 
 	Allocator alloc;
@@ -311,7 +320,8 @@ Connection::LazyTranslate(const char *translation_server,
 
 	translation = std::make_unique<Translation>(new_username,
 						    std::move(alloc),
-						    std::move(response));
+						    std::move(response),
+						    !password.empty());
 	co_return translation->response;
 }
 

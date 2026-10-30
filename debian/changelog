@@ -2,6 +2,7 @@ cm4all-lukko (0.70) unstable; urgency=low
 
   * auth: disallow changing the user name
   * auth: limit authentication requests per connection
+  * auth: fix "publickey" rejection after failed "password"
 
  --   
 
