@@ -6,7 +6,7 @@ cm4all-lukko (0.70) unstable; urgency=low
   * auth: read ~/.ssh/authorized_keys only once
   * systemd: raise MemoryMax to 4 GB
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Fri, 30 Oct 2026 15:13:20 +0100
 
 cm4all-lukko (0.69) unstable; urgency=low
 
