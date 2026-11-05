@@ -15,7 +15,7 @@ using std::string_view_literals::operator""sv;
 namespace SSH {
 
 std::unique_ptr<Kex>
-MakeKex(std::string_view algorithms)
+MakeKex(std::string_view algorithms, [[maybe_unused]] Role role)
 {
 	for (const std::string_view a : IterableSplitString(algorithms, ','))
 		if (a == "curve25519-sha256"sv)

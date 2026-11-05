@@ -524,7 +524,7 @@ Connection::HandleKexInit(std::span<const std::byte> payload)
 		? FindCommonAlgorithm(p.kex_algorithms, all_server_kex_algorithms)
 		: FindCommonAlgorithm(all_client_kex_algorithms, p.kex_algorithms);
 
-	kex_algorithm = MakeKex(negotiated_kex_algorithm);
+	kex_algorithm = MakeKex(negotiated_kex_algorithm, role);
 	if (!kex_algorithm)
 		throw Disconnect{
 			DisconnectReasonCode::KEY_EXCHANGE_FAILED,

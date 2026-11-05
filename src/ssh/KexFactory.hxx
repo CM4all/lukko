@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "KexEnums.hxx"
 #include "config.h"
 
 #include <memory>
@@ -33,6 +34,6 @@ static constexpr std::string_view all_client_kex_algorithms =
  * Throws on error.
  */
 std::unique_ptr<Kex>
-MakeKex(std::string_view algorithms);
+MakeKex(std::string_view algorithms, Role role);
 
 } // namespace SSH
