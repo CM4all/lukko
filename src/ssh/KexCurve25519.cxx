@@ -3,11 +3,11 @@
 // author: Max Kellermann <max.kellermann@ionos.com>
 
 #include "KexCurve25519.hxx"
+#include "Curve25519.hxx"
 #include "Serializer.hxx"
 #include "system/Urandom.hxx"
 #include "util/ScopeExit.hxx"
 
-#include <sodium/crypto_scalarmult_curve25519.h>
 #include <sodium/utils.h>
 
 #include <stdexcept>
@@ -16,7 +16,7 @@ namespace SSH {
 
 Curve25519Kex::Curve25519Kex()
 {
-	static_assert(sizeof(secret_key) == crypto_scalarmult_curve25519_SCALARBYTES);
+	static_assert(sizeof(secret_key) == CURVE25519_SECRET_KEY_SIZE);
 
 	UrandomFill(secret_key);
 }
@@ -26,59 +26,29 @@ Curve25519Kex::~Curve25519Kex() noexcept
 	sodium_memzero(&secret_key, sizeof(secret_key));
 }
 
-static void
-Curve25519SecretKeyToPublicKey(std::span<const std::byte, crypto_scalarmult_curve25519_SCALARBYTES> key,
-			       std::span<std::byte, crypto_scalarmult_curve25519_BYTES> pub)
-{
-	if (crypto_scalarmult_curve25519_base(reinterpret_cast<unsigned char *>(pub.data()),
-					      reinterpret_cast<const unsigned char *>(key.data())) != 0)
-		throw std::runtime_error{"crypto_scalarmult_curve25519_base() failed"};
-}
-
-static void
-KexCurve25519CalcSharedKey(std::span<const std::byte, crypto_scalarmult_curve25519_SCALARBYTES> key,
-			   std::span<const std::byte, crypto_scalarmult_curve25519_BYTES> pub,
-			   Serializer &out, bool raw)
-{
-	std::byte shared_key[crypto_scalarmult_curve25519_BYTES]{};
-
-	if (crypto_scalarmult_curve25519(reinterpret_cast<unsigned char *>(shared_key),
-					 reinterpret_cast<const unsigned char *>(key.data()),
-					 reinterpret_cast<const unsigned char *>(pub.data())) != 0)
-		throw std::runtime_error{"crypto_scalarmult_curve25519() failed"};
-
-	AtScopeExit(&shared_key) { sodium_memzero(shared_key, sizeof(shared_key)); };
-
-	/* Check for all-zero shared secret */
-	if (sodium_is_zero(reinterpret_cast<const unsigned char *>(shared_key),
-			   sizeof(shared_key)))
-		throw std::invalid_argument{"Invalid EC value"};
-
-	if (raw)
-		out.WriteN(shared_key);
-	else {
-		const auto length = out.PrepareLength();
-		out.WriteBignum2(shared_key);
-		out.CommitLength(length);
-	}
-}
-
 void
 Curve25519Kex::SerializeEphemeralPublicKey(Serializer &s) const
 {
-	Curve25519SecretKeyToPublicKey(secret_key, s.WriteN<crypto_scalarmult_curve25519_BYTES>());
+	Curve25519SecretKeyToPublicKey(secret_key, s.WriteN<CURVE25519_PUBLIC_KEY_SIZE>());
 }
 
 void
 Curve25519Kex::GenerateSharedSecret(std::span<const std::byte> client_ephemeral_public_key,
 				    Serializer &shared_secret)
 {
-	if (client_ephemeral_public_key.size() != crypto_scalarmult_curve25519_BYTES)
+	if (client_ephemeral_public_key.size() != CURVE25519_PUBLIC_KEY_SIZE)
 		throw std::invalid_argument{"Wrong size"};
 
-	KexCurve25519CalcSharedKey(secret_key,
-				   client_ephemeral_public_key.first<crypto_scalarmult_curve25519_BYTES>(),
-				   shared_secret, false);
+	std::array<std::byte, CURVE25519_SHARED_KEY_SIZE> shared_key;
+	AtScopeExit(&shared_key) { sodium_memzero(shared_key.data(), shared_key.size()); };
+
+	Curve25519CalcSharedKey(secret_key,
+				client_ephemeral_public_key.first<CURVE25519_PUBLIC_KEY_SIZE>(),
+				shared_key);
+
+	const auto length = shared_secret.PrepareLength();
+	shared_secret.WriteBignum2(shared_key);
+	shared_secret.CommitLength(length);
 }
 
 } // namespace SSH

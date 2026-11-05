@@ -17,6 +17,7 @@ libssh = static_library(
   'Channel.cxx',
   'BufferedChannel.cxx',
   'KexFactory.cxx',
+  'Curve25519.cxx',
   'KexCurve25519.cxx',
   'KexHash.cxx',
   'KexSignature.cxx',
