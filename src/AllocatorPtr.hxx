@@ -10,6 +10,7 @@
 #include <new>
 #include <span>
 #include <string_view>
+#include <type_traits>
 
 #include <stdlib.h>
 #include <string.h>
@@ -78,6 +79,7 @@ public:
 	}
 
 	template<typename T>
+	requires std::is_trivial_v<T>
 	T *NewArray(size_t n) noexcept {
 		auto p = new T[n];
 		cleanup.emplace_front([p](){ delete[] p; });
@@ -178,6 +180,7 @@ public:
 	}
 
 	template<typename T>
+	requires std::is_trivial_v<T>
 	T *NewArray(size_t n) const noexcept {
 		return allocator.NewArray<T>(n);
 	}
@@ -191,6 +194,7 @@ public:
 	std::span<const std::byte> Dup(std::span<const std::byte> src) const noexcept;
 
 	template<typename T>
+	requires std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T>
 	std::span<const T> Dup(std::span<const T> src) const noexcept {
 		auto dest = Dup(std::as_bytes(src));
 		return {
