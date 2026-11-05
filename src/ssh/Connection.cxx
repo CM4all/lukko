@@ -353,15 +353,19 @@ Connection::SendECDHKexInitReply(std::span<const std::byte> client_ephemeral_pub
 	s.CommitLength(kex_host_key_length);
 	const auto server_host_key_blob = s.Since(kex_host_key_mark);
 
+	/* this must be called before SerializeEphemeralPublicKey()
+	   because for KEM-based algorithms, the server's ephemeral
+	   public key (the ciphertext) is generated together with the
+	   shared secret */
+	Serializer shared_secret;
+	kex_algorithm->GenerateSharedSecret(client_ephemeral_public_key, shared_secret);
+	const auto shared_secret_ = shared_secret.Finish();
+
 	const auto server_ephemeral_public_key_length = s.PrepareLength();
 	const auto server_ephemeral_public_key_mark = s.Mark();
 	kex_algorithm->SerializeEphemeralPublicKey(s);
 	const auto server_ephemeral_public_key = s.Since(server_ephemeral_public_key_mark);
 	s.CommitLength(server_ephemeral_public_key_length);
-
-	Serializer shared_secret;
-	kex_algorithm->GenerateSharedSecret(client_ephemeral_public_key, shared_secret);
-	const auto shared_secret_ = shared_secret.Finish();
 
 	constexpr auto hash_alg = DigestAlgorithm::SHA256; // TODO
 
