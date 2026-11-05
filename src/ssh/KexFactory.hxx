@@ -5,6 +5,7 @@
 #pragma once
 
 #include "KexEnums.hxx"
+#include "KexMlkem768X25519.hxx" // for HAVE_MLKEM768
 #include "config.h"
 
 #include <memory>
@@ -15,6 +16,9 @@ namespace SSH {
 class Kex;
 
 static constexpr std::string_view all_server_kex_algorithms =
+#ifdef HAVE_MLKEM768
+	"mlkem768x25519-sha256,"
+#endif
 	"curve25519-sha256"
 #ifdef HAVE_OPENSSL
 	",ecdh-sha2-nistp256"
@@ -22,6 +26,9 @@ static constexpr std::string_view all_server_kex_algorithms =
 	",kex-strict-s-v00@openssh.com";
 
 static constexpr std::string_view all_client_kex_algorithms =
+#ifdef HAVE_MLKEM768
+	"mlkem768x25519-sha256,"
+#endif
 	"curve25519-sha256"
 #ifdef HAVE_OPENSSL
 	",ecdh-sha2-nistp256"

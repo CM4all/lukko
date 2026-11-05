@@ -20,6 +20,10 @@ MakeKex(std::string_view algorithms, [[maybe_unused]] Role role)
 	for (const std::string_view a : IterableSplitString(algorithms, ','))
 		if (a == "curve25519-sha256"sv)
 			return std::make_unique<Curve25519Kex>();
+#ifdef HAVE_MLKEM768
+		else if (a == "mlkem768x25519-sha256"sv)
+			return std::make_unique<Mlkem768X25519Kex>(role);
+#endif
 #ifdef HAVE_OPENSSL
 		else if (a == "ecdh-sha2-nistp256"sv)
 			return std::make_unique<ECDHKex>();
