@@ -1,6 +1,6 @@
 cm4all-lukko (0.71) unstable; urgency=low
 
-  * 
+  * fix crash with GCC 15 and newer
 
  --   
 
