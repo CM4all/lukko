@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "util/RoundPowerOfTwo.hxx"
-
+#include <bit>
 #include <cstddef>
 
 namespace SSH {
@@ -14,7 +13,7 @@ static constexpr std::size_t HEADER_SIZE = 4;
 
 static constexpr std::size_t MAX_PACKET_SIZE = 35000;
 
-static constexpr std::size_t BUFFER_SIZE = RoundUpToPowerOfTwo(SSH::MAX_PACKET_SIZE);
+static constexpr std::size_t BUFFER_SIZE = std::bit_ceil(SSH::MAX_PACKET_SIZE);
 
 static constexpr std::size_t KEX_COOKIE_SIZE = 16;
 
