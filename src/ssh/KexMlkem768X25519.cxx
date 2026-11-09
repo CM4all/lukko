@@ -63,7 +63,7 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 	std::array<std::byte, crypto_kem_mlkem768_SHAREDSECRETBYTES + CURVE25519_SHARED_KEY_SIZE> shared_keys;
 	AtScopeExit(&shared_keys) { sodium_memzero(shared_keys.data(), shared_keys.size()); };
 
-	const auto mlkem_shared_key = std::span{shared_keys}.first<crypto_kem_mlkem768_SHAREDSECRETBYTES>();
+	const MlKem768SharedSecretPtr mlkem_shared_key = std::span{shared_keys}.first<crypto_kem_mlkem768_SHAREDSECRETBYTES>();
 	const auto x25519_shared_key = std::span{shared_keys}.last<CURVE25519_SHARED_KEY_SIZE>();
 
 	switch (role) {
