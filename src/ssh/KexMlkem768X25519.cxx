@@ -78,17 +78,17 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 {
 	/* the ML-KEM-768 shared secret followed by the X25519 shared
 	   secret; this will be hashed */
-	std::array<std::byte, MLKEM768_SHARED_KEY_SIZE + CURVE25519_SHARED_KEY_SIZE> shared_keys;
+	std::array<std::byte, crypto_kem_mlkem768_SHAREDSECRETBYTES + CURVE25519_SHARED_KEY_SIZE> shared_keys;
 	AtScopeExit(&shared_keys) { sodium_memzero(shared_keys.data(), shared_keys.size()); };
 
-	const auto mlkem_shared_key = std::span{shared_keys}.first<MLKEM768_SHARED_KEY_SIZE>();
+	const auto mlkem_shared_key = std::span{shared_keys}.first<crypto_kem_mlkem768_SHAREDSECRETBYTES>();
 	const auto x25519_shared_key = std::span{shared_keys}.last<CURVE25519_SHARED_KEY_SIZE>();
 
 	switch (role) {
 	case Role::SERVER:
 		/* the client sends its ML-KEM-768 encapsulation key
 		   followed by its X25519 public key */
-		if (peer_ephemeral_public_key.size() != MLKEM768_PUBLIC_KEY_SIZE + CURVE25519_PUBLIC_KEY_SIZE)
+		if (peer_ephemeral_public_key.size() != crypto_kem_mlkem768_PUBLICKEYBYTES + CURVE25519_PUBLIC_KEY_SIZE)
 			throw std::invalid_argument{"Wrong size"};
 
 		/* this fails if the encapsulation key is invalid
@@ -103,7 +103,7 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 	case Role::CLIENT:
 		/* the server sends the ML-KEM-768 ciphertext followed
 		   by its X25519 public key */
-		if (peer_ephemeral_public_key.size() != MLKEM768_CIPHERTEXT_SIZE + CURVE25519_PUBLIC_KEY_SIZE)
+		if (peer_ephemeral_public_key.size() != crypto_kem_mlkem768_CIPHERTEXTBYTES + CURVE25519_PUBLIC_KEY_SIZE)
 			throw std::invalid_argument{"Wrong size"};
 
 		if (crypto_kem_mlkem768_dec(ToUC(mlkem_shared_key.data()),
