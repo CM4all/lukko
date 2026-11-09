@@ -8,33 +8,16 @@
 
 #include "Curve25519.hxx"
 #include "Serializer.hxx"
+#include "lib/sodium/MlKem768.hxx"
 #include "lib/sodium/SHA256.hxx"
 #include "system/Urandom.hxx"
 #include "util/ScopeExit.hxx"
 
-#include <sodium/crypto_kem_mlkem768.h>
 #include <sodium/utils.h>
 
 #include <stdexcept>
 
 namespace SSH {
-
-static_assert(MLKEM768_PUBLIC_KEY_SIZE == crypto_kem_mlkem768_PUBLICKEYBYTES);
-static_assert(MLKEM768_SECRET_KEY_SIZE == crypto_kem_mlkem768_SECRETKEYBYTES);
-static_assert(MLKEM768_CIPHERTEXT_SIZE == crypto_kem_mlkem768_CIPHERTEXTBYTES);
-static_assert(MLKEM768_SHARED_KEY_SIZE == crypto_kem_mlkem768_SHAREDSECRETBYTES);
-
-static unsigned char *
-ToUC(std::byte *p) noexcept
-{
-	return reinterpret_cast<unsigned char *>(p);
-}
-
-static const unsigned char *
-ToUC(const std::byte *p) noexcept
-{
-	return reinterpret_cast<const unsigned char *>(p);
-}
 
 Mlkem768X25519Kex::Mlkem768X25519Kex(Role _role)
 	:role(_role)
@@ -43,10 +26,9 @@ Mlkem768X25519Kex::Mlkem768X25519Kex(Role _role)
 
 	UrandomFill(x25519_secret_key);
 
-	if (role == Role::CLIENT &&
-	    crypto_kem_mlkem768_keypair(ToUC(mlkem_public_key.data()),
-					ToUC(mlkem_secret_key.data())) != 0)
-		throw std::runtime_error{"crypto_kem_mlkem768_keypair() failed"};
+	if (role == Role::CLIENT)
+		crypto_kem_mlkem768_keypair(mlkem_public_key,
+					    mlkem_secret_key);
 }
 
 Mlkem768X25519Kex::~Mlkem768X25519Kex() noexcept
@@ -93,9 +75,9 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 
 		/* this fails if the encapsulation key is invalid
 		   (FIPS 203 modulus check) */
-		if (crypto_kem_mlkem768_enc(ToUC(mlkem_ciphertext.data()),
-					    ToUC(mlkem_shared_key.data()),
-					    ToUC(peer_ephemeral_public_key.data())) != 0)
+		if (crypto_kem_mlkem768_enc(mlkem_ciphertext,
+					    mlkem_shared_key,
+					    peer_ephemeral_public_key.first<crypto_kem_mlkem768_PUBLICKEYBYTES>()) != 0)
 			throw std::invalid_argument{"Invalid ML-KEM-768 public key"};
 
 		break;
@@ -106,9 +88,9 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 		if (peer_ephemeral_public_key.size() != crypto_kem_mlkem768_CIPHERTEXTBYTES + CURVE25519_PUBLIC_KEY_SIZE)
 			throw std::invalid_argument{"Wrong size"};
 
-		if (crypto_kem_mlkem768_dec(ToUC(mlkem_shared_key.data()),
-					    ToUC(peer_ephemeral_public_key.data()),
-					    ToUC(mlkem_secret_key.data())) != 0)
+		if (crypto_kem_mlkem768_dec(mlkem_shared_key,
+					    peer_ephemeral_public_key.first<crypto_kem_mlkem768_CIPHERTEXTBYTES>(),
+					    mlkem_secret_key) != 0)
 			throw std::invalid_argument{"Invalid ML-KEM-768 ciphertext"};
 
 		break;
