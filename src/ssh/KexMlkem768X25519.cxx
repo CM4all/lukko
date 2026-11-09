@@ -8,10 +8,10 @@
 
 #include "Curve25519.hxx"
 #include "Serializer.hxx"
+#include "lib/sodium/SHA256.hxx"
 #include "system/Urandom.hxx"
 #include "util/ScopeExit.hxx"
 
-#include <sodium/crypto_hash_sha256.h>
 #include <sodium/crypto_kem_mlkem768.h>
 #include <sodium/utils.h>
 
@@ -120,10 +120,8 @@ Mlkem768X25519Kex::GenerateSharedSecret(std::span<const std::byte> peer_ephemera
 
 	/* K = SHA-256(K_PQ || K_CL), encoded as "string" (not as
 	   "mpint") */
-	std::array<std::byte, crypto_hash_sha256_BYTES> k;
+	auto k = SHA256(shared_keys);
 	AtScopeExit(&k) { sodium_memzero(k.data(), k.size()); };
-
-	crypto_hash_sha256(ToUC(k.data()), ToUC(shared_keys.data()), shared_keys.size());
 
 	shared_secret.WriteLengthEncoded(k);
 }
