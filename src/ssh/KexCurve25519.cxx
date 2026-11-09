@@ -16,8 +16,6 @@ namespace SSH {
 
 Curve25519Kex::Curve25519Kex()
 {
-	static_assert(sizeof(secret_key) == CURVE25519_SECRET_KEY_SIZE);
-
 	UrandomFill(secret_key);
 }
 
@@ -29,21 +27,21 @@ Curve25519Kex::~Curve25519Kex() noexcept
 void
 Curve25519Kex::SerializeEphemeralPublicKey(Serializer &s) const
 {
-	Curve25519SecretKeyToPublicKey(secret_key, s.WriteN<CURVE25519_PUBLIC_KEY_SIZE>());
+	Curve25519SecretKeyToPublicKey(secret_key, s.WriteN<sizeof(Curve25519)>());
 }
 
 void
 Curve25519Kex::GenerateSharedSecret(std::span<const std::byte> client_ephemeral_public_key,
 				    Serializer &shared_secret)
 {
-	if (client_ephemeral_public_key.size() != CURVE25519_PUBLIC_KEY_SIZE)
+	if (client_ephemeral_public_key.size() != sizeof(Curve25519))
 		throw std::invalid_argument{"Wrong size"};
 
-	std::array<std::byte, CURVE25519_SHARED_KEY_SIZE> shared_key;
+	Curve25519 shared_key;
 	AtScopeExit(&shared_key) { sodium_memzero(shared_key.data(), shared_key.size()); };
 
 	Curve25519CalcSharedKey(secret_key,
-				client_ephemeral_public_key.first<CURVE25519_PUBLIC_KEY_SIZE>(),
+				client_ephemeral_public_key.first<sizeof(Curve25519)>(),
 				shared_key);
 
 	const auto length = shared_secret.PrepareLength();

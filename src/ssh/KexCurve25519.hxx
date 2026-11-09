@@ -5,6 +5,7 @@
 #pragma once
 
 #include "KexInterface.hxx"
+#include "lib/sodium/Curve25519Types.hxx"
 
 #include <array>
 
@@ -13,7 +14,7 @@ namespace SSH {
 class Serializer;
 
 class Curve25519Kex final : public Kex {
-	std::array<std::byte, 32> secret_key;
+	Curve25519Scalar secret_key;
 
 public:
 	Curve25519Kex();

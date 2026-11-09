@@ -4,14 +4,9 @@
 
 #pragma once
 
-#include <cstddef>
-#include <span>
+#include "lib/sodium/Curve25519Types.hxx"
 
 class Serializer;
-
-static constexpr std::size_t CURVE25519_SECRET_KEY_SIZE = 32;
-static constexpr std::size_t CURVE25519_PUBLIC_KEY_SIZE = 32;
-static constexpr std::size_t CURVE25519_SHARED_KEY_SIZE = 32;
 
 /**
  * Calculate the X25519 public key for the specified secret key.
@@ -19,8 +14,7 @@ static constexpr std::size_t CURVE25519_SHARED_KEY_SIZE = 32;
  * Throws on error.
  */
 void
-Curve25519SecretKeyToPublicKey(std::span<const std::byte, CURVE25519_SECRET_KEY_SIZE> key,
-			       std::span<std::byte, CURVE25519_PUBLIC_KEY_SIZE> pub);
+Curve25519SecretKeyToPublicKey(Curve25519ScalarView key, Curve25519Ptr pub);
 
 /**
  * Calculate the raw X25519 shared secret.
@@ -28,6 +22,5 @@ Curve25519SecretKeyToPublicKey(std::span<const std::byte, CURVE25519_SECRET_KEY_
  * Throws on error (e.g. if the shared secret is all zero).
  */
 void
-Curve25519CalcSharedKey(std::span<const std::byte, CURVE25519_SECRET_KEY_SIZE> key,
-			std::span<const std::byte, CURVE25519_PUBLIC_KEY_SIZE> pub,
-			std::span<std::byte, CURVE25519_SHARED_KEY_SIZE> shared_key);
+Curve25519CalcSharedKey(Curve25519ScalarView key, Curve25519View pub,
+			Curve25519Ptr shared_key);

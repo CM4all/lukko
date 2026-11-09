@@ -16,6 +16,7 @@
 
 #include "KexInterface.hxx"
 #include "KexEnums.hxx"
+#include "lib/sodium/Curve25519Types.hxx"
 #include "lib/sodium/MlKem768Types.hxx"
 
 namespace SSH {
@@ -32,7 +33,7 @@ namespace SSH {
 class Mlkem768X25519Kex final : public Kex {
 	const Role role;
 
-	std::array<std::byte, 32> x25519_secret_key;
+	Curve25519Scalar x25519_secret_key;
 
 	/**
 	 * The ML-KEM-768 key pair (only used by the client).
