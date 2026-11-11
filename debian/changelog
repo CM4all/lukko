@@ -3,7 +3,7 @@ cm4all-lukko (0.71) unstable; urgency=low
   * implement post-quantum key exchange "mlkem768x25519-sha256"
   * fix crash with GCC 15 and newer
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Wed, 11 Nov 2026 17:27:28 +0100
 
 cm4all-lukko (0.70) unstable; urgency=low
 
