@@ -1,6 +1,6 @@
 cm4all-lukko (0.72) unstable; urgency=low
 
-  * 
+  * work around GCC 16 `-Wmaybe-uninitialized`
 
  --   
 

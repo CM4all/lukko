@@ -34,10 +34,9 @@ public:
 };
 
 class OutgoingConnection final
-	: public SSH::Connection, SSH::UserAuthClientHandler
+	: SSH::WithSimpleHostKeyVerifier,
+	  public SSH::Connection, SSH::UserAuthClientHandler
 {
-	const SSH::SimpleHostKeyVerifier server_host_key_verifier;
-
 	OutgoingConnectionHandler &handler;
 
 	std::unique_ptr<SSH::UserAuthClient> user_auth;

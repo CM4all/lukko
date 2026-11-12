@@ -11,10 +11,10 @@ OutgoingConnection::OutgoingConnection(EventLoop &event_loop,
 				       const PublicKeySet &_server_host_keys,
 				       UniqueSocketDescriptor &&fd,
 				       OutgoingConnectionHandler &_handler)
-	:SSH::Connection(event_loop, std::move(fd),
+	:SSH::WithSimpleHostKeyVerifier(_server_host_keys),
+	 SSH::Connection(event_loop, std::move(fd),
 			 _handler,
 			 server_host_key_verifier),
-	 server_host_key_verifier(_server_host_keys),
 	 handler(_handler),
 	 auth_timeout(event_loop, BIND_THIS_METHOD(OnAuthTimeout))
 {
