@@ -598,6 +598,16 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	   "uploadpack.packObjectsHook" */
 	p.PutEnv("GIT_CONFIG_GLOBAL=/dev/null");
 
+	/* never fetch from promisor remotes (e.g. index-pack
+	   resolving a thin pack), because that runs commands from
+	   the repository config such as "core.sshCommand" */
+	p.PutEnv("GIT_NO_LAZY_FETCH=1");
+
+	/* refuse all transports (for git versions older than 2.45
+	   which ignore GIT_NO_LAZY_FETCH); this cannot be
+	   overridden by "protocol.*.allow" */
+	p.PutEnv("GIT_ALLOW_PROTOCOL=");
+
 	/* override configuration options (from the client-writable
 	   repository config) which make git execute commands */
 	p.PutEnv("GIT_CONFIG_COUNT=7");

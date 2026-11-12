@@ -1,5 +1,6 @@
 cm4all-lukko (0.72) unstable; urgency=low
 
+  * git: disable lazy fetch and remote transports
   * work around GCC 16 `-Wmaybe-uninitialized`
 
  --   
