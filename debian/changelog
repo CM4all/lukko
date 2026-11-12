@@ -3,7 +3,7 @@ cm4all-lukko (0.72) unstable; urgency=low
   * git: disable lazy fetch and remote transports
   * work around GCC 16 `-Wmaybe-uninitialized`
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 12 Nov 2026 13:20:23 +0100
 
 cm4all-lukko (0.71) unstable; urgency=low
 
