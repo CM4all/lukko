@@ -26,4 +26,18 @@ public:
 	std::pair<const SecretKey *, std::string_view> ChooseHostKey(std::string_view algorithms) const noexcept override;
 };
 
+/**
+ * A base class with a #SimpleHostKeyChooser field.  This is a kludge
+ * that allows passing the #SimpleHostKeyChooser to the constructor
+ * of another base class (e.g. #Connection), as a workaround for
+ * `-Wmaybe-uninitialized`.
+ */
+class WithSimpleHostKeyChooser {
+protected:
+	const SSH::SimpleHostKeyChooser host_key_chooser;
+
+	explicit WithSimpleHostKeyChooser(const SecretKeyList &_keys) noexcept
+		:host_key_chooser(_keys) {}
+};
+
 } // namespace SSH

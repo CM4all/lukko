@@ -47,6 +47,7 @@ class PacketSerializer;
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
+	  SSH::WithSimpleHostKeyChooser,
 	  public SSH::Connection,
 	  public SSH::GlobalRequestHandler,
 	  public SSH::ChannelHandler,
@@ -55,8 +56,6 @@ class Connection final
 {
 	Instance &instance;
 	Listener &listener;
-
-	const SSH::SimpleHostKeyChooser host_key_chooser;
 
 	AllocatedSocketAddress peer_address;
 	const AllocatedSocketAddress local_address;
