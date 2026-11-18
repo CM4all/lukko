@@ -70,10 +70,6 @@ struct ListenerConfig : SocketConfig {
 #endif // HAVE_AVAHI
 		     const TargetHostConfig *> proxy_to;
 
-#ifdef HAVE_AVAHI
-	const ZeroconfClusterConfig *proxy_to_zeroconf_cluster = nullptr;
-#endif
-
 #ifdef ENABLE_POND
 	AllocatedSocketAddress pond_server;
 #endif
