@@ -161,6 +161,7 @@ if libsystemd.found()
   # uses a protocol with JSON payloads
   subdir('libcommon/src/event/systemd')
 else
+  odbus_dep = dependency('', required: false)
   nlohmann_json_dep = dependency('', required: false)
   event_systemd_dep = dependency('', required: false)
 endif
@@ -286,6 +287,7 @@ executable(
     coroutines_dep,
     memory_dep,
     thread_pool_dep,
+    odbus_dep,
   ],
   install: true,
   install_dir: 'sbin',

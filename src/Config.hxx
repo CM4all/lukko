@@ -92,6 +92,15 @@ struct ListenerConfig : SocketConfig {
 		listen = 256;
 		tcp_no_delay = true;
 	}
+
+	bool HasZeroconf() const noexcept {
+#ifdef HAVE_AVAHI
+		return zeroconf.IsEnabled() ||
+			std::holds_alternative<const ZeroconfClusterConfig *>(proxy_to);
+#else
+		return false;
+#endif
+	}
 };
 
 struct PrometheusExporterConfig : SocketConfig {
@@ -145,6 +154,20 @@ struct Config {
 	Config();
 
 	void Check();
+
+	[[gnu::pure]]
+	bool HasZeroconf() const noexcept {
+		for (const auto &i : listeners)
+			if (i.HasZeroconf())
+				return true;
+
+		return false;
+	}
+
+	[[gnu::pure]]
+	bool UsesDBus() const noexcept {
+		return spawn.UsesDBus() || HasZeroconf();
+	}
 };
 
 /**

@@ -23,6 +23,11 @@
 #include "util/PrintException.hxx"
 #include "config.h"
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
+#include "lib/dbus/Init.hxx"
+#include "lib/dbus/Connection.hxx"
+#endif
+
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Service.hxx"
 #endif
@@ -133,6 +138,13 @@ try {
 	}
 
 	SetupProcess();
+
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
+	const ODBus::ScopeInit dbus_init;
+	if (config.UsesDBus())
+		dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
+						       false);
+#endif
 
 	auto spawner = LaunchSpawnServer(config.spawn, nullptr);
 
