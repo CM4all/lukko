@@ -71,6 +71,9 @@ Known attributes:
 - ``reuse_port``: ``yes`` enables the socket option ``SO_REUSEPORT``,
   which allows multiple sockets to bind to the same port.
 
+- ``free_bind``: ``yes`` enables the socket option ``IP_FREEBIND``,
+  which allows binding to an address which does not exist (yet).
+
 - ``zeroconf_service``: if specified, then register this listener as
   Zeroconf service in the local Avahi daemon.
 

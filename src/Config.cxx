@@ -289,6 +289,9 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "reuse_port")) {
 		config.reuse_port = line.NextBool();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "free_bind")) {
+		config.free_bind = line.NextBool();
+		line.ExpectEnd();
 #ifdef HAVE_AVAHI
 	} else if (config.zeroconf.ParseLine(word, line)) {
 #else

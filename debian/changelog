@@ -1,6 +1,7 @@
 cm4all-lukko (0.73) unstable; urgency=low
 
   * do not exit on DBus disconnect
+  * add listener option "free_bind"
 
  --   
 
