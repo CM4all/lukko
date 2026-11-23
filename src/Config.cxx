@@ -254,44 +254,7 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (StringIsEqual(word, "bind")) {
-		config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
-							 LUKKO_DEFAULT_PORT, true);
-	} else if (StringIsEqual(word, "interface")) {
-		config.interface = line.ExpectValueAndEnd();
-	} else if (StringIsEqual(word, "mode")) {
-		if (config.bind_address.IsNull() ||
-		    config.bind_address.GetFamily() != AF_LOCAL)
-			throw LineParser::Error("'mode' works only with local sockets");
-
-		const char *s = line.ExpectValueAndEnd();
-		char *endptr;
-		const unsigned long value = strtoul(s, &endptr, 8);
-		if (endptr == s || *endptr != 0)
-			throw LineParser::Error("Not a valid octal value");
-
-		if (value & ~0777ULL)
-			throw LineParser::Error("Not a valid mode");
-
-		config.mode = value;
-	} else if (StringIsEqual(word, "mptcp")) {
-		config.mptcp = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "ack_timeout")) {
-		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "keepalive")) {
-		config.keepalive = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "v6only")) {
-		config.v6only = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "reuse_port")) {
-		config.reuse_port = line.NextBool();
-		line.ExpectEnd();
-	} else if (StringIsEqual(word, "free_bind")) {
-		config.free_bind = line.NextBool();
-		line.ExpectEnd();
+	if (config.ParseLine(word, line, LUKKO_DEFAULT_PORT)) {
 #ifdef HAVE_AVAHI
 	} else if (config.zeroconf.ParseLine(word, line)) {
 #else
