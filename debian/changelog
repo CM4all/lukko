@@ -3,7 +3,7 @@ cm4all-lukko (0.73) unstable; urgency=low
   * do not exit on DBus disconnect
   * add listener option "free_bind"
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Mon, 23 Nov 2026 08:52:19 +0100
 
 cm4all-lukko (0.72) unstable; urgency=low
 
