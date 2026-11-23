@@ -254,7 +254,7 @@ LukkoConfigParser::Listener::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (config.ParseLine(word, line, LUKKO_DEFAULT_PORT)) {
+	if (config.ParseLine(word, line, SOCK_STREAM, LUKKO_DEFAULT_PORT)) {
 #ifdef HAVE_AVAHI
 	} else if (config.zeroconf.ParseLine(word, line)) {
 #else
@@ -349,7 +349,7 @@ LukkoConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (!config.ParseLine(word, line, 9100))
+	if (!config.ParseLine(word, line, SOCK_STREAM, 9100))
 		throw LineParser::Error("Unknown option");
 }
 
