@@ -52,11 +52,12 @@ class RequestedChannel final : public Channel, Cancellable {
 public:
 	RequestedChannel(ChannelSupport &_connection,
 			 uint_least32_t _local_channel,
+			 uint_least32_t initial_window_size,
 			 ChannelFactory &_factory,
 			 CancellablePointer &cancel_ptr) noexcept
 		:Channel(_connection,
 			 { .local_channel = _local_channel },
-			 0),
+			 initial_window_size),
 		 factory(_factory)
 	{
 		cancel_ptr = *this;
@@ -133,6 +134,7 @@ ChannelSupport::OpenChannel(std::string_view channel_type,
 	}
 
 	auto *requested = new RequestedChannel(*this, local_channel,
+					       initial_window_size,
 					       factory, cancel_ptr);
 	channels[local_channel] = requested;
 }
@@ -375,6 +377,9 @@ ChannelSupport::HandleChannelOpenConfirmation(std::span<const std::byte> payload
 	const auto p = ParseChannelOpenConfirmation(payload);
 	auto &requested_channel = PopRequestedChannel(p.local_channel);
 
+	/* the window we announced in CHANNEL_OPEN */
+	const std::size_t receive_window = requested_channel.GetReceiveWindow();
+
 	auto channel = requested_channel.OnChannelOpenConfirmation(p);
 
 	if (!channel) {
@@ -390,7 +395,7 @@ ChannelSupport::HandleChannelOpenConfirmation(std::span<const std::byte> payload
 		};
 
 		channels[p.local_channel] = new TombstoneChannel(*this, init,
-								 p.initial_window_size);
+								 receive_window);
 		return;
 	}
 
