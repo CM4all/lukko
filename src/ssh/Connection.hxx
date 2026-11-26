@@ -258,8 +258,12 @@ public:
 
 	/**
 	 * Send a DISCONNECT packet, flush it and destroy this object.
+	 *
+	 * @return false if this object was destroyed; true if
+	 * destruction was postponed because the encrypted DISCONNECT
+	 * packet still needs to be sent
 	 */
-	void DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
+	bool DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept;
 
 	std::span<const std::byte> GetSessionId() const noexcept {
 		return kex_state.session_id;

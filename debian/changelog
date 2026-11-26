@@ -1,6 +1,6 @@
 cm4all-lukko (0.74) unstable; urgency=low
 
-  * 
+  * fix assertion failure after protocol error during key exchange
 
  --   
 

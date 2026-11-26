@@ -202,11 +202,11 @@ Connection::SendPacket(MessageNumber msg, std::span<const std::byte> payload)
 	SendPacket(std::move(s));
 }
 
-void
+bool
 Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg) noexcept
 {
 	if (IsDead())
-		return;
+		return true;
 
 	OnDisconnecting(reason_code, msg);
 
@@ -228,7 +228,7 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 
 		/* we don't want to receive anything from it */
 		socket.UnscheduleOnlyRead();
-		return;
+		return true;
 	}
 
 	try {
@@ -240,13 +240,14 @@ Connection::DoDisconnect(DisconnectReasonCode reason_code, std::string_view msg)
 			break;
 
 		case Output::FlushResult::DESTROYED:
-			return;
+			return false;
 		}
 	} catch (...) {
 		/* ignore errors, we're going to disconnect anyway */
 	}
 
 	disposer.Dispose(this);
+	return false;
 }
 
 void
@@ -950,7 +951,7 @@ bool
 Connection::OnInputReady() noexcept
 try {
 	if (IsDead())
-		return false;
+		return true;
 
 	while (true) {
 		if (read_blocked || write_blocked) {
@@ -988,11 +989,9 @@ try {
 	socket.ScheduleRead();
 	return true;
 } catch (const Disconnect &d) {
-	DoDisconnect(d.reason_code, d.msg);
-	return false;
+	return DoDisconnect(d.reason_code, d.msg);
 } catch (const ProtocolError &e) {
-	DoDisconnect(DisconnectReasonCode::PROTOCOL_ERROR, e.msg);
-	return false;
+	return DoDisconnect(DisconnectReasonCode::PROTOCOL_ERROR, e.msg);
 } catch (const Destroyed &) {
 	return false;
 } catch (...) {
