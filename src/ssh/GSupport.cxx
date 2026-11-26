@@ -141,10 +141,9 @@ GlobalRequestSupport::HandleGlobalRequest(std::span<const std::byte> payload)
 									     p.request_specific_data));
 	pending_global_requests.push_back(*request);
 
-	if (request->IsDone())
-		SubmitGlobalRequestResponses();
-	else
-		request->Start();
+	/* this invokes OnGlobalRequestDone() if the request has
+	   already completed */
+	request->Start();
 }
 
 bool

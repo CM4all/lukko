@@ -186,10 +186,9 @@ Channel::HandleRequest(std::string_view request_type,
 					   OnRequest(request_type, type_specific));
 	pending_requests.push_back(*request);
 
-	if (request->IsDone())
-		SubmitRequestResponses();
-	else
-		request->Start();
+	/* this invokes OnRequestDone() if the request has already
+	   completed */
+	request->Start();
 }
 
 void
