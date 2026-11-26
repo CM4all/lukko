@@ -605,8 +605,10 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 
 	/* refuse all transports (for git versions older than 2.45
 	   which ignore GIT_NO_LAZY_FETCH); this cannot be
-	   overridden by "protocol.*.allow" */
-	p.PutEnv("GIT_ALLOW_PROTOCOL=");
+	   overridden by "protocol.*.allow"; "\n" because an empty
+	   string would allow the empty helper name, and no alias
+	   can be named "remote-\n" */
+	p.PutEnv("GIT_ALLOW_PROTOCOL=\n");
 
 	/* override configuration options (from the client-writable
 	   repository config) which make git execute commands */

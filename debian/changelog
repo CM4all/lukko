@@ -4,6 +4,7 @@ cm4all-lukko (0.74) unstable; urgency=low
   * fix receive window of canceled outgoing channels
   * fix assertion failure with back-to-back key exchanges
   * git: disable automatic gc
+  * git: refuse the empty remote helper name
 
  --   
 
