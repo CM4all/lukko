@@ -318,6 +318,14 @@ Information about the translation protocol can be found here:
 - `asynchronous framework for C++
   <https://github.com/CM4all/libcommon/tree/master/src/translation/server>`__
 
+If the translation server allows ``git-receive-pack`` or
+``git-upload-pack`` for accounts which are not allowed to execute
+commands, the git installation used for this must be version 2.45.1
+or newer (or a maintenance release with the May 2024 security fixes,
+e.g. 2.39.4).  Lukko relies on its support for ``GIT_NO_LAZY_FETCH``
+to prevent commands configured in the (client-writable) repository
+from being executed.
+
 
 Authentication
 ==============
