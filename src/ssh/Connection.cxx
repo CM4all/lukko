@@ -926,7 +926,8 @@ Connection::OnBufferedWrite()
 		return false;
 	}
 
-	if (input_ready && !read_blocked && !write_blocked)
+	if (input_ready && !read_blocked && !write_blocked &&
+	    !output.HasPendingCipher())
 		/* OnInputReady() has postponed handling packets
 		   because writing was blocked; resume that now */
 		resume_input.Schedule();
@@ -954,7 +955,8 @@ try {
 		return true;
 
 	while (true) {
-		if (read_blocked || write_blocked) {
+		if (read_blocked || write_blocked ||
+		    output.HasPendingCipher()) {
 			/* reading is currently blocked - postpone the
 			   packet handler and really stop reading from
 			   the socket to avoid unbounded packet buffer
@@ -964,7 +966,11 @@ try {
 			   packets are answered with another packet
 			   (e.g. UNIMPLEMENTED); a peer which stops
 			   reading its socket could otherwise make us
-			   queue an unbounded number of replies */
+			   queue an unbounded number of replies
+
+			   a pending cipher switch must be applied
+			   before the next key exchange can complete
+			   (see Output::SetCipher()) */
 			input_ready = true;
 			socket.UnscheduleOnlyRead();
 			return true;

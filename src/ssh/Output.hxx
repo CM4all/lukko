@@ -108,12 +108,20 @@ public:
 		return push_cipher;
 	}
 
-	template<typename T>
-	void SetCipher(T &&_cipher) noexcept {
+	/**
+	 * Has the cipher passed to SetCipher() not yet been applied
+	 * by the worker thread?
+	 */
+	[[gnu::pure]]
+	bool HasPendingCipher() noexcept {
 		const std::scoped_lock lock{mutex};
-		next_cipher = std::forward<T>(_cipher);
-		push_cipher = next_cipher.get();
+		return next_cipher != nullptr;
 	}
+
+	/**
+	 * Must not be called while HasPendingCipher() is true.
+	 */
+	void SetCipher(std::unique_ptr<Cipher> &&_cipher) noexcept;
 
 	void AutoResetSeq() noexcept {
 		auto_reset_seq = true;

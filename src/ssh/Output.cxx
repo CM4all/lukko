@@ -43,6 +43,20 @@ Output::EncryptPacket(std::span<const std::byte> src)
 }
 
 void
+Output::SetCipher(std::unique_ptr<Cipher> &&_cipher) noexcept
+{
+	{
+		const std::scoped_lock lock{mutex};
+		assert(!next_cipher);
+		next_cipher = std::move(_cipher);
+		push_cipher = next_cipher.get();
+	}
+
+	/* let Run() apply it even if no packet gets pushed */
+	thread_queue.Add(*this);
+}
+
+void
 Output::Push(std::span<const std::byte> src) noexcept
 {
 	AllocatedArray<std::byte> copy{src};
@@ -146,7 +160,7 @@ try {
 		const std::scoped_lock lock{mutex};
 		encrypted_queue.splice(encrypted_queue.end(), dest);
 
-		if (plain_queue.empty() && !next_plain_queue.empty())
+		if (plain_queue.empty() && next_cipher)
 			again = true;
 	}
 } catch (...) {
