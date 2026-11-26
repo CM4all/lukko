@@ -7,7 +7,7 @@ cm4all-lukko (0.74) unstable; urgency=low
   * git: refuse the empty remote helper name
   * zeroconf: fix error "Failed to commit Avahi service group: Is empty"
 
- --   
+ -- Max Kellermann <max.kellermann@ionos.com>  Thu, 26 Nov 2026 09:11:29 +0100
 
 cm4all-lukko (0.73) unstable; urgency=low
 
