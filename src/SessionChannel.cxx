@@ -610,7 +610,7 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 
 	/* override configuration options (from the client-writable
 	   repository config) which make git execute commands */
-	p.PutEnv("GIT_CONFIG_COUNT=7");
+	p.PutEnv("GIT_CONFIG_COUNT=8");
 	p.PutEnv("GIT_CONFIG_KEY_0=core.alternateRefsCommand");
 	p.PutEnv("GIT_CONFIG_VALUE_0=true");
 	p.PutEnv("GIT_CONFIG_KEY_1=core.fsmonitor");
@@ -625,6 +625,11 @@ SessionChannel::ExecGit(const char *cmd, const char *default_exec_path,
 	p.PutEnv("GIT_CONFIG_VALUE_5=false");
 	p.PutEnv("GIT_CONFIG_KEY_6=gpg.ssh.program");
 	p.PutEnv("GIT_CONFIG_VALUE_6=false");
+
+	/* no automatic "git maintenance"/"git gc" which would
+	   execute "gc.recentObjectsHook" */
+	p.PutEnv("GIT_CONFIG_KEY_7=receive.autogc");
+	p.PutEnv("GIT_CONFIG_VALUE_7=false");
 
 	if (execute_options.process_name != nullptr)
 		p.SetProcessName(execute_options.process_name);
